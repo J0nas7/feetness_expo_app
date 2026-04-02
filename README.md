@@ -1,50 +1,116 @@
-# Welcome to your Expo app 👋
+# Feetness
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Feetness** is a React Native/Expo fitness app, allowing users to track their workouts, routes, pace, distance, and duration. It supports activities like cycling, running, and walking, and provides voice feedback on progress.
 
-## Get started
+---
 
-1. Install dependencies
+## Table of Contents
 
-   ```bash
-   npm install
-   ```
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [Key Components](#key-components)
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## Features
 
-In the output, you'll find options to open the app in a
+- Track workouts: cycling, running, and walking
+- Real-time distance, pace, and duration tracking
+- Map view of workout paths
+- Voice feedback for progress every 5 minutes
+- Pause/resume workouts
+- Save workouts locally using AsyncStorage
+- Goal-based tracking (distance or duration)
+- Workout history accessible after finishing exercises
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Tech Stack
 
-## Get a fresh project
+- **React Native** 0.81
+- **Expo** 54
+- **TypeScript**
+- **React Navigation** 7
+- **React Native Maps**
+- **Expo Location & Task Manager** for GPS tracking
+- **AsyncStorage** for persistent storage
+- **Expo Speech** for voice feedback
+- **Geolib** for distance calculations
 
-When you're ready, run:
+---
+
+## Installation
+
+1. Clone the repository:
 
 ```bash
-npm run reset-project
+git clone https://github.com/yourusername/feetness_expo_app.git
+cd feetness_expo_app
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Install dependencies:
 
-## Learn more
+```bash
+npm install
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+3. Start the Expo development server:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npm start
+```
 
-## Join the community
+4. Run on a device or simulator:
 
-Join our community of developers creating universal apps.
+```bash
+npm run android   # for Android
+npm run ios       # for iOS
+npm run web       # for Web
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Usage
+
+1. Open the app on your device.
+2. Navigate to Start in the tabs.
+3. Select an exercise type: Cycling, Running, or Walking.
+4. Set a goal (distance in km or duration in minutes).
+5. Start the workout:
+* The map shows your route in real time
+* Voice prompts provide updates on progress
+6. Pause/resume as needed.
+7. Finish workout:
+* The workout data (distance, pace, time, path) is saved locally
+* You can view details on the Progress tab
+
+## Project Structure
+
+src/
+├─ app/                # Main Expo Router screens
+│  ├─ (tabs)/          # Bottom tab navigation
+│  ├─ explore/         # Explore workouts
+│  ├─ finished-exercise.tsx
+│  └─ onboarding.tsx
+├─ components/         # UI components
+│  ├─ exercise/        # Workout components
+│  │  ├─ exercise/     # Core exercise logic & map
+│  │  ├─ GoalProgress.tsx
+│  │  └─ FinishedExercise.tsx
+│  └─ global/          # Global UI components
+├─ types/              # TypeScript types
+├─ utils/              # Utilities
+│  ├─ location/        # Location tracking & workout store
+│  └─ native/          # Native speech & live activity modules
+└─ styles/             # Global styles
+
+## Key Components
+
+* Exercise.tsx: Main workout screen, handles state, timer, location tracking, and progress.
+* ExerciseMap.tsx: Displays user's route and segments on a map.
+* ExerciseStats.tsx: Shows distance, pace, elapsed time, and pause/resume controls.
+* GoalProgress.tsx: Circular progress indicator for workout goals.
+* workoutStore.ts: Handles background location updates, distance calculations, and notifying listeners.
+* NativeSpeech.ts: Integrates text-to-speech for real-time workout feedback.
+
