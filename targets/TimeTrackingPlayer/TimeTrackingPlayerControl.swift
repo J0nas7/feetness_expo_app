@@ -12,7 +12,7 @@ import WidgetKit
 struct TimeTrackingPlayerControl: ControlWidget {
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(
-            kind: "com.j0nas7.outdoor_fitness_expo_app.TimeTrackingPlayer",
+            kind: "com.j0nas7.feetness_expo_app.TimeTrackingPlayer",
             provider: Provider()
         ) { value in
             ControlWidgetToggle(
@@ -24,7 +24,7 @@ struct TimeTrackingPlayerControl: ControlWidget {
             }
         }
         .displayName("Timer")
-        .description("A an example control that runs a timer.")
+        .description("An example control that runs a timer.")
     }
 }
 

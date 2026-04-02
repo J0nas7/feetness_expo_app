@@ -4,6 +4,7 @@ import { ExerciseType, GoalMetric, Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Slider from '@react-native-community/slider';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
@@ -68,11 +69,14 @@ export const Controls: React.FC<ControlsProps> = (props) => {
                         maximumValue={props.mode === 'distance' ? 20 : 300}
                         step={props.mode === 'distance' ? 0.25 : 5}
                         value={props.mode === 'distance' ? props.distance : props.duration}
-                        onValueChange={(v) =>
-                            props.mode === 'distance'
-                                ? props.setDistance(v)
-                                : props.setDuration(v)
-                        }
+                        onValueChange={(v) => {
+                            if (props.mode === 'distance') {
+                                props.setDistance(v)
+                            } else {
+                                props.setDuration(v)
+                            }
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }}
                         minimumTrackTintColor="green"
                         maximumTrackTintColor="#ccc"
                         thumbTintColor="green"

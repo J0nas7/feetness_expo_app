@@ -8,7 +8,7 @@ module.exports = config => ({
   entitlements: {
     // e.g. app groups if needed
     "com.apple.security.application-groups": [
-      "group.com.j0nas7.outdoor_fitness_expo_app"
+      "group.com.j0nas7.feetness_expo_app"
     ]
   }
 });

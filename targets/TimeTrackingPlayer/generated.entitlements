@@ -4,7 +4,7 @@
   <dict>
     <key>com.apple.security.application-groups</key>
     <array>
-      <string>group.com.j0nas7.outdoor_fitness_expo_app</string>
+      <string>group.com.j0nas7.feetness_expo_app</string>
     </array>
   </dict>
 </plist>

@@ -28,7 +28,7 @@ const withAndroidSpeechService = (config) => {
         "android",
         async (mod) => {
             const packageName =
-                mod?.manifest?.applicationId || "com.j0nas7.outdoor_fitness_expo_app";
+                mod?.manifest?.applicationId || "com.j0nas7.feetness_expo_app";
             copySpeechFiles(mod.modRequest.projectRoot, packageName);
             return mod;
         },

@@ -134,9 +134,9 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     // Subscribe to the workout store for UI updates
     useEffect(() => {
         const unsubscribe = subscribeToWorkout(({ distance, path, segments, location }) => {
-            if (isPausedRef.current) return; // safe pause
+            if (isPausedRef.current) return; // Safe pause
 
-            // update UI state
+            // Update UI state
             distanceRef.current = distance;
             setDistance(distance);
 

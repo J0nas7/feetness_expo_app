@@ -1,4 +1,4 @@
-package com.j0nas7.outdoor_fitness_expo_app.speech
+package com.j0nas7.feetness_expo_app.speech
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -6,7 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.j0nas7.outdoor_fitness_expo_app.R
+import com.j0nas7.feetness_expo_app.R
 
 object SpeechNotification {
 

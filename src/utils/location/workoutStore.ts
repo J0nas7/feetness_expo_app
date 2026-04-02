@@ -30,6 +30,9 @@ export const subscribeToWorkout = (listener: Listener) => {
 };
 
 export const storeLocationUpdate = (loc: Location.LocationObject) => {
+    const MIN_DISTANCE_METERS = 5; // ignore tiny GPS jumps
+    const MAX_DISTANCE_METERS = 50; // ignore unrealistic spikes
+
     const coords = loc.coords;
     const now = Date.now();
 
@@ -38,6 +41,18 @@ export const storeLocationUpdate = (loc: Location.LocationObject) => {
             { latitude: prevCoords.latitude, longitude: prevCoords.longitude },
             { latitude: coords.latitude, longitude: coords.longitude }
         );
+
+        // 🚫 Ignore GPS noise (too small)
+        if (delta < MIN_DISTANCE_METERS) {
+            return;
+        }
+
+        // 🚫 Ignore unrealistic jumps (bad GPS)
+        if (delta > MAX_DISTANCE_METERS) {
+            prevCoords = coords;
+            prevTime = now;
+            return;
+        }
 
         distance += delta;
 

@@ -1,4 +1,4 @@
-package com.j0nas7.outdoor_fitness_expo_app.speech
+package com.j0nas7.feetness_expo_app.speech
 
 import SpeechService
 

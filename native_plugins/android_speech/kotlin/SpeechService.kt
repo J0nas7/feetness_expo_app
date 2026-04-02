@@ -8,8 +8,8 @@ import android.os.Build
 import android.speech.tts.TextToSpeech
 import java.util.*
 import android.speech.tts.UtteranceProgressListener
-import com.j0nas7.outdoor_fitness_expo_app.speech.SpeechNotification
-import com.j0nas7.outdoor_fitness_expo_app.speech.SpeechServiceHolder
+import com.j0nas7.feetness_expo_app.speech.SpeechNotification
+import com.j0nas7.feetness_expo_app.speech.SpeechServiceHolder
 
 class SpeechService : Service(), TextToSpeech.OnInitListener {
 
