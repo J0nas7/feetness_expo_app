@@ -8,8 +8,11 @@
 import Foundation
 import ActivityKit
 
+@available(iOS 16.1, *)
 @objc(TimeTracking)
 class TimeTracking: NSObject {
+
+  private var currentActivity: Activity<TimeTrackingPlayerAttributes>?
 
   @objc(startActivity)
   func startActivity() {
@@ -19,7 +22,13 @@ class TimeTracking: NSObject {
         let timeTrackingContentState = TimeTrackingPlayerAttributes.ContentState.init(taskName: "Working on a task", timeSpend: "00:00:00")
 
         print("Swift Start TimeTracking Live Activity")
-        let activity = try Activity<TimeTrackingPlayerAttributes>.request(attributes: timeTrackingAttributes, contentState: timeTrackingContentState, pushType: nil)
+        let activity = try Activity<TimeTrackingPlayerAttributes>.request(
+          attributes: timeTrackingAttributes,
+          contentState: timeTrackingContentState,
+          pushType: nil
+        )
+
+        self.currentActivity = activity
       } else {
         print("Live Activity is not supported on this device")
       }
@@ -35,9 +44,11 @@ class TimeTracking: NSObject {
         let timeTrackingContentState = TimeTrackingPlayerAttributes.ContentState.init(taskName: taskName, timeSpend: timeSpend)
 
         Task {
-          for activity in Activity<TimeTrackingPlayerAttributes>.activities {
-            print("Swift Update TimeTracking Live Activity")
-            await activity.update(using: timeTrackingContentState)
+          if let activity = self.currentActivity {
+              print("Swift Update TimeTracking Live Activity")
+              await activity.update(using: timeTrackingContentState)
+          } else {
+              print("⚠️ No active Live Activity found")
           }
         }
       } else {
@@ -52,9 +63,9 @@ class TimeTracking: NSObject {
   func endActivity() {
     Task {
       if #available(iOS 16.2, *) {
-        for activity in Activity<TimeTrackingPlayerAttributes>.activities {
-          print("Swift End TimeTracking Live Activity")
-          await activity.end(nil, dismissalPolicy: .immediate)
+        if let activity = self.currentActivity {
+            await activity.end(nil, dismissalPolicy: .immediate)
+            self.currentActivity = nil
         }
       } else {
         // Fallback on earlier versions

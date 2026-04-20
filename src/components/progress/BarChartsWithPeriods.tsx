@@ -133,6 +133,7 @@ export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = (props)
             width: 18,
             backgroundColor: theme.colors.success,
             borderRadius: 6,
+            boxShadow: '2px 2px 0 0 rgba(0, 0, 0, 0.6)',
         },
         barLabel: {
             marginTop: 6,

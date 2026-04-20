@@ -30,11 +30,14 @@ export const subscribeToWorkout = (listener: Listener) => {
 };
 
 export const storeLocationUpdate = (loc: Location.LocationObject) => {
-    const MIN_DISTANCE_METERS = 5; // ignore tiny GPS jumps
-    const MAX_DISTANCE_METERS = 50; // ignore unrealistic spikes
+    const MIN_DISTANCE_METERS = 12;     // ignore small GPS noise
+    const MAX_DISTANCE_METERS = 40;     // ignore unrealistic spikes
+    const MAX_ACCEPTABLE_ACCURACY = 25; // ignore points with poor accuracy
 
     const coords = loc.coords;
     const now = Date.now();
+
+    if (coords.accuracy && coords.accuracy > MAX_ACCEPTABLE_ACCURACY) return;
 
     if (prevCoords) {
         const delta = getDistance(
@@ -43,14 +46,12 @@ export const storeLocationUpdate = (loc: Location.LocationObject) => {
         );
 
         // 🚫 Ignore GPS noise (too small)
-        if (delta < MIN_DISTANCE_METERS) {
-            return;
-        }
+        if (delta < MIN_DISTANCE_METERS) return;
 
         // 🚫 Ignore unrealistic jumps (bad GPS)
         if (delta > MAX_DISTANCE_METERS) {
-            prevCoords = coords;
-            prevTime = now;
+            // prevCoords = coords;
+            // prevTime = now;
             return;
         }
 

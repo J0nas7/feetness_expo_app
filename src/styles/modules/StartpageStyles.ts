@@ -70,6 +70,7 @@ export const createStartpageStyles = (theme: MyTheme) =>
         toggleContainer: {
             flexDirection: 'row',
             marginVertical: 12,
+            boxShadow: '2px 2px 0 0 rgba(0, 0, 0, 0.6)',
         },
         toggleButton: {
             flex: 1,
@@ -94,6 +95,7 @@ export const createStartpageStyles = (theme: MyTheme) =>
             borderRadius: 8,
             padding: 14,
             marginTop: 8,
+            boxShadow: '2px 2px 0 0 rgba(0, 0, 0, 0.6)',
         },
         selectText: {
             fontSize: 16,
@@ -107,6 +109,7 @@ export const createStartpageStyles = (theme: MyTheme) =>
             paddingHorizontal: 15,
             borderRadius: 20,
             backgroundColor: theme.colors.surface,
+            boxShadow: '2px 2px 0 0 rgba(0, 0, 0, 0.6)',
         },
         togglerText: {
             fontSize: 14,
@@ -139,6 +142,7 @@ export const createStartpageStyles = (theme: MyTheme) =>
             padding: 16,
             borderRadius: 8,
             alignItems: 'center',
+            boxShadow: '2px 2px 0 0 rgba(0, 0, 0, 0.6)',
         },
         startText: {
             color: theme.colors.onPrimary,

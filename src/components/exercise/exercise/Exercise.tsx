@@ -4,6 +4,7 @@ import { Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
 import { resetWorkoutStoreAndNotify, subscribeToWorkout } from '@/utils/location/workoutStore';
+import { endLiveActivity, startLiveActivity, updateLiveActivity } from '@/utils/native/LiveActivityModule';
 import { speak, startSpeechService, stopSpeak, stopSpeechService } from "@/utils/native/NativeSpeech";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
@@ -118,10 +119,17 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     // Start background location updates
     useEffect(() => {
         (async () => {
+            startLiveActivity();
+
+            updateLiveActivity({
+                taskName: `Distance: 0,0 km, `,
+                timeSpend: `Tid: 00:00`
+            });
+
             await Location.startLocationUpdatesAsync(WORKOUT_LOCATION_TASK, {
-                accuracy: Location.Accuracy.BestForNavigation,
-                distanceInterval: 1,
-                timeInterval: 1000,
+                accuracy: Location.Accuracy.High,
+                distanceInterval: 5, // Update every 5 meters
+                timeInterval: 3000, // Update every 3 seconds (in case distanceInterval isn't met)
                 showsBackgroundLocationIndicator: true,
                 foregroundService: {
                     notificationTitle: 'Workout in progress',
@@ -156,6 +164,11 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 paceRef.current = minutes / km;
                 setPace(paceRef.current);
             }
+
+            updateLiveActivity({
+                taskName: `Distance: ${(distance / 1000).toFixed(2)} km, `,
+                timeSpend: `Tid: ${Math.floor(elapsed / 60)}:${String(Math.floor(elapsed % 60)).padStart(2, '0')}`
+            });
 
             speakProgress(elapsed);
         });
@@ -226,34 +239,43 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     };
 
     const stopExercise = async () => {
-        locationSubRef.current?.remove();
-        locationSubRef.current = null;
-
-        // Show entire route
-        if (pathRef.current.length > 1) {
-            mapRef.current?.fitToCoordinates(pathRef.current, {
-                edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
-                animated: true,
-            });
-        }
-
-        // Save workout to AsyncStorage
-        const workoutData: Workout = {
-            id: Date.now(),
-            exercise: props.exercise,
-            goalAmount: props.goalAmount,
-            goalMetric: props.goalMetric,
-            percentage,
-            startTime: startTimeRef.current,
-            endTime: Date.now(),
-            distance: distanceRef.current,
-            elapsedTime: elapsedTimeRef.current,
-            pace: paceRef.current,
-            path: pathRef.current,
-            segments,
-        };
-
         try {
+            // Stop background tracking
+            const hasStarted = await Location.hasStartedLocationUpdatesAsync(WORKOUT_LOCATION_TASK);
+            if (hasStarted) {
+                await Location.stopLocationUpdatesAsync(WORKOUT_LOCATION_TASK);
+            }
+
+            // Stop live activity
+            endLiveActivity();
+
+            locationSubRef.current?.remove();
+            locationSubRef.current = null;
+
+            // Show entire route
+            if (pathRef.current.length > 1) {
+                mapRef.current?.fitToCoordinates(pathRef.current, {
+                    edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
+                    animated: true,
+                });
+            }
+
+            // Save workout to AsyncStorage
+            const workoutData: Workout = {
+                id: Date.now(),
+                exercise: props.exercise,
+                goalAmount: props.goalAmount,
+                goalMetric: props.goalMetric,
+                percentage,
+                startTime: startTimeRef.current,
+                endTime: Date.now(),
+                distance: distanceRef.current,
+                elapsedTime: elapsedTimeRef.current,
+                pace: paceRef.current,
+                path: pathRef.current,
+                segments,
+            };
+
             // Save workout
             const storedWorkouts = await AsyncStorage.getItem('workouts');
             const workouts = storedWorkouts ? JSON.parse(storedWorkouts) : [];
@@ -270,7 +292,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 },
             });
         } catch (error) {
-            console.error('Error saving workout', error);
+            console.error('Error stopping workout', error);
         }
     };
 

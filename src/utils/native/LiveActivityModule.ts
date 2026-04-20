@@ -10,7 +10,8 @@ export function startLiveActivity() {
     }
 }
 
-export function updateLiveActivity(taskName: string, timeSpend: string) {
+export function updateLiveActivity({ taskName, timeSpend }: { taskName: string, timeSpend: string }) {
+    console.log("updateLiveActivity TimeTracking Live Activity", TimeTracking)
     if (Platform.OS === 'ios' && TimeTracking?.updateActivity) {
         console.log("Updating TimeTracking Live Activity")
         TimeTracking.updateActivity(taskName, timeSpend);

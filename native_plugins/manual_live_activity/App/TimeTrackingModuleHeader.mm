@@ -10,5 +10,7 @@
 @interface RCT_EXTERN_MODULE(TimeTracking, NSObject)
 
 RCT_EXTERN_METHOD(startActivity)
+RCT_EXTERN_METHOD(updateActivity:(NSString *)taskName timeSpend:(NSString *)timeSpend)
+RCT_EXTERN_METHOD(endActivity)
 
 @end

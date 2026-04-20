@@ -1,8 +1,10 @@
 import { MyTheme } from '@/types/theme';
 import { ProgressPeriod, Workout } from '@/types/WorkoutDTO';
 import { useTheme } from '@react-navigation/native';
+import { router } from 'expo-router';
 import React from 'react';
 import {
+    Pressable,
     StyleSheet,
     Text,
     View
@@ -23,7 +25,7 @@ interface PeriodSectionsProps {
     }
 }
 
-export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => props.periods.map((p, idx) => {
+export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => props.periods.map((period, idx) => {
     const theme = useTheme() as MyTheme;
     const styles = StyleSheet.create({
         periodSection: {
@@ -50,6 +52,7 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => props.pe
             backgroundColor: theme.colors.surface,
             borderRadius: 12,
             marginBottom: 8,
+            boxShadow: '2px 2px 0 0 rgba(0, 0, 0, 0.6)',
         },
         workoutIcon: {
             fontSize: 24,
@@ -69,15 +72,15 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => props.pe
         },
     })
 
-    const totalDistance = p.workouts.reduce((s, w) => s + w.distance, 0)
-    const totalDuration = p.workouts.reduce((s, w) => s + w.elapsedTime, 0)
-    const completedGoals = p.workouts.filter((w) => w.percentage >= 100).length
+    const totalDistance = period.workouts.reduce((s, w) => s + w.distance, 0)
+    const totalDuration = period.workouts.reduce((s, w) => s + w.elapsedTime, 0)
+    const completedGoals = period.workouts.filter((w) => w.percentage >= 100).length
 
     const now = new Date();
 
-    const periodTitle = props.isMonthPeriod(p)
-        ? new Date(p.year, p.month).toLocaleString('default', { month: 'long', year: 'numeric' })
-        : `Week ${String(p.week).padStart(2, '0')} (${new Date(p.workouts[0]?.startTime || now).toLocaleDateString()})`;
+    const periodTitle = props.isMonthPeriod(period)
+        ? new Date(period.year, period.month).toLocaleString('default', { month: 'long', year: 'numeric' })
+        : `Week ${String(period.week).padStart(2, '0')} (${new Date(period.workouts[0]?.startTime || now).toLocaleDateString()})`;
 
     return (
         <View key={idx} style={styles.periodSection}>
@@ -97,28 +100,42 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => props.pe
                 <Text style={styles.summaryText}>🎯 {completedGoals} goals</Text>
             </View>
 
-            {p.workouts.map((w) => {
-                const goalCompleted = w.percentage >= 100;
+            {period.workouts.map((workout) => {
+                const goalCompleted = workout.percentage >= 100;
+
+                const navigateToWorkoutDetails = () => {
+                    router.push({
+                        pathname: "/finished-exercise",
+                        params: {
+                            workout: JSON.stringify(workout),
+                        },
+                    });
+                }
+
                 return (
-                    <View key={w.id} style={styles.workoutCard}>
+                    <Pressable
+                        key={workout.id}
+                        style={styles.workoutCard}
+                        onPress={navigateToWorkoutDetails}
+                    >
                         <Text style={styles.workoutIcon}>
-                            {EXERCISE_ICON[w.exercise]}
+                            {EXERCISE_ICON[workout.exercise]}
                         </Text>
 
                         <View style={{ flex: 1 }}>
                             <Text style={styles.workoutTitle}>
-                                {w.exercise} ·{' '}
-                                {w.goalAmount}
-                                {w.goalMetric === 'distance'
+                                {workout.exercise} ·{' '}
+                                {workout.goalAmount}
+                                {workout.goalMetric === 'distance'
                                     ? ' km'
                                     : ' min'}
                             </Text>
                             <Text style={styles.workoutMeta}>
-                                {(w.distance / 1000).toFixed(1)} km ·{' '}
-                                {Math.round(w.elapsedTime / 60)} min
+                                {(workout.distance / 1000).toFixed(1)} km ·{' '}
+                                {Math.round(workout.elapsedTime / 60)} min
                             </Text>
                             <Text style={styles.workoutMeta}>
-                                {new Date(w.startTime).toDateString()}
+                                {new Date(workout.startTime).toDateString()}
                             </Text>
                         </View>
 
@@ -134,7 +151,7 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => props.pe
                         >
                             {goalCompleted ? '✓' : '•'}
                         </Text>
-                    </View>
+                    </Pressable>
                 );
             })}
         </View>

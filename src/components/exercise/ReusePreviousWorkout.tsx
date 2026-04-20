@@ -26,6 +26,7 @@ export const ReusePreviousWorkout: React.FC<Reuse & { item: Workout }> = (props)
             paddingHorizontal: 15,
             backgroundColor: theme.colors.surface,
             borderRadius: 10,
+            boxShadow: '2px 2px 0 0 rgba(0, 0, 0, 0.6)',
             marginVertical: 5,
             display: 'flex',
             flexDirection: 'row',

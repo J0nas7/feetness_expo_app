@@ -1,13 +1,14 @@
-import { Controls, ControlsProps, Map } from '@/components/startpage';
+import { Controls, Map } from '@/components/startpage';
 import { createStartpageStyles } from '@/styles/modules/StartpageStyles';
 import { ExerciseType, GoalMetric, Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { getCurrentLocation, hasBackgroundPermission, hasLocationPermission } from '@/utils/location/location';
-import { startLiveActivity } from '@/utils/native/LiveActivityModule';
+import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
+import { endLiveActivity } from '@/utils/native/LiveActivityModule';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import * as Location from 'expo-location';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert, Modal, Pressable, Text, View } from 'react-native';
 
 export default function StartScreen() {
@@ -22,10 +23,24 @@ export default function StartScreen() {
     const [savedWorkouts, setSavedWorkouts] = useState<Workout[]>([]);
     const [showCustom, setShowCustom] = useState(true); // toggler
 
-    // Live Activity Start
-    useEffect(() => {
-        startLiveActivity()
-    }, [])
+    // Stop any ongoing location tracking when screen is focused
+    useFocusEffect(
+        useCallback(() => {
+            const stopAnyOngoingTracking = async () => {
+                const isRunning = await Location.hasStartedLocationUpdatesAsync(WORKOUT_LOCATION_TASK);
+
+                // Stop background location tracking if active
+                if (isRunning) {
+                    await Location.stopLocationUpdatesAsync(WORKOUT_LOCATION_TASK);
+                }
+
+                // Ensure live activity is also stopped
+                endLiveActivity();
+            };
+
+            stopAnyOngoingTracking();
+        }, [])
+    );
 
     // Check user location permissions
     useFocusEffect(
@@ -100,6 +115,7 @@ export default function StartScreen() {
         }, [])
     );
 
+    // Handle plus/minus buttons for distance/duration
     const pressGoalAmount = (direction: "plus" | "minus") => {
         let newGoalAmount = mode === 'distance' ? distance : duration
 
@@ -119,24 +135,8 @@ export default function StartScreen() {
             : setDuration(newGoalAmount)
     }
 
+    // Styles
     const styles = createStartpageStyles(theme);
-
-    const controlsProps: ControlsProps = {
-        theme,
-        showCustom,
-        mode,
-        setMode,
-        pressGoalAmount,
-        distance,
-        duration,
-        setDistance,
-        setDuration,
-        setActivityModalVisible,
-        activity,
-        savedWorkouts,
-        setActivity,
-        setShowCustom,
-    }
 
     return (
         <View style={styles.container}>
@@ -144,7 +144,22 @@ export default function StartScreen() {
             <Map theme={theme} location={location} />
 
             {/* 🎛 CONTROLS (60%) */}
-            <Controls {...controlsProps} />
+            <Controls {...{
+                theme,
+                showCustom,
+                mode,
+                setMode,
+                pressGoalAmount,
+                distance,
+                duration,
+                setDistance,
+                setDuration,
+                setActivityModalVisible,
+                activity,
+                savedWorkouts,
+                setActivity,
+                setShowCustom,
+            }} />
 
             <Modal
                 visible={activityModalVisible}
