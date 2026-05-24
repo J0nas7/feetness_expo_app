@@ -61,6 +61,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     const activeStartTimeRef = React.useRef<number | null>(null);
     const totalActiveMsRef = React.useRef<number>(0);
     const lastSpokenBucketRef = React.useRef(0); // bucket = Math.floor(elapsed / 300)
+    const lastSpokenPercentageBucketRef = React.useRef(0); // percentageBucket = Math.floor(percentage / 10)
 
     const prevLocationRef = React.useRef<Location.LocationObjectCoords | null>(null);
     const prevTimeRef = React.useRef<number | null>(null);
@@ -100,6 +101,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
             activeStartTimeRef.current = Date.now();
             lastSpokenBucketRef.current = 0;
+            lastSpokenPercentageBucketRef.current = 0;
 
             // Speak the message
             setTimeout(() => {
@@ -171,6 +173,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             });
 
             speakProgress(elapsed);
+            speakPercentageProgress();
         });
 
         return () => {
@@ -212,7 +215,8 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         if (bucket > lastSpokenBucketRef.current) {
             lastSpokenBucketRef.current = bucket;
 
-            const dist = (distanceRef.current / 1000).toFixed(2);
+            const distKm = Math.floor(distanceRef.current / 1000);
+            const distDecimal = ((distanceRef.current / 1000).toFixed(2).split('.')[1]);
 
             const hours = Math.floor(elapsed / 3600);
             const minutes = Math.floor((elapsed % 3600) / 60);
@@ -224,9 +228,25 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             speak(
                 `Fremskridt ${percentageRef.current} procent, ` +
                 `varighed ${hours > 0 ? `${hours} time og ` : ''}${minutes} minutter, ` +
-                `distance ${dist} kilometer, ` +
+                `distance ${distKm} komma ${distDecimal} kilometer, ` +
                 `tempo ${paceMinutes} minutter og ${paceSeconds} sekunder`
             );
+        }
+    };
+
+    const speakPercentageProgress = () => {
+        // 20% buckets: 20, 40, 60, 80, 100
+        const bucket = Math.floor(percentageRef.current / 20);
+
+        // Ignore 0%
+        if (bucket <= 0) return;
+
+        if (bucket > lastSpokenPercentageBucketRef.current) {
+            lastSpokenPercentageBucketRef.current = bucket;
+
+            const reachedPercentage = bucket * 20;
+
+            speak(`Du har nået ${reachedPercentage} procent af dit mål.`);
         }
     };
 
