@@ -9,6 +9,7 @@ import {
     Text,
     View
 } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 const EXERCISE_ICON: Record<string, string> = {
     Løb: '🏃‍♂️',
@@ -18,6 +19,7 @@ const EXERCISE_ICON: Record<string, string> = {
 
 interface PeriodSectionsProps {
     periods: ProgressPeriod[]
+    confirmDeleteWorkout: (workout: Workout) => Promise<void>
     isMonthPeriod: (p: ProgressPeriod) => p is {
         year: number;
         month: number;
@@ -82,6 +84,56 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => props.pe
         ? new Date(period.year, period.month).toLocaleString('default', { month: 'long', year: 'numeric' })
         : `Week ${String(period.week).padStart(2, '0')} (${new Date(period.workouts[0]?.startTime || now).toLocaleDateString()})`;
 
+    const handleEdit = (workout: Workout) => {
+        router.push({
+            pathname: '/edit-workout',
+            params: {
+                workout: JSON.stringify(workout),
+            },
+        });
+    };
+
+    const renderRightActions = (workout: Workout) => (
+        <View
+            style={{
+                flexDirection: 'row',
+                marginBottom: 8,
+            }}
+        >
+            <Pressable
+                onPress={() => handleEdit(workout)}
+                style={{
+                    width: 80,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#3b82f6',
+                    borderTopLeftRadius: 12,
+                    borderBottomLeftRadius: 12,
+                }}
+            >
+                <Text style={{ color: 'white', fontWeight: '600' }}>
+                    Edit
+                </Text>
+            </Pressable>
+
+            <Pressable
+                onPress={() => props.confirmDeleteWorkout(workout)}
+                style={{
+                    width: 80,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#ef4444',
+                    borderTopRightRadius: 12,
+                    borderBottomRightRadius: 12,
+                }}
+            >
+                <Text style={{ color: 'white', fontWeight: '600' }}>
+                    Delete
+                </Text>
+            </Pressable>
+        </View>
+    );
+
     return (
         <View key={idx} style={styles.periodSection}>
             <Text style={styles.periodTitle}>{periodTitle}</Text>
@@ -113,45 +165,50 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => props.pe
                 }
 
                 return (
-                    <Pressable
+                    <Swipeable
                         key={workout.id}
-                        style={styles.workoutCard}
-                        onPress={navigateToWorkoutDetails}
+                        renderRightActions={() => renderRightActions(workout)}
+                        overshootRight={false}
                     >
-                        <Text style={styles.workoutIcon}>
-                            {EXERCISE_ICON[workout.exercise]}
-                        </Text>
-
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.workoutTitle}>
-                                {workout.exercise} ·{' '}
-                                {workout.goalAmount}
-                                {workout.goalMetric === 'distance'
-                                    ? ' km'
-                                    : ' min'}
-                            </Text>
-                            <Text style={styles.workoutMeta}>
-                                {(workout.distance / 1000).toFixed(1)} km ·{' '}
-                                {Math.round(workout.elapsedTime / 60)} min
-                            </Text>
-                            <Text style={styles.workoutMeta}>
-                                {new Date(workout.startTime).toDateString()}
-                            </Text>
-                        </View>
-
-                        <Text
-                            style={[
-                                styles.goalStatus,
-                                {
-                                    color: goalCompleted
-                                        ? theme.colors.success
-                                        : theme.colors.notification,
-                                },
-                            ]}
+                        <Pressable
+                            style={styles.workoutCard}
+                            onPress={navigateToWorkoutDetails}
                         >
-                            {goalCompleted ? '✓' : '•'}
-                        </Text>
-                    </Pressable>
+                            <Text style={styles.workoutIcon}>
+                                {EXERCISE_ICON[workout.exercise]}
+                            </Text>
+
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.workoutTitle}>
+                                    {workout.exercise} ·{' '}
+                                    {workout.goalAmount}
+                                    {workout.goalMetric === 'distance'
+                                        ? ' km'
+                                        : ' min'}
+                                </Text>
+                                <Text style={styles.workoutMeta}>
+                                    {(workout.distance / 1000).toFixed(1)} km ·{' '}
+                                    {Math.round(workout.elapsedTime / 60)} min
+                                </Text>
+                                <Text style={styles.workoutMeta}>
+                                    {new Date(workout.startTime).toDateString()}
+                                </Text>
+                            </View>
+
+                            <Text
+                                style={[
+                                    styles.goalStatus,
+                                    {
+                                        color: goalCompleted
+                                            ? theme.colors.success
+                                            : theme.colors.notification,
+                                    },
+                                ]}
+                            >
+                                {goalCompleted ? '✓' : '•'}
+                            </Text>
+                        </Pressable>
+                    </Swipeable>
                 );
             })}
         </View>

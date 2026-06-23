@@ -41,10 +41,10 @@ export const RenderTime = ({ workout }: { workout: Workout }) => {
             : '-';
 
     const paceToColor = (pace: number) => {
-        if (!pace || !isFinite(pace)) return '#95a5a6';
-        if (pace < 5) return '#e74c3c';
-        if (pace < 6) return '#f1c40f';
-        return '#2ecc71';
+        if (!pace || !isFinite(pace)) return "#95a5a6";
+        if (pace < 5.5) return "#2ecc71"; // fast (<5:30 min/km) → green
+        if (pace < 6.5) return "#f1c40f"; // moderate (5:30–6:30 min/km) → yellow
+        return "#e74c3c"; // slow (>6:30 min/km) → red
     };
 
     /**

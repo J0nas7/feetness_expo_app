@@ -30,9 +30,9 @@ export const RenderSummary = ({ workout }: { workout: Workout; }) => {
 
     const paceToColor = (pace: number) => {
         if (!pace || !isFinite(pace)) return "#95a5a6";
-        if (pace < 5) return "#e74c3c";
-        if (pace < 6) return "#f1c40f";
-        return "#2ecc71";
+        if (pace < 5.5) return "#2ecc71"; // fast (<5:30 min/km) → green
+        if (pace < 6.5) return "#f1c40f"; // moderate (5:30–6:30 min/km) → yellow
+        return "#e74c3c"; // slow (>6:30 min/km) → red
     };
 
     const styles = StyleSheet.create({
@@ -42,6 +42,22 @@ export const RenderSummary = ({ workout }: { workout: Workout; }) => {
         },
         mapContainer: {
             height: '60%', // Map takes 60% of the screen
+            position: 'relative'
+        },
+        mapLegends: {
+            position: 'absolute',
+            marginTop: 10,
+            zIndex: 10,
+        },
+        legendItem: {
+            width: '30%', // 3 items per row (100% / 3 = 33.33%, rounded to 30% for spacing)
+            alignItems: 'center',
+            backgroundColor: theme.colors.background,
+            padding: 5,
+            borderRadius: 10
+        },
+        legendText: {
+            fontSize: 12
         },
         map: {
             width: '100%',
@@ -86,6 +102,8 @@ export const RenderSummary = ({ workout }: { workout: Workout; }) => {
         statItem: {
             width: '30%', // 3 items per row (100% / 3 = 33.33%, rounded to 30% for spacing)
             alignItems: 'center',
+            display: 'flex',
+            paddingTop: 20, // Space from top of item to value
             marginBottom: 20, // Space between rows
         },
         valueText: {
@@ -108,11 +126,31 @@ export const RenderSummary = ({ workout }: { workout: Workout; }) => {
             zIndex: 10,
             elevation: 10, // Android
         },
-    })
+    });
 
     return (
         <View style={styles.container}>
             <View style={styles.mapContainer}>
+                <View style={[styles.grid, styles.mapLegends]}>
+                    <View style={styles.legendItem}>
+                        <Text style={{
+                            ...styles.legendText,
+                            color: paceToColor(5)
+                        }}>Max. 5:30 min/km</Text>
+                    </View>
+                    <View style={styles.legendItem}>
+                        <Text style={{
+                            ...styles.legendText,
+                            color: paceToColor(6)
+                        }}>5:30-6:30 min/km</Text>
+                    </View>
+                    <View style={styles.legendItem}>
+                        <Text style={{
+                            ...styles.legendText,
+                            color: paceToColor(7)
+                        }}>Min. 6:30 min/km</Text>
+                    </View>
+                </View>
                 <MapView
                     ref={mapRef}
                     style={styles.map}

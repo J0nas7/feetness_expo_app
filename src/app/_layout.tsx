@@ -1,6 +1,7 @@
 import { AppStateGate, OnboardingGate } from '@/components';
 import { MyTheme } from '@/types/theme';
 import '@/utils/location/workoutLocationTask';
+import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 import { DefaultTheme, DarkTheme as NavigationDarkTheme, ThemeProvider } from '@react-navigation/native';
 import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -55,32 +56,34 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : LightTheme}>
-        <AppStateGate>
-          <OnboardingGate />
+      <ActionSheetProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : LightTheme}>
+          <AppStateGate>
+            <OnboardingGate />
 
-          <Stack>
-            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="explore" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="finished-exercise"
-              options={{
-                headerShown: true,      // show header
-                title: 'Workout Complete', // custom title
-                headerLeft: () => (
-                  <Pressable
-                    onPress={() => router.back()}
-                  >
-                    <Text style={{ color: 'gray', fontWeight: 'bold' }}>&lt; Fremskridt</Text>
-                  </Pressable>
-                ),
-              }}
-            />
-          </Stack>
-        </AppStateGate>
-        <StatusBar style="auto" />
-      </ThemeProvider>
+            <Stack>
+              <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="explore" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="finished-exercise"
+                options={{
+                  headerShown: true,      // show header
+                  title: 'Workout Complete', // custom title
+                  headerLeft: () => (
+                    <Pressable
+                      onPress={() => router.back()}
+                    >
+                      <Text style={{ color: 'gray', fontWeight: 'bold' }}>&lt; Fremskridt</Text>
+                    </Pressable>
+                  ),
+                }}
+              />
+            </Stack>
+          </AppStateGate>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </ActionSheetProvider>
     </GestureHandlerRootView>
   );
 }

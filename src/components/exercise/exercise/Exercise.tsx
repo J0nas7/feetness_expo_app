@@ -6,6 +6,7 @@ import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
 import { resetWorkoutStoreAndNotify, subscribeToWorkout } from '@/utils/location/workoutStore';
 import { endLiveActivity, startLiveActivity, updateLiveActivity } from '@/utils/native/LiveActivityModule';
 import { speak, startSpeechService, stopSpeak, stopSpeechService } from "@/utils/native/NativeSpeech";
+import { sendWorkoutUpdate } from '@/utils/native/WatchBridge';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import * as Location from 'expo-location';
@@ -124,8 +125,9 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             startLiveActivity();
 
             updateLiveActivity({
-                taskName: `Distance: 0,0 km, `,
-                timeSpend: `Tid: 00:00`
+                distance: `0,0 km, `,
+                timeSpend: `00:00`,
+                percent: 0
             });
 
             await Location.startLocationUpdatesAsync(WORKOUT_LOCATION_TASK, {
@@ -141,10 +143,29 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         })();
     }, []);
 
+    const exerciseUpdates = (distance: number) => {
+        const elapsed = getElapsedSeconds();
+        elapsedTimeRef.current = elapsed;
+        setElapsedTime(elapsed);
+
+        updateLiveActivity({
+            distance: `${(distance / 1000).toFixed(2)} km, `,
+            timeSpend: `${Math.floor(elapsed / 60)}:${String(Math.floor(elapsed % 60)).padStart(2, '0')}`,
+            percent: percentageRef.current
+        });
+
+        sendWorkoutUpdate(distance, paceRef.current, elapsed);
+
+        speakProgress(elapsed);
+        speakPercentageProgress();
+    }
+
     // Subscribe to the workout store for UI updates
     useEffect(() => {
         const unsubscribe = subscribeToWorkout(({ distance, path, segments, location }) => {
             if (isPausedRef.current) return; // Safe pause
+
+            exerciseUpdates(distance);
 
             // Update UI state
             distanceRef.current = distance;
@@ -157,8 +178,6 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             setLocation(location);
 
             const elapsed = getElapsedSeconds();
-            elapsedTimeRef.current = elapsed;
-            setElapsedTime(elapsed);
 
             if (distance > 0 && elapsed > 0) {
                 const km = distance / 1000;
@@ -166,18 +185,17 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 paceRef.current = minutes / km;
                 setPace(paceRef.current);
             }
-
-            updateLiveActivity({
-                taskName: `Distance: ${(distance / 1000).toFixed(2)} km, `,
-                timeSpend: `Tid: ${Math.floor(elapsed / 60)}:${String(Math.floor(elapsed % 60)).padStart(2, '0')}`
-            });
-
-            speakProgress(elapsed);
-            speakPercentageProgress();
         });
+
+        const interval = setInterval(() => {
+            if (isPausedRef.current) return; // Safe pause
+
+            exerciseUpdates(distance);
+        }, 1000); // Second-timer interval for foreground updates (distance/pace updates come from workout store subscription)
 
         return () => {
             unsubscribe();
+            clearInterval(interval);
         };
     }, []);
 
@@ -198,14 +216,6 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         // === Workout starts OR resumes ===
         activeStartTimeRef.current = Date.now();
     }
-
-    const paceToColor = (pace: number) => {
-        if (pace === 0 || !isFinite(pace)) return '#95a5a6'; // unknown / paused
-
-        if (pace < 5) return '#e74c3c';   // fast (<5:00 min/km) → red
-        if (pace < 6) return '#f1c40f';   // moderate (5–6) → yellow
-        return '#2ecc71';                 // easy (>6) → green
-    };
 
     const speakProgress = (elapsed: number) => {
         // 5-minute buckets
@@ -324,7 +334,6 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                     segments={segments}
                     startPoint={startPoint}
                     mapRef={mapRef}
-                    paceToColor={paceToColor}
                 />
             </View>
 

@@ -16,26 +16,71 @@ struct TimeTrackingPlayerLiveActivity: Widget {
             // Lock screen/banner UI goes here
             HStack {
                 VStack(alignment: .leading) {
-                    Text("\(context.state.taskName)")
+                    HStack {
+                        Image(systemName: "stopwatch.fill")
+                            .foregroundColor(.green)
 
-                    Text("\(context.state.timeSpend)")
+                        Text("\(context.state.timeSpend)")
+                            .font(.system(size: 16))
+                    }
+
+                    HStack {
+                        Image(systemName: "shoeprints.fill")
+                            .foregroundColor(.green)
+
+                        Text("\(context.state.distance)")
+                            .font(.system(size: 24))
+                    }
+
+                    HStack {
+                        Text("Mål: \(Int(context.state.percent))%")
+                            .font(.system(size: 16))
+                            .foregroundColor(.gray)
+                    }
+
+                    ProgressView(value: context.state.percent, total: 100)
+                            .progressViewStyle(LinearProgressViewStyle(tint: .green))
                 }
 
                 Spacer()
 
-                // Red button as a link
-                Link(destination: URL(string: "giveortake://endLiveActivity")!) {
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 44, height: 44)
-                        .overlay(
-                            Image(systemName: "xmark")
-                                .foregroundColor(.white)
-                        )
+                VStack(alignment: .trailing) {
+                    HStack {
+                        Image(systemName: "figure.run")
+                            .foregroundColor(.green)
+
+                        Text("Løb")
+                            .font(.system(size: 16))
+                            .foregroundColor(.gray)
+                    }
+
+                    HStack {
+                        // Red button as a link
+                        Link(destination: URL(string: "feetness://endLiveActivity")!) {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 44, height: 44)
+                                .overlay(
+                                    Image(systemName: "stop.fill")
+                                        .foregroundColor(.white)
+                                )
+                        }
+
+                        // Green button as a link
+                        Link(destination: URL(string: "feetness://startLiveActivity")!) {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 44, height: 44)
+                                .overlay(
+                                    Image(systemName: "play.fill")
+                                        .foregroundColor(.white)
+                                )
+                        }
+                    }
                 }
             }
             .padding(10)
-            .activityBackgroundTint(Color(red: 0.290, green: 0.871, blue: 0.502))
+            .activityBackgroundTint(Color.white)
             .activitySystemActionForegroundColor(Color.black)
 
         } dynamicIsland: { context in
@@ -50,7 +95,7 @@ struct TimeTrackingPlayerLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     HStack {
-                        Text("\(context.state.taskName)")
+                        Text("\(context.state.distance)")
 
                         Text("\(context.state.timeSpend)")
                     }
@@ -63,7 +108,7 @@ struct TimeTrackingPlayerLiveActivity: Widget {
             } minimal: {
                 Text("M")
             }
-            .widgetURL(URL(string: "http://www.apple.com"))
+            .widgetURL(URL(string: "feetness://endLiveActivity"))
             .keylineTint(Color.red)
         }
     }
@@ -77,6 +122,6 @@ extension TimeTrackingPlayerAttributes {
 
 extension TimeTrackingPlayerAttributes.ContentState {
     fileprivate static var smiley: TimeTrackingPlayerAttributes.ContentState {
-        TimeTrackingPlayerAttributes.ContentState(taskName: "To do 📝", timeSpend: "00:00:00")
+        TimeTrackingPlayerAttributes.ContentState(distance: "To do 📝", timeSpend: "00:00:00", percent: 0.0)
      }
 }

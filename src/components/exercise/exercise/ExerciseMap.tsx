@@ -10,7 +10,6 @@ interface ExerciseMapProps {
     segments: { coords: { latitude: number; longitude: number }[]; pace: number }[];
     startPoint: { latitude: number; longitude: number } | undefined;
     mapRef: React.RefObject<MapView | null>
-    paceToColor: (pace: number) => string;
 }
 
 export const ExerciseMap: React.FC<ExerciseMapProps> = (props) => {
@@ -43,7 +42,7 @@ export const ExerciseMap: React.FC<ExerciseMapProps> = (props) => {
                     <Polyline
                         key={idx}
                         coordinates={seg.coords}
-                        strokeColor={props.paceToColor(seg.pace)}
+                        strokeColor={"#2e8fcc"}
                         strokeWidth={4}
                     />
                 ))}
