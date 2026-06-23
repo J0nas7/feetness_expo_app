@@ -1,4 +1,4 @@
-{
+export default {
   "expo": {
     "name": "Feetness",
     "slug": "feetness_expo_app",
@@ -37,7 +37,7 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyDLKUq6frMXo8Ak9tiIhbU7Q3pJv-bhaAo"
+          "apiKey": process.env.GOOGLE_MAPS_API_KEY
         }
       },
       "edgeToEdgeEnabled": true,
