@@ -10,11 +10,27 @@ export function startLiveActivity() {
     }
 }
 
-export function updateLiveActivity({ distance, timeSpend, percent }: { distance: string, timeSpend: string, percent: number }) {
-    console.log("updateLiveActivity TimeTracking Live Activity", TimeTracking)
+interface UpdateLiveActivityParams {
+    distance: string;
+    timeSpend: string;
+    percent: number;
+    exercise?: "Cykling" | "Løb" | "Gågang";
+    goalAmount?: number;
+    goalMetric?: "min" | "km";
+}
+
+export function updateLiveActivity({
+    distance,
+    timeSpend,
+    percent,
+    exercise,
+    goalAmount,
+    goalMetric
+}: UpdateLiveActivityParams) {
+    console.log("updateLiveActivity TimeTracking Live Activity", TimeTracking, distance, timeSpend, percent, exercise, goalAmount, goalMetric)
     if (Platform.OS === 'ios' && TimeTracking?.updateActivity) {
         console.log("Updating TimeTracking Live Activity")
-        TimeTracking.updateActivity(distance, timeSpend, percent);
+        TimeTracking.updateActivity(distance, timeSpend, percent, exercise, goalAmount, goalMetric);
     }
 }
 

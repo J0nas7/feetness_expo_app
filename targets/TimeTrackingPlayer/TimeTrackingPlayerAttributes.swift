@@ -15,6 +15,9 @@ public struct TimeTrackingPlayerAttributes: ActivityAttributes {
         var distance: String
         var timeSpend: String
         var percent: Double
+        var exercise: String?
+        var goalAmount: Double?
+        var goalMetric: String?
     }
 
     // Fixed non-changing properties about your activity go here!

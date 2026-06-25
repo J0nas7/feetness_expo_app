@@ -11,6 +11,12 @@ import SwiftUI
 
 @available(iOS 16.2, *)
 struct TimeTrackingPlayerLiveActivity: Widget {
+    var exerciseIcons = [
+        "Cykling": "figure.outdoor.cycle",
+        "Løb": "figure.run",
+        "Gågang": "figure.walk"
+    ]
+
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: TimeTrackingPlayerAttributes.self) { context in
             // Lock screen/banner UI goes here
@@ -21,7 +27,7 @@ struct TimeTrackingPlayerLiveActivity: Widget {
                             .foregroundColor(.green)
 
                         Text("\(context.state.timeSpend)")
-                            .font(.system(size: 16))
+                            .font(.system(size: 18))
                     }
 
                     HStack {
@@ -29,12 +35,16 @@ struct TimeTrackingPlayerLiveActivity: Widget {
                             .foregroundColor(.green)
 
                         Text("\(context.state.distance)")
-                            .font(.system(size: 24))
+                            .font(.system(size: 28, weight: .bold))
                     }
 
                     HStack {
                         Text("Mål: \(Int(context.state.percent))%")
-                            .font(.system(size: 16))
+                            .font(.system(size: 18))
+                            .foregroundColor(.gray)
+
+                        Text(context.state.goalAmount != nil && context.state.goalMetric != nil ? "\(String(format: "%.2f", context.state.goalAmount!)) \(context.state.goalMetric!)" : "")
+                            .font(.system(size: 18))
                             .foregroundColor(.gray)
                     }
 
@@ -46,11 +56,11 @@ struct TimeTrackingPlayerLiveActivity: Widget {
 
                 VStack(alignment: .trailing) {
                     HStack {
-                        Image(systemName: "figure.run")
+                        Image(systemName: exerciseIcons[context.state.exercise ?? "Ukendt øvelse"] ?? "figure.run")
                             .foregroundColor(.green)
 
-                        Text("Løb")
-                            .font(.system(size: 16))
+                        Text("\(context.state.exercise ?? "Ukendt øvelse")")
+                            .font(.system(size: 18))
                             .foregroundColor(.gray)
                     }
 
@@ -94,12 +104,7 @@ struct TimeTrackingPlayerLiveActivity: Widget {
                     Text("Trailing")
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    HStack {
-                        Text("\(context.state.distance)")
-
-                        Text("\(context.state.timeSpend)")
-                    }
-                    // more content
+                    Text("Bottom")
                 }
             } compactLeading: {
                 Text("L")
@@ -122,6 +127,13 @@ extension TimeTrackingPlayerAttributes {
 
 extension TimeTrackingPlayerAttributes.ContentState {
     fileprivate static var smiley: TimeTrackingPlayerAttributes.ContentState {
-        TimeTrackingPlayerAttributes.ContentState(distance: "To do 📝", timeSpend: "00:00:00", percent: 0.0)
+        TimeTrackingPlayerAttributes.ContentState(
+            distance: "To do 📝",
+            timeSpend: "00:00:00",
+            percent: 0.0,
+            exercise: "Ukendt øvelse",
+            goalAmount: nil,
+            goalMetric: nil
+        )
      }
 }

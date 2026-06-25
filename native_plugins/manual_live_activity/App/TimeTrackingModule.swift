@@ -41,14 +41,24 @@ class TimeTracking: NSObject {
     }
   }
 
-  @objc(updateActivity:timeSpend:percent:)
-  func updateActivity(distance: String, timeSpend: String, percent: NSNumber) {
+  @objc(updateActivity:timeSpend:percent:exercise:goalAmount:goalMetric:)
+  func updateActivity(
+    distance: String,
+    timeSpend: String,
+    percent: NSNumber,
+    exercise: String?,
+    goalAmount: NSNumber?,
+    goalMetric: String?
+  ) {
     do {
       if #available(iOS 16.1, *) {
         let timeTrackingContentState = TimeTrackingPlayerAttributes.ContentState.init(
           distance: distance,
           timeSpend: timeSpend,
-          percent: percent.doubleValue
+          percent: percent.doubleValue,
+          exercise: exercise,
+          goalAmount: goalAmount?.doubleValue,
+          goalMetric: goalMetric
         )
 
         Task {
@@ -63,7 +73,7 @@ class TimeTracking: NSObject {
         print("Live Activity is not supported on this device")
       }
     } catch (let error) {
-      print("There is some error with TimeTrackingModule")
+      print("There is some error with TimeTrackingModule: \(error)")
     }
   }
 
@@ -76,7 +86,7 @@ class TimeTracking: NSObject {
             self.currentActivity = nil
         }
       } else {
-        // Fallback on earlier versions
+        print("Live Activity is not supported on this device")
       }
     }
   }

@@ -127,7 +127,10 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             updateLiveActivity({
                 distance: `0,0 km, `,
                 timeSpend: `00:00`,
-                percent: 0
+                percent: 0,
+                exercise: props.exercise,
+                goalAmount: props.goalAmount,
+                goalMetric: props.goalMetric === "duration" ? "min" : "km"
             });
 
             await Location.startLocationUpdatesAsync(WORKOUT_LOCATION_TASK, {
@@ -151,7 +154,10 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         updateLiveActivity({
             distance: `${(distance / 1000).toFixed(2)} km, `,
             timeSpend: `${Math.floor(elapsed / 60)}:${String(Math.floor(elapsed % 60)).padStart(2, '0')}`,
-            percent: percentageRef.current
+            percent: percentageRef.current,
+            exercise: props.exercise,
+            goalAmount: props.goalAmount,
+            goalMetric: props.goalMetric === "duration" ? "min" : "km"
         });
 
         sendWorkoutUpdate(distance, paceRef.current, elapsed);
@@ -190,7 +196,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         const interval = setInterval(() => {
             if (isPausedRef.current) return; // Safe pause
 
-            exerciseUpdates(distance);
+            exerciseUpdates(distanceRef.current);
         }, 1000); // Second-timer interval for foreground updates (distance/pace updates come from workout store subscription)
 
         return () => {
