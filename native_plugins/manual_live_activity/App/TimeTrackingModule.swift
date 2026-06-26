@@ -22,7 +22,11 @@ class TimeTracking: NSObject {
         let timeTrackingContentState = TimeTrackingPlayerAttributes.ContentState.init(
           distance: "0 km",
           timeSpend: "00:00:00",
-          percent: 0.0
+          percent: 0.0,
+          pace: 0.0,
+          exercise: nil,
+          goalAmount: nil,
+          goalMetric: nil
         )
 
         print("Swift Start TimeTracking Live Activity")
@@ -41,11 +45,12 @@ class TimeTracking: NSObject {
     }
   }
 
-  @objc(updateActivity:timeSpend:percent:exercise:goalAmount:goalMetric:)
+  @objc(updateActivity:timeSpend:percent:pace:exercise:goalAmount:goalMetric:)
   func updateActivity(
     distance: String,
     timeSpend: String,
     percent: NSNumber,
+    pace: NSNumber,
     exercise: String?,
     goalAmount: NSNumber?,
     goalMetric: String?
@@ -56,6 +61,7 @@ class TimeTracking: NSObject {
           distance: distance,
           timeSpend: timeSpend,
           percent: percent.doubleValue,
+          pace: pace.doubleValue,
           exercise: exercise,
           goalAmount: goalAmount?.doubleValue,
           goalMetric: goalMetric

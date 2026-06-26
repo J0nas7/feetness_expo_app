@@ -15,6 +15,7 @@ public struct TimeTrackingPlayerAttributes: ActivityAttributes {
         var distance: String
         var timeSpend: String
         var percent: Double
+        var pace: Double
         var exercise: String?
         var goalAmount: Double?
         var goalMetric: String?

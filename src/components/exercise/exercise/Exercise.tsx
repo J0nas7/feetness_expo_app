@@ -128,6 +128,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 distance: `0,0 km, `,
                 timeSpend: `00:00`,
                 percent: 0,
+                pace: 0,
                 exercise: props.exercise,
                 goalAmount: props.goalAmount,
                 goalMetric: props.goalMetric === "duration" ? "min" : "km"
@@ -155,6 +156,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             distance: `${(distance / 1000).toFixed(2)} km, `,
             timeSpend: `${Math.floor(elapsed / 60)}:${String(Math.floor(elapsed % 60)).padStart(2, '0')}`,
             percent: percentageRef.current,
+            pace: paceRef.current,
             exercise: props.exercise,
             goalAmount: props.goalAmount,
             goalMetric: props.goalMetric === "duration" ? "min" : "km"

@@ -20,6 +20,9 @@ struct TimeTrackingPlayerLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: TimeTrackingPlayerAttributes.self) { context in
             // Lock screen/banner UI goes here
+            let paceMinutes = Int(context.state.pace)
+            let paceSeconds = Int((context.state.pace - Double(paceMinutes)) * 60)
+
             HStack {
                 VStack(alignment: .leading) {
                     HStack {
@@ -59,9 +62,15 @@ struct TimeTrackingPlayerLiveActivity: Widget {
                         Image(systemName: exerciseIcons[context.state.exercise ?? "Ukendt øvelse"] ?? "figure.run")
                             .foregroundColor(.green)
 
-                        Text("\(context.state.exercise ?? "Ukendt øvelse")")
-                            .font(.system(size: 18))
-                            .foregroundColor(.gray)
+                        VStack(alignment: .trailing) {
+                            Text("\(context.state.exercise ?? "Ukendt øvelse")")
+                                .font(.system(size: 18))
+                                .foregroundColor(.gray)
+
+                            Text("\(paceMinutes):\(String(format: "%02d", paceSeconds)) min/km")
+                                .font(.system(size: 12))
+                                .foregroundColor(.gray)
+                        }
                     }
 
                     HStack {
@@ -131,6 +140,7 @@ extension TimeTrackingPlayerAttributes.ContentState {
             distance: "To do 📝",
             timeSpend: "00:00:00",
             percent: 0.0,
+            pace: 0.0,
             exercise: "Ukendt øvelse",
             goalAmount: nil,
             goalMetric: nil

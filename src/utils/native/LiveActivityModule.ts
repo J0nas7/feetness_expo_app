@@ -14,6 +14,7 @@ interface UpdateLiveActivityParams {
     distance: string;
     timeSpend: string;
     percent: number;
+    pace: number;
     exercise?: "Cykling" | "Løb" | "Gågang";
     goalAmount?: number;
     goalMetric?: "min" | "km";
@@ -23,14 +24,15 @@ export function updateLiveActivity({
     distance,
     timeSpend,
     percent,
+    pace,
     exercise,
     goalAmount,
     goalMetric
 }: UpdateLiveActivityParams) {
-    console.log("updateLiveActivity TimeTracking Live Activity", TimeTracking, distance, timeSpend, percent, exercise, goalAmount, goalMetric)
+    console.log("updateLiveActivity TimeTracking Live Activity", TimeTracking, distance, timeSpend, percent, pace, exercise, goalAmount, goalMetric)
     if (Platform.OS === 'ios' && TimeTracking?.updateActivity) {
         console.log("Updating TimeTracking Live Activity")
-        TimeTracking.updateActivity(distance, timeSpend, percent, exercise, goalAmount, goalMetric);
+        TimeTracking.updateActivity(distance, timeSpend, percent, pace, exercise, goalAmount, goalMetric);
     }
 }
 
