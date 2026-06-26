@@ -1,4 +1,3 @@
-import { GoalProgress } from '@/components/exercise/GoalProgress';
 import { Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -8,15 +7,15 @@ import React, { useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
-interface RenderSummaryProps {
+interface RenderMapProps {
     workout: Workout;
     setActiveTab: React.Dispatch<React.SetStateAction<'summary' | 'time' | 'media' | 'map'>>
 }
 
-export const RenderSummary = ({
+export const RenderMap = ({
     workout,
     setActiveTab
-}: RenderSummaryProps) => {
+}: RenderMapProps) => {
     const theme = useTheme() as MyTheme;
     const mapRef = useRef<MapView>(null);
 
@@ -64,17 +63,15 @@ export const RenderSummary = ({
             flexDirection: 'column',
         },
         mapContainer: {
-            height: '60%', // Map takes 60% of the screen
+            height: '100%', // Map takes 100% of the screen
             position: 'relative'
         },
         gestureIndicate: {
             position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: [
-                { translateX: -50 },
-                { translateY: -50 },
-            ],
+            top: 'auto',
+            left: 'auto',
+            right: 10,
+            bottom: 10,
             zIndex: 10,
             elevation: 10, // Android
             width: 80,
@@ -171,9 +168,8 @@ export const RenderSummary = ({
 
     return (
         <View style={styles.container}>
-            <Pressable
+            <View
                 style={styles.mapContainer}
-                onPress={() => setActiveTab('map')}
             >
                 <View style={[styles.grid, styles.mapLegends]}>
                     <View style={styles.legendItem}>
@@ -237,21 +233,19 @@ export const RenderSummary = ({
                         </Text>
                     </View>
                 </View>
-                <View style={styles.gestureIndicate}>
+                <Pressable
+                    style={styles.gestureIndicate}
+                    onPress={() => setActiveTab('summary')}
+                >
                     <FontAwesome5
-                        name="hand-pointer"
+                        name="times"
                         size={50}
                         color={theme.colors.primary}
                     />
-                </View>
+                </Pressable>
                 <MapView
                     ref={mapRef}
                     style={styles.map}
-                    scrollEnabled={false}
-                    zoomEnabled={false}
-                    rotateEnabled={false}
-                    pitchEnabled={false}
-                    toolbarEnabled={false}
                     onMapReady={() => {
                         if (workout.path.length > 1) {
                             mapRef.current?.fitToCoordinates(workout.path, {
@@ -280,43 +274,6 @@ export const RenderSummary = ({
                     style={styles.mapGradient}
                     locations={[0, 1]}
                     pointerEvents="none"
-                />
-            </Pressable>
-            <View style={styles.statsContainer}>
-                <View style={styles.grid}>
-                    <View style={styles.statItem}>
-                        <Text style={styles.valueText}>{((workout.distance) / 1000).toFixed(2)} </Text>
-                        <Text style={styles.unitText}>km</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.valueText}>{formatTime(workout.elapsedTime)}</Text>
-                        <Text style={styles.unitText}>Time</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.valueText}>{formatPace(workout.pace)}</Text>
-                        <Text style={styles.unitText}>min/km</Text>
-                    </View>
-
-                    {/* Placeholder stats */}
-                    <View style={styles.statItem}>
-                        <Text style={styles.valueText}>0</Text>
-                        <Text style={styles.unitText}>Steps</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.valueText}>0</Text>
-                        <Text style={styles.unitText}>Kcal</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.valueText}>0</Text>
-                        <Text style={styles.unitText}>bpm</Text>
-                    </View>
-                </View>
-            </View>
-            <View style={styles.goalOverlay}>
-                <GoalProgress
-                    percentage={workout.percentage}
-                    goalAmount={workout.goalAmount}
-                    goalMetric={workout.goalMetric}
                 />
             </View>
         </View>

@@ -6,8 +6,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface RenderNavigationProps {
-    activeTab: 'summary' | 'time' | 'media';
-    setActiveTab: React.Dispatch<React.SetStateAction<'summary' | 'time' | 'media'>>
+    activeTab: 'summary' | 'time' | 'media' | 'map';
+    setActiveTab: React.Dispatch<React.SetStateAction<'summary' | 'time' | 'media' | 'map'>>
 }
 
 export const RenderNavigation = ({ activeTab, setActiveTab }: RenderNavigationProps) => {
