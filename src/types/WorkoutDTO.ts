@@ -2,7 +2,11 @@ export type ExerciseType = "Cykling" | "Løb" | "Gågang";
 export type GoalMetric = "duration" | "distance";
 
 export type Segment = {
-    coords: { latitude: number; longitude: number }[];
+    coords: {
+        latitude: number;
+        longitude: number;
+        altitude: number | null;
+    }[];
     pace: number; // min/km
 }
 

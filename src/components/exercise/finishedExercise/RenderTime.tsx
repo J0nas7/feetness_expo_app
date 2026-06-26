@@ -92,6 +92,44 @@ export const RenderTime = ({ workout }: { workout: Workout }) => {
         groupedSegments[0]
     );
 
+    /**
+     * 🧠 ALTITUDE DATA
+     * We extract altitude data from the workout segments for
+     * visualizations and analysis of elevation changes during the workout.
+     */
+    const altitudeData = useMemo(() => {
+        return workout.segments
+            .flatMap(segment => segment.coords)
+            .filter(coord => coord.altitude != null)
+            .map(coord => coord.altitude as number);
+    }, [workout.segments]);
+
+    const minAltitude = Math.min(...altitudeData);
+    const maxAltitude = Math.max(...altitudeData);
+
+    let ascent = 0;
+    let descent = 0;
+
+    for (let i = 1; i < altitudeData.length; i++) {
+        const diff = altitudeData[i] - altitudeData[i - 1];
+
+        if (diff > 0) ascent += diff;
+        else descent += Math.abs(diff);
+    }
+
+    const altitudePoints = altitudeData
+        .map((altitude, i) => {
+            const x = (i / (altitudeData.length - 1 || 1)) * chartWidth;
+
+            const y =
+                chartHeight -
+                ((altitude - minAltitude) / (maxAltitude - minAltitude || 1)) *
+                (chartHeight - 20);
+
+            return `${x},${y}`;
+        })
+        .join(" ");
+
     // 📊 animations
     const animations = useRef(
         groupedSegments.map(() => new Animated.Value(0))
@@ -412,6 +450,47 @@ export const RenderTime = ({ workout }: { workout: Workout }) => {
                         />
                         <Text style={styles.legendText}>
                             Finish
+                        </Text>
+                    </View>
+                </View>
+
+                <Text style={styles.sectionTitle}>Elevation Profile</Text>
+
+                <Text style={styles.chartDescription}>
+                    Elevation changes throughout your workout.
+                </Text>
+
+                <Svg height={chartHeight} width="100%">
+                    <Polyline
+                        points={altitudePoints}
+                        fill="rgba(142, 68, 173, 0.15)"
+                        stroke="#8e44ad"
+                        strokeWidth={3}
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
+                    />
+                </Svg>
+
+                <View style={styles.axisFooterRow}>
+                    <Text style={styles.axisLabel}>
+                        Min {Math.round(minAltitude)} m
+                    </Text>
+
+                    <Text style={styles.axisLabel}>
+                        Max {Math.round(maxAltitude)} m
+                    </Text>
+                </View>
+
+                <View style={styles.legendContainer}>
+                    <View style={styles.legendItem}>
+                        <Text style={styles.legendText}>
+                            ⬆️ {Math.round(ascent)} m
+                        </Text>
+                    </View>
+
+                    <View style={styles.legendItem}>
+                        <Text style={styles.legendText}>
+                            ⬇️ {Math.round(descent)} m
                         </Text>
                     </View>
                 </View>

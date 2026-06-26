@@ -36,7 +36,11 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     >([]);
     const [segments, setSegments] = useState<
         {
-            coords: { latitude: number; longitude: number }[];
+            coords: {
+                latitude: number;
+                longitude: number;
+                altitude: number | null;
+            }[];
             pace: number; // m/s
         }[]
     >([]);

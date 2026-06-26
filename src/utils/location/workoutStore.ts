@@ -1,7 +1,11 @@
 import * as Location from 'expo-location';
 import { getDistance } from 'geolib';
 
-type Point = { latitude: number; longitude: number };
+type Point = {
+    latitude: number;
+    longitude: number;
+    altitude: number | null;
+};
 
 export type Segment = {
     coords: [Point, Point];
@@ -57,8 +61,17 @@ export const storeLocationUpdate = (loc: Location.LocationObject) => {
 
         distance += delta;
 
-        const currPoint = { latitude: coords.latitude, longitude: coords.longitude };
-        const prevPoint = { latitude: prevCoords.latitude, longitude: prevCoords.longitude };
+        const currPoint = {
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+            altitude: coords.altitude,
+        };
+
+        const prevPoint = {
+            latitude: prevCoords.latitude,
+            longitude: prevCoords.longitude,
+            altitude: prevCoords.altitude,
+        };
 
         path.push(currPoint);
 
@@ -74,7 +87,12 @@ export const storeLocationUpdate = (loc: Location.LocationObject) => {
         });
     } else {
         // first point
-        path.push({ latitude: coords.latitude, longitude: coords.longitude });
+        path.push({
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+            altitude: coords.altitude,
+        });
+
         prevTime = now;
     }
 
