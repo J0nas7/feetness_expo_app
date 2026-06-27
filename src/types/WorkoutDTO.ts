@@ -22,6 +22,7 @@ export type Workout = {
 
     distance: number; // meters
     elapsedTime: number; // seconds
+    calories: number; // kcal
     pace: number; // min/km (avg)
 
     path: { latitude: number; longitude: number }[];

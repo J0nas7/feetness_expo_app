@@ -1,6 +1,6 @@
 import { createStyles } from '@/components/exercise/exercise/CreateStyles';
 import { GoalProgress } from '@/components/exercise/GoalProgress';
-import { Workout } from '@/types';
+import { OnboardingData, Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
 import { resetWorkoutStoreAndNotify, subscribeToWorkout } from '@/utils/location/workoutStore';
@@ -31,6 +31,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     const [distance, setDistance] = useState<number>(0); // Distance in meters
     const [elapsedTime, setElapsedTime] = useState<number>(0); // Elapsed time in seconds
     const [pace, setPace] = useState<number>(0); // Elapsed time in seconds
+    const [calories, setCalories] = useState<number>(0); // Calories in kcal
     const [path, setPath] = useState<
         { latitude: number; longitude: number }[]
     >([]);
@@ -57,12 +58,15 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     progress = Math.min(progress, 1); // clamp 0 → 1
     const percentage = Math.round(progress * 100);
 
+    const [weight, setWeight] = useState(60);
+
     const percentageRef = React.useRef<number>(percentage);
     const isPausedRef = React.useRef<boolean>(isPaused);
     const startTimeRef = React.useRef<number>(startTime);
     const distanceRef = React.useRef<number>(distance);
     const elapsedTimeRef = React.useRef<number>(elapsedTime);
     const paceRef = React.useRef<number>(pace);
+    const caloriesRef = React.useRef<number>(0);
     const activeStartTimeRef = React.useRef<number | null>(null);
     const totalActiveMsRef = React.useRef<number>(0);
     const lastSpokenBucketRef = React.useRef(0); // bucket = Math.floor(elapsed / 300)
@@ -97,6 +101,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             // New workout starts
             setStartTime(Date.now());
             setPace(0);
+            setCalories(0);
             setPath([]);
             setSegments([]);
             setElapsedTime(0);
@@ -138,10 +143,29 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 goalMetric: props.goalMetric === "duration" ? "min" : "km"
             });
 
+            let distanceInterval: number | null = null;
+            let timeInterval: number | null = null;
+
+            if (props.exercise === "Cykling") {
+                distanceInterval = 15; // Update every 15 meters for cycling
+                timeInterval = 5000; // Update every 5 seconds for cycling
+            } else if (props.exercise === "Løb") {
+                distanceInterval = 5; // Update every 5 meters for running
+                timeInterval = 3000; // Update every 3 seconds for running
+            } else if (props.exercise === "Gågang") {
+                distanceInterval = 5; // Update every 5 meters for walking
+                timeInterval = 3000; // Update every 3 seconds for walking
+            }
+
+            if (distanceInterval === null || timeInterval === null) {
+                console.error('Invalid exercise type for location updates');
+                return;
+            }
+
             await Location.startLocationUpdatesAsync(WORKOUT_LOCATION_TASK, {
                 accuracy: Location.Accuracy.High,
-                distanceInterval: 5, // Update every 5 meters
-                timeInterval: 3000, // Update every 3 seconds (in case distanceInterval isn't met)
+                distanceInterval: distanceInterval,
+                timeInterval: timeInterval,
                 showsBackgroundLocationIndicator: true,
                 foregroundService: {
                     notificationTitle: 'Workout in progress',
@@ -151,10 +175,17 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         })();
     }, []);
 
-    const exerciseUpdates = (distance: number) => {
+    const exerciseUpdates = (distance: number, elevationGain: number) => {
         const elapsed = getElapsedSeconds();
         elapsedTimeRef.current = elapsed;
         setElapsedTime(elapsed);
+
+        const met = getMet(props.exercise, paceRef.current);
+        const baseCalories = calculateCalories(met, weight, elapsed);
+        const elevationCalories = (elevationGain * 0.9 * weight / 100);
+        const calories = baseCalories + elevationCalories;
+        caloriesRef.current = calories;
+        setCalories(calories);
 
         updateLiveActivity({
             distance: `${(distance / 1000).toFixed(2)} km, `,
@@ -174,10 +205,10 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
     // Subscribe to the workout store for UI updates
     useEffect(() => {
-        const unsubscribe = subscribeToWorkout(({ distance, path, segments, location }) => {
+        const unsubscribe = subscribeToWorkout(({ distance, path, segments, location, elevationGain }) => {
             if (isPausedRef.current) return; // Safe pause
 
-            exerciseUpdates(distance);
+            exerciseUpdates(distance, elevationGain);
 
             // Update UI state
             distanceRef.current = distance;
@@ -202,7 +233,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         const interval = setInterval(() => {
             if (isPausedRef.current) return; // Safe pause
 
-            exerciseUpdates(distanceRef.current);
+            exerciseUpdates(distanceRef.current, 0);
         }, 1000); // Second-timer interval for foreground updates (distance/pace updates come from workout store subscription)
 
         return () => {
@@ -272,6 +303,64 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         }
     };
 
+    // Load onboarding data from AsyncStorage
+    useEffect(() => {
+        const loadOnboardingData = async () => {
+            setTimeout(async () => {
+                try {
+                    const STORAGE_KEY = 'onboardingData';
+                    const stored = await AsyncStorage.getItem(STORAGE_KEY);
+                    if (!stored) return;
+
+                    const data: OnboardingData = JSON.parse(stored);
+
+                    setWeight(data.weight ?? 60);
+                } catch (err) {
+                    console.error('Failed to load onboarding data', err);
+                }
+            }, 3000)
+        };
+
+        loadOnboardingData();
+    }, []);
+
+    const getMet = (exercise: string, paceMinPerKm: number) => {
+        if (exercise === "Gågang") {
+            if (paceMinPerKm > 12) return 2.8;
+            if (paceMinPerKm > 9) return 3.5;
+            return 5.0;
+        }
+
+        if (exercise === "Løb") {
+            const speedKmh = 60 / paceMinPerKm;
+
+            if (speedKmh < 8) return 8.3;
+            if (speedKmh < 10) return 9.8;
+            if (speedKmh < 12) return 11.5;
+            return 12.5;
+        }
+
+        if (exercise === "Cykling") {
+            const speedKmh = 60 / paceMinPerKm;
+
+            if (speedKmh < 15) return 4.5;
+            if (speedKmh < 20) return 6.8;
+            if (speedKmh < 25) return 8.5;
+            return 10.5;
+        }
+
+        return 1;
+    };
+
+    const calculateCalories = (
+        met: number,
+        weightKg: number,
+        elapsedSeconds: number
+    ) => {
+        const hours = elapsedSeconds / 3600;
+        return met * weightKg * hours;
+    };
+
     const getElapsedSeconds = () => {
         const activeMs = activeStartTimeRef.current
             ? Date.now() - activeStartTimeRef.current
@@ -314,6 +403,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 distance: distanceRef.current,
                 elapsedTime: elapsedTimeRef.current,
                 pace: paceRef.current,
+                calories: caloriesRef.current,
                 path: pathRef.current,
                 segments,
             };
@@ -354,6 +444,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 distance={distance}
                 elapsedTime={elapsedTime}
                 pace={pace}
+                calories={calories}
                 isPaused={isPaused}
                 setIsPaused={setIsPaused}
                 stopExercise={stopExercise}

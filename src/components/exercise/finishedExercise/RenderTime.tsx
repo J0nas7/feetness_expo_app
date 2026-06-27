@@ -117,19 +117,6 @@ export const RenderTime = ({ workout }: { workout: Workout }) => {
         else descent += Math.abs(diff);
     }
 
-    const altitudePoints = altitudeData
-        .map((altitude, i) => {
-            const x = (i / (altitudeData.length - 1 || 1)) * chartWidth;
-
-            const y =
-                chartHeight -
-                ((altitude - minAltitude) / (maxAltitude - minAltitude || 1)) *
-                (chartHeight - 20);
-
-            return `${x},${y}`;
-        })
-        .join(" ");
-
     // 📊 animations
     const animations = useRef(
         groupedSegments.map(() => new Animated.Value(0))
@@ -155,6 +142,18 @@ export const RenderTime = ({ workout }: { workout: Workout }) => {
             .slice(0, index + 1)
             .reduce((sum, g) => sum + g.avgPace * GROUP_SECONDS * 60, 0);
     });
+
+    const cumulativePoints = cumulativeData
+        .map((val, i) => {
+            const x = (i / (cumulativeData.length - 1 || 1)) * chartWidth;
+
+            const y =
+                chartHeight -
+                (val / maxCumulative) * (chartHeight - 20);
+
+            return `${x},${y}`;
+        })
+        .join(' ');
 
     const maxCumulative = Math.max(...cumulativeData, 1);
 
@@ -462,7 +461,19 @@ export const RenderTime = ({ workout }: { workout: Workout }) => {
 
                 <Svg height={chartHeight} width="100%">
                     <Polyline
-                        points={altitudePoints}
+                        points={altitudeData
+                            .map((altitude, i) => {
+                                const x = (i / (altitudeData.length - 1 || 1)) * chartWidth;
+
+                                const y =
+                                    chartHeight -
+                                    ((altitude - minAltitude) / (maxAltitude - minAltitude || 1)) *
+                                    (chartHeight - 20);
+
+                                return `${x},${y}`;
+                            })
+                            .join(" ")
+                        }
                         fill="rgba(142, 68, 173, 0.15)"
                         stroke="#8e44ad"
                         strokeWidth={3}

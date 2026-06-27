@@ -5,7 +5,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
 interface RenderSummaryProps {
@@ -17,6 +17,7 @@ export const RenderSummary = ({
     workout,
     setActiveTab
 }: RenderSummaryProps) => {
+    const colorScheme = useColorScheme();
     const theme = useTheme() as MyTheme;
     const mapRef = useRef<MapView>(null);
 
@@ -82,7 +83,7 @@ export const RenderSummary = ({
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 0.6)', // semi-transparent background
+            backgroundColor: colorScheme === 'dark' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)', // semi-transparent background
             borderRadius: '100%', // circular background
         },
         mapLegends: {
@@ -303,7 +304,7 @@ export const RenderSummary = ({
                         <Text style={styles.unitText}>Steps</Text>
                     </View>
                     <View style={styles.statItem}>
-                        <Text style={styles.valueText}>0</Text>
+                        <Text style={styles.valueText}>{Math.floor(workout.calories)}</Text>
                         <Text style={styles.unitText}>Kcal</Text>
                     </View>
                     <View style={styles.statItem}>

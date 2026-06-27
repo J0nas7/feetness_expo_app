@@ -16,6 +16,7 @@ let prevCoords: Location.LocationObjectCoords | null = null;
 let prevTime: number | null = null;
 
 let distance = 0;
+let elevationGainTotal = 0;
 let path: Point[] = [];
 let segments: Segment[] = [];
 
@@ -24,6 +25,7 @@ type Listener = (data: {
     path: Point[];
     segments: Segment[];
     location: Location.LocationObjectCoords;
+    elevationGain: number;
 }) => void;
 
 const listeners = new Set<Listener>();
@@ -73,6 +75,20 @@ export const storeLocationUpdate = (loc: Location.LocationObject) => {
             altitude: prevCoords.altitude,
         };
 
+        let elevationGain = 0;
+
+        if (
+            coords.altitude != null &&
+            prevCoords.altitude != null
+        ) {
+            elevationGain =
+                coords.altitude - prevCoords.altitude;
+
+            if (elevationGain > 0) {
+                elevationGainTotal += elevationGain;
+            }
+        }
+
         path.push(currPoint);
 
         // delta time in seconds
@@ -105,6 +121,7 @@ export const storeLocationUpdate = (loc: Location.LocationObject) => {
             path: [...path],
             segments: [...segments],
             location: coords,
+            elevationGain: elevationGainTotal,
         })
     );
 };
@@ -115,6 +132,7 @@ export const resetWorkoutStore = () => {
     distance = 0;
     path = [];
     segments = [];
+    elevationGainTotal = 0;
 };
 
 /**
@@ -129,6 +147,7 @@ export const resetWorkoutStoreAndNotify = () => {
             path: [],
             segments: [],
             location: null as any, // or undefined if you prefer
+            elevationGain: 0,
         })
     );
 };

@@ -9,13 +9,14 @@ interface ExerciseStatsProps {
     distance: number;
     elapsedTime: number;
     pace: number;
+    calories: number;
     isPaused: boolean;
     setIsPaused: (value: React.SetStateAction<boolean>) => void
     stopExercise: () => void;
 }
 
 export const ExerciseStats: React.FC<ExerciseStatsProps> = ({
-    theme, distance, elapsedTime, pace, isPaused, setIsPaused, stopExercise
+    theme, distance, elapsedTime, pace, calories, isPaused, setIsPaused, stopExercise
 }) => {
     const styles = createStyles(theme);
 
@@ -67,7 +68,7 @@ export const ExerciseStats: React.FC<ExerciseStatsProps> = ({
                     <Text style={styles.unitText}>Steps</Text>
                 </View>
                 <View style={styles.statItem}>
-                    <Text style={styles.valueText}>0</Text>
+                    <Text style={styles.valueText}>{Math.floor(calories)}</Text>
                     <Text style={styles.unitText}>Kcal</Text>
                 </View>
                 <View style={styles.statItem}>

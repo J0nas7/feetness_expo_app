@@ -4,7 +4,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
 interface RenderMapProps {
@@ -16,25 +16,12 @@ export const RenderMap = ({
     workout,
     setActiveTab
 }: RenderMapProps) => {
+    const colorScheme = useColorScheme();
     const theme = useTheme() as MyTheme;
     const mapRef = useRef<MapView>(null);
 
     const startPoint = workout.path[0];
     const endPoint = workout.path[workout.path.length - 1];
-
-    const formatTime = (seconds: number) => {
-        const h = Math.floor(seconds / 3600);
-        const m = Math.floor((seconds % 3600) / 60);
-        const s = seconds % 60;
-        return h > 0
-            ? `${pad(h)}:${pad(m)}:${pad(s)}`
-            : `${pad(m)}:${pad(s)}`;
-    };
-
-    const formatPace = (pace: number) =>
-        pace > 0 ? `${Math.floor(pace)}:${pad(Math.floor((pace % 1) * 60))}` : "-";
-
-    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
 
     const paceToColor = (pace: number) => {
         const green = "#2ecc71";
@@ -79,7 +66,7 @@ export const RenderMap = ({
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 0.6)', // semi-transparent background
+            backgroundColor: colorScheme === 'dark' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)', // semi-transparent background
             borderRadius: '100%', // circular background
         },
         mapLegends: {
