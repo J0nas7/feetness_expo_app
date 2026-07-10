@@ -240,7 +240,7 @@ export const RenderSummary = ({
                 </View>
                 <View style={styles.gestureIndicate}>
                     <FontAwesome5
-                        name="hand-pointer"
+                        name="maximize"
                         size={50}
                         color={theme.colors.primary}
                     />

@@ -71,6 +71,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     const totalActiveMsRef = React.useRef<number>(0);
     const lastSpokenBucketRef = React.useRef(0); // bucket = Math.floor(elapsed / 300)
     const lastSpokenPercentageBucketRef = React.useRef(0); // percentageBucket = Math.floor(percentage / 10)
+    const lastSpokenDistanceBucketRef = React.useRef(0); // distanceBucket = Math.floor(distance / 1000)
 
     const prevLocationRef = React.useRef<Location.LocationObjectCoords | null>(null);
     const prevTimeRef = React.useRef<number | null>(null);
@@ -201,6 +202,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
         speakProgress(elapsed);
         speakPercentageProgress();
+        speakDistanceProgress();
     }
 
     // Subscribe to the workout store for UI updates
@@ -300,6 +302,22 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             const reachedPercentage = bucket * 20;
 
             speak(`Du har nået ${reachedPercentage} procent af dit mål.`);
+        }
+    };
+
+    const speakDistanceProgress = () => {
+        // 1km buckets: 1, 2, 3, 4, 5...
+        const bucket = Math.floor(distanceRef.current / 1000);
+
+        // Ignore 0km
+        if (bucket <= 0) return;
+
+        if (bucket > lastSpokenDistanceBucketRef.current) {
+            lastSpokenDistanceBucketRef.current = bucket;
+
+            const reachedDistance = bucket; // in km
+
+            speak(`Du har nået ${reachedDistance} kilometer.`);
         }
     };
 

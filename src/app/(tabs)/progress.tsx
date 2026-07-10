@@ -45,6 +45,7 @@ const DEMO_WORKOUTS: Workout[] = Array.from({ length: 7 }).flatMap(
                 endTime: start.getTime(),
                 distance: 3000 + Math.random() * 7000,
                 elapsedTime: 1200 + Math.random() * 2400,
+                calories: 200 + Math.random() * 400,
                 pace: 4 + Math.random() * 4,
                 path: [],
                 segments: [],
@@ -60,8 +61,8 @@ const ProgressView = () => {
 
     // ==== VARIABLES, STATE AND REFS ====
     const [periodType, setPeriodType] = React.useState<'week' | 'month'>('month');
-    const [sortedWorkouts, setSortedWorkouts] = useState<Workout[]>([])
-    const [periods, setPeriods] = useState<ProgressPeriod[]>([])
+    const [sortedWorkouts, setSortedWorkouts] = useState<Workout[]>([]);
+    const [periods, setPeriods] = useState<ProgressPeriod[]>([]);
 
     const basePeriods = React.useMemo(() => {
         const now = new Date();
@@ -77,7 +78,7 @@ const ProgressView = () => {
                 const { weekYear, week } = getISOWeekInfo(d);
                 return { year: weekYear, week, workouts: [] as Workout[] };
             });
-    }, [periodType])
+    }, [periodType]);
 
     // ==== EFFECTS ====
     // On screen focus, remove any saved 'currentWorkout' and redirect to '/explore' with its data.
