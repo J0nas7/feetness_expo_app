@@ -54,6 +54,42 @@ const DEMO_WORKOUTS: Workout[] = Array.from({ length: 7 }).flatMap(
     }
 );
 
+// Calculates the ISO week number and ISO week-year for a given date.
+const getISOWeekInfo = (d: Date) => {
+    const date = new Date(d.getTime());
+    date.setHours(0, 0, 0, 0);
+
+    // Thursday determines ISO week-year
+    date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
+
+    const weekYear = date.getFullYear();
+
+    const week1 = new Date(weekYear, 0, 4);
+    const week =
+        1 +
+        Math.round(
+            ((date.getTime() - week1.getTime()) / 86400000 -
+                3 +
+                ((week1.getDay() + 6) % 7)) /
+            7
+        );
+
+    return { weekYear, week };
+}
+
+// Converts an ISO week number and ISO week-year to a timestamp (milliseconds since epoch).
+const isoWeekToDate = (year: number, week: number) => {
+    // Jan 4th is always in ISO week 1
+    const jan4 = new Date(Date.UTC(year, 0, 4));
+    const dayOfWeek = jan4.getUTCDay() || 7; // Sunday = 7
+    const mondayWeek1 = new Date(jan4);
+    mondayWeek1.setUTCDate(jan4.getUTCDate() - dayOfWeek + 1);
+
+    const result = new Date(mondayWeek1);
+    result.setUTCDate(mondayWeek1.getUTCDate() + (week - 1) * 7);
+    return result.getTime();
+}
+
 const ProgressView = () => {
     // ==== HOOKS ====
     const theme = useTheme() as MyTheme;
@@ -224,44 +260,11 @@ const ProgressView = () => {
 
     // ==== METHODS ====
     // Type guard to check if a ProgressPeriod is a monthly period.
-    const isMonthPeriod = (p: ProgressPeriod): p is { year: number; month: number; workouts: Workout[] } =>
-        periodType === 'month';
-
-    // Calculates the ISO week number and ISO week-year for a given date.
-    const getISOWeekInfo = (d: Date) => {
-        const date = new Date(d.getTime());
-        date.setHours(0, 0, 0, 0);
-
-        // Thursday determines ISO week-year
-        date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
-
-        const weekYear = date.getFullYear();
-
-        const week1 = new Date(weekYear, 0, 4);
-        const week =
-            1 +
-            Math.round(
-                ((date.getTime() - week1.getTime()) / 86400000 -
-                    3 +
-                    ((week1.getDay() + 6) % 7)) /
-                7
-            );
-
-        return { weekYear, week };
-    }
-
-    // Converts an ISO week number and ISO week-year to a timestamp (milliseconds since epoch).
-    const isoWeekToDate = (year: number, week: number) => {
-        // Jan 4th is always in ISO week 1
-        const jan4 = new Date(Date.UTC(year, 0, 4));
-        const dayOfWeek = jan4.getUTCDay() || 7; // Sunday = 7
-        const mondayWeek1 = new Date(jan4);
-        mondayWeek1.setUTCDate(jan4.getUTCDate() - dayOfWeek + 1);
-
-        const result = new Date(mondayWeek1);
-        result.setUTCDate(mondayWeek1.getUTCDate() + (week - 1) * 7);
-        return result.getTime();
-    }
+    const isMonthPeriod = (
+        p: ProgressPeriod
+    ): p is { year: number; month: number; workouts: Workout[] } => {
+        return "month" in p;
+    };
 
     // ==== RENDERING ====
     const styles = StyleSheet.create({
