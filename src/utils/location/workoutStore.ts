@@ -37,11 +37,13 @@ export const subscribeToWorkout = (listener: Listener) => {
 
 export const storeLocationUpdate = (loc: Location.LocationObject) => {
     const MIN_DISTANCE_METERS = 12;     // ignore small GPS noise
-    const MAX_DISTANCE_METERS = 40;     // ignore unrealistic spikes
     const MAX_ACCEPTABLE_ACCURACY = 25; // ignore points with poor accuracy
+    const MAX_PLAUSIBLE_SPEED_MPS = 25; // 90 km/h, safely above workout cycling speed
 
     const coords = loc.coords;
-    const now = Date.now();
+    // TaskManager may deliver several buffered locations at once. Their GPS
+    // timestamps preserve the real interval; Date.now() does not.
+    const timestamp = loc.timestamp;
 
     if (coords.accuracy && coords.accuracy > MAX_ACCEPTABLE_ACCURACY) return;
 
@@ -54,10 +56,18 @@ export const storeLocationUpdate = (loc: Location.LocationObject) => {
         // 🚫 Ignore GPS noise (too small)
         if (delta < MIN_DISTANCE_METERS) return;
 
-        // 🚫 Ignore unrealistic jumps (bad GPS)
-        if (delta > MAX_DISTANCE_METERS) {
-            // prevCoords = coords;
-            // prevTime = now;
+        const elapsedSeconds = prevTime
+            ? Math.max((timestamp - prevTime) / 1000, 1)
+            : 1;
+        const accuracyAllowance = (prevCoords.accuracy ?? 0) + (coords.accuracy ?? 0);
+        const maxPlausibleDistance = Math.max(
+            50,
+            elapsedSeconds * MAX_PLAUSIBLE_SPEED_MPS + accuracyAllowance,
+        );
+
+        // Ignore a GPS spike, while allowing longer gaps caused by Android
+        // batching background updates (especially common while cycling).
+        if (delta > maxPlausibleDistance) {
             return;
         }
 
@@ -92,8 +102,8 @@ export const storeLocationUpdate = (loc: Location.LocationObject) => {
         path.push(currPoint);
 
         // delta time in seconds
-        const deltaSeconds = prevTime ? (now - prevTime) / 1000 : 0;
-        prevTime = now;
+        const deltaSeconds = prevTime ? (timestamp - prevTime) / 1000 : 0;
+        prevTime = timestamp;
 
         const segmentPace = delta > 0 ? (deltaSeconds / (delta / 1000)) / 60 : 0;
 
@@ -109,7 +119,7 @@ export const storeLocationUpdate = (loc: Location.LocationObject) => {
             altitude: coords.altitude,
         });
 
-        prevTime = now;
+        prevTime = timestamp;
     }
 
     prevCoords = coords;
