@@ -69,6 +69,7 @@ export const createStartpageStyles = (theme: MyTheme) =>
 
         toggleContainer: {
             flexDirection: 'row',
+            borderRadius: 8,
             marginVertical: 12,
             boxShadow: '2px 2px 0 0 rgba(0, 0, 0, 0.6)',
         },
@@ -76,8 +77,8 @@ export const createStartpageStyles = (theme: MyTheme) =>
             flex: 1,
             padding: 12,
             alignItems: 'center',
-            borderWidth: 1,
-            borderColor: theme.colors.border,
+            borderRadius: 8,
+            gap: 4
         },
         toggleActive: {
             backgroundColor: theme.colors.success,
@@ -87,7 +88,7 @@ export const createStartpageStyles = (theme: MyTheme) =>
             fontWeight: '600',
         },
         toggleTextActive: {
-            color: theme.colors.text,
+            color: theme.colors.background,
         },
         selectRow: {
             borderWidth: 1,

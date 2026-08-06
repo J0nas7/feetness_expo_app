@@ -2,6 +2,7 @@ import { ReusePreviousWorkout } from '@/components';
 import { createStartpageStyles } from '@/styles/modules/StartpageStyles';
 import { ExerciseType, GoalMetric, Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
+import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
@@ -84,39 +85,18 @@ export const Controls: React.FC<ControlsProps> = (props) => {
 
                     {/* Toggle */}
                     <View style={styles.toggleContainer}>
-                        <Pressable
-                            style={[
-                                styles.toggleButton,
-                                props.mode === 'distance' && styles.toggleActive,
-                            ]}
-                            onPress={() => props.setMode('distance')}
-                        >
-                            <Text
-                                style={[
-                                    styles.toggleText,
-                                    props.mode === 'distance' && styles.toggleTextActive,
-                                ]}
-                            >
-                                Distance
-                            </Text>
-                        </Pressable>
-
-                        <Pressable
-                            style={[
-                                styles.toggleButton,
-                                props.mode === 'duration' && styles.toggleActive,
-                            ]}
-                            onPress={() => props.setMode('duration')}
-                        >
-                            <Text
-                                style={[
-                                    styles.toggleText,
-                                    props.mode === 'duration' && styles.toggleTextActive,
-                                ]}
-                            >
-                                Duration
-                            </Text>
-                        </Pressable>
+                        {([['distance', 'road', 'Distance'], ['duration', 'clock', 'Varighed']] as const).map(([value, icon, label]) => {
+                            const selected = props.mode === value;
+                            return <Pressable key={value} style={[styles.toggleButton, selected && styles.toggleActive]} onPress={() => props.setMode(value)}>
+                                <FontAwesome5 name={icon} size={15} color={selected ? props.theme.colors.border : props.theme.colors.success} />
+                                <Text
+                                    style={[
+                                        styles.toggleText,
+                                        props.mode === value && styles.toggleTextActive,
+                                    ]}
+                                >{label}</Text>
+                            </Pressable>
+                        })}
                     </View>
 
                     {/* Activity select */}
