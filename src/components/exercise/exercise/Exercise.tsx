@@ -3,6 +3,7 @@ import { GoalProgress } from '@/components/exercise/GoalProgress';
 import { OnboardingData, Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
+import { hasBackgroundPermission, hasLocationPermission } from '@/utils/location/location';
 import { resetWorkoutStoreAndNotify, subscribeToWorkout } from '@/utils/location/workoutStore';
 import { endLiveActivity, startLiveActivity, updateLiveActivity } from '@/utils/native/LiveActivityModule';
 import { speak, startSpeechService, stopSpeak, stopSpeechService } from "@/utils/native/NativeSpeech";
@@ -12,7 +13,7 @@ import { useFocusEffect, useTheme } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { Alert, Linking, Platform, View } from 'react-native';
 import MapView from 'react-native-maps';
 import { ExerciseMap } from './ExerciseMap';
 import { ExerciseStats } from './ExerciseStats';
@@ -131,6 +132,8 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
     // Start background location updates
     useEffect(() => {
+        let cancelled = false;
+
         (async () => {
             startLiveActivity();
 
@@ -163,6 +166,25 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 return;
             }
 
+            const foregroundGranted = await hasLocationPermission();
+            const backgroundGranted = await hasBackgroundPermission();
+
+            if (cancelled) return;
+
+            if (!foregroundGranted || !backgroundGranted) {
+                Alert.alert(
+                    'Location Permission Required',
+                    Platform.OS === 'android'
+                        ? 'Feetness needs Location set to “Allow all the time” to track this workout with the screen locked.'
+                        : 'Feetness needs Always Location access to track this workout.',
+                    [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Open Settings', onPress: () => void Linking.openSettings() },
+                    ],
+                );
+                return;
+            }
+
             await Location.startLocationUpdatesAsync(WORKOUT_LOCATION_TASK, {
                 accuracy: Location.Accuracy.High,
                 distanceInterval: distanceInterval,
@@ -173,8 +195,18 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                     notificationBody: 'Tracking your route',
                 },
             });
-        })();
-    }, []);
+        })().catch((error) => {
+            console.error('Unable to start workout location tracking', error);
+            Alert.alert(
+                'Location Tracking Unavailable',
+                'Feetness could not start location tracking. Check your location permissions and that Location is enabled.',
+            );
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [props.exercise, props.goalAmount, props.goalMetric]);
 
     const exerciseUpdates = (distance: number, elevationGain: number) => {
         const elapsed = getElapsedSeconds();

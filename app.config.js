@@ -69,7 +69,17 @@ export default {
       "./native_plugins/withAndroidSetup",
       "./native_plugins/android_speech/app.plugin.js",
       "@bacons/apple-targets",
-      "react-native-health"
+      "react-native-health",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Feetness to use your location to track your workouts.",
+          "locationAlwaysAndWhenInUsePermission": "Allow Feetness to use your location in the background while a workout is active.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

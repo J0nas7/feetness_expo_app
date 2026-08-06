@@ -1,5 +1,5 @@
 import * as Location from 'expo-location';
-import { Alert } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
 
 export type UserLocation = Location.LocationObject | null;
 
@@ -20,10 +20,23 @@ export const requestLocationPermissions = async (): Promise<boolean> => {
             return false;
         }
 
-        // 2. Background (optional, only iOS & Android)
+        // Background access is required by startLocationUpdatesAsync when a
+        // workout continues after the app is no longer in the foreground.
         const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
-        // Continue onboarding regardless of bgStatus, since the API may not return final value immediately
         console.log('Background location status:', bgStatus);
+
+        if (bgStatus !== 'granted') {
+            Alert.alert(
+                'Background Location Required',
+                Platform.OS === 'android'
+                    ? 'To track a workout while the screen is locked, set Location to “Allow all the time” in Android settings.'
+                    : 'Enable Always Location access in Settings to track workouts in the background.',
+                [
+                    { text: 'Not Now', style: 'cancel' },
+                    { text: 'Open Settings', onPress: () => void Linking.openSettings() },
+                ],
+            );
+        }
 
         return true;
     } catch (error) {
