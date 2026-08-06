@@ -87,17 +87,17 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
             : `Week ${String(period.week).padStart(2, '0')} (${new Date(period.workouts[0]?.startTime || now).toLocaleDateString()})`;
 
         // Find three workouts that have the longest distance
-        const longestDistanceWorkouts = period.workouts
+        const longestDistanceWorkouts = [...period.workouts]
             .sort((a, b) => b.distance - a.distance)
             .slice(0, 3);
 
         const handleEdit = (workout: Workout) => {
-            router.push({
-                pathname: '/edit-workout',
-                params: {
-                    workout: JSON.stringify(workout),
-                },
-            });
+            // router.push({
+            //     pathname: '/edit-workout',
+            //     params: {
+            //         workout: JSON.stringify(workout),
+            //     },
+            // });
         };
 
         const renderRightActions = (workout: Workout) => (
@@ -140,6 +140,18 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
                 </Pressable>
             </View>
         );
+
+        const formatDuration = (seconds: number): string => {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+
+            if (hours > 0) {
+                return `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+            }
+
+            return `${minutes}:${String(secs).padStart(2, "0")}`;
+        }
 
         return (
             <View key={idx} style={styles.periodSection}>
@@ -191,14 +203,26 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
                                         {workout.goalAmount}
                                         {workout.goalMetric === 'distance'
                                             ? ' km'
-                                            : ' min'}
+                                            : ' min'} mål{' '}
+                                        <Text
+                                            style={[
+                                                styles.goalStatus,
+                                                {
+                                                    color: goalCompleted
+                                                        ? theme.colors.success
+                                                        : theme.colors.notification,
+                                                },
+                                            ]}
+                                        >
+                                            {goalCompleted ? '✓' : '•'}
+                                        </Text>
                                     </Text>
                                     <Text style={styles.workoutMeta}>
                                         {(workout.distance / 1000).toFixed(1)} km ·{' '}
-                                        {Math.round(workout.elapsedTime / 60)} min
+                                        {formatDuration(workout.elapsedTime)}
                                     </Text>
                                     <Text style={styles.workoutMeta}>
-                                        {new Date(workout.startTime).toDateString()}
+                                        {new Date(workout.startTime).toLocaleDateString()}
                                     </Text>
                                 </View>
 
@@ -211,19 +235,6 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
                                         ) : longestDistanceWorkouts[2]?.id === workout.id ? (
                                             <>🥉</>
                                         ) : null}
-                                    </Text>
-
-                                    <Text
-                                        style={[
-                                            styles.goalStatus,
-                                            {
-                                                color: goalCompleted
-                                                    ? theme.colors.success
-                                                    : theme.colors.notification,
-                                            },
-                                        ]}
-                                    >
-                                        {goalCompleted ? '✓' : '•'}
                                     </Text>
                                 </View>
                             </Pressable>

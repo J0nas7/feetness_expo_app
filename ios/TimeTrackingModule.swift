@@ -19,7 +19,15 @@ class TimeTracking: NSObject {
     do {
       if #available(iOS 16.1, *) {
         let timeTrackingAttributes = TimeTrackingPlayerAttributes(name: "Time Tracking")
-        let timeTrackingContentState = TimeTrackingPlayerAttributes.ContentState.init(taskName: "Working on a task", timeSpend: "00:00:00")
+        let timeTrackingContentState = TimeTrackingPlayerAttributes.ContentState.init(
+          distance: "0 km",
+          timeSpend: "00:00:00",
+          percent: 0.0,
+          pace: 0.0,
+          exercise: nil,
+          goalAmount: nil,
+          goalMetric: nil
+        )
 
         print("Swift Start TimeTracking Live Activity")
         let activity = try Activity<TimeTrackingPlayerAttributes>.request(
@@ -33,15 +41,31 @@ class TimeTracking: NSObject {
         print("Live Activity is not supported on this device")
       }
     } catch (let error) {
-      print("There is some error with TimeTrackingModule")
+      print("There is some error with TimeTrackingModule: \(error)")
     }
   }
 
-  @objc(updateActivity:timeSpend:)
-  func updateActivity(taskName: String, timeSpend: String) {
+  @objc(updateActivity:timeSpend:percent:pace:exercise:goalAmount:goalMetric:)
+  func updateActivity(
+    distance: String,
+    timeSpend: String,
+    percent: NSNumber,
+    pace: NSNumber,
+    exercise: String?,
+    goalAmount: NSNumber?,
+    goalMetric: String?
+  ) {
     do {
       if #available(iOS 16.1, *) {
-        let timeTrackingContentState = TimeTrackingPlayerAttributes.ContentState.init(taskName: taskName, timeSpend: timeSpend)
+        let timeTrackingContentState = TimeTrackingPlayerAttributes.ContentState.init(
+          distance: distance,
+          timeSpend: timeSpend,
+          percent: percent.doubleValue,
+          pace: pace.doubleValue,
+          exercise: exercise,
+          goalAmount: goalAmount?.doubleValue,
+          goalMetric: goalMetric
+        )
 
         Task {
           if let activity = self.currentActivity {
@@ -55,7 +79,7 @@ class TimeTracking: NSObject {
         print("Live Activity is not supported on this device")
       }
     } catch (let error) {
-      print("There is some error with TimeTrackingModule")
+      print("There is some error with TimeTrackingModule: \(error)")
     }
   }
 
@@ -68,7 +92,7 @@ class TimeTracking: NSObject {
             self.currentActivity = nil
         }
       } else {
-        // Fallback on earlier versions
+        print("Live Activity is not supported on this device")
       }
     }
   }

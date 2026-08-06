@@ -69,6 +69,8 @@ npm start
 npm run android   # for Android
 npm run ios       # for iOS
 npm run web       # for Web
+
+npx expo run:android --variant release
 ```
 
 ## Usage
