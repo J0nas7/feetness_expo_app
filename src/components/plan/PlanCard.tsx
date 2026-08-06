@@ -1,20 +1,64 @@
 import { MyTheme } from '@/types/theme';
+import { Workout } from '@/types/WorkoutDTO';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { useTheme } from '@react-navigation/native';
-import React from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect, useTheme } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { currentPeriodIndex, formatPeriod, periodIndex, Plan } from './model';
 
 type Props = { plan: Plan; selected: boolean; bulkMode: boolean; onSelect: () => void; onCopy: () => void; onEdit: () => void; onDelete: () => void };
+const COMPACT_CARD_HEIGHT = 88;
+const PROGRESS_CARD_HEIGHT = 118;
+export const planCardHeight = (plan: Plan) =>
+    periodIndex(plan.period) > currentPeriodIndex ? COMPACT_CARD_HEIGHT : PROGRESS_CARD_HEIGHT;
 
 export function PlanCard({ plan, selected, bulkMode, onSelect, onCopy, onEdit, onDelete }: Props) {
     const theme = useTheme() as MyTheme;
     const current = periodIndex(plan.period) === currentPeriodIndex;
+    const showProgress = periodIndex(plan.period) <= currentPeriodIndex;
+    const cardHeight = planCardHeight(plan);
+    const [completedAmount, setCompletedAmount] = useState(0);
+
+    useFocusEffect(useCallback(() => {
+        let active = true;
+
+        const loadMonthlyProgress = async () => {
+            if (!showProgress) {
+                if (active) setCompletedAmount(0);
+                return;
+            }
+            const period = /^(0[1-9]|1[0-2])-(\d{4})$/.exec(plan.period);
+            if (!period) return;
+
+            const stored = await AsyncStorage.getItem('workouts');
+            const workouts: Workout[] = stored ? JSON.parse(stored) : [];
+            const planMonth = Number(period[1]) - 1;
+            const planYear = Number(period[2]);
+            const monthlyWorkouts = workouts.filter((workout) => {
+                const workoutDate = new Date(workout.startTime);
+                return workoutDate.getMonth() === planMonth && workoutDate.getFullYear() === planYear;
+            });
+            const completed = plan.metric === 'distance'
+                ? monthlyWorkouts.reduce((total, workout) => total + workout.distance, 0) / 1000
+                : monthlyWorkouts.reduce((total, workout) => total + workout.elapsedTime, 0) / 3600;
+
+            if (active) setCompletedAmount(completed);
+        };
+
+        loadMonthlyProgress();
+        return () => { active = false; };
+    }, [plan.metric, plan.period, showProgress]));
+
+    const percentage = plan.goal > 0 ? completedAmount / plan.goal * 100 : 0;
+    const displayedPercentage = Math.round(percentage);
+    const progressWidth = `${Math.min(Math.max(percentage, 0), 100)}%` as `${number}%`;
+    const completedLabel = Number(completedAmount.toFixed(1));
+    const unit = plan.metric === 'distance' ? 'km' : 'timer';
     const styles = StyleSheet.create({
         wrapper: { marginBottom: 10, borderRadius: 14, overflow: 'hidden' },
-        card: { flexDirection: 'row', height: 88, padding: 15, borderRadius: 14, borderWidth: 2, borderColor: 'transparent', backgroundColor: theme.colors.background, alignItems: 'center' },
-        current: { borderColor: theme.colors.primary, backgroundColor: `${theme.colors.primary}0D` },
+        card: { flexDirection: 'row', height: cardHeight, padding: 15, borderRadius: 14, borderWidth: 2, borderColor: 'transparent', backgroundColor: theme.colors.background, alignItems: 'center' },
         selected: { borderColor: theme.colors.primary },
         body: { flex: 1 },
         titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -22,17 +66,29 @@ export function PlanCard({ plan, selected, bulkMode, onSelect, onCopy, onEdit, o
         badge: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: theme.colors.primary },
         badgeText: { color: theme.colors.onPrimary, fontSize: 10, fontWeight: '800' },
         detail: { color: theme.colors.tertiaryText, marginTop: 7 },
-        actions: { height: 88, flexDirection: 'row' },
+        progressTrack: { height: 7, marginTop: 10, borderRadius: 4, overflow: 'hidden', backgroundColor: theme.colors.border },
+        progressFill: { height: '100%', borderRadius: 4, backgroundColor: percentage >= 100 ? theme.colors.success : theme.colors.primary },
+        progressText: { color: theme.colors.tertiaryText, marginTop: 5, fontSize: 11, fontWeight: '600' },
+        actions: { height: cardHeight, flexDirection: 'row' },
         action: { width: 70, alignItems: 'center', justifyContent: 'center', gap: 6 },
         actionText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' },
     });
-    const card = <Pressable style={[styles.card, current && styles.current, selected && styles.selected]} onPress={bulkMode ? onSelect : onEdit}>
+
+    const card = <Pressable style={[styles.card, selected && styles.selected]} onPress={bulkMode ? onSelect : onEdit}>
         <View style={styles.body}>
             <View style={styles.titleRow}>
                 <Text style={styles.title}>{formatPeriod(plan.period)}</Text>
                 {current && <View style={styles.badge}><Text style={styles.badgeText}>DENNE MÅNED</Text></View>}
             </View>
-            <Text style={styles.detail}>Mål: {plan.goal} {plan.metric === 'distance' ? 'km' : 'timer'}</Text>
+            <Text style={styles.detail}>Mål: {plan.goal} {unit}</Text>
+            {showProgress && <><View
+                style={styles.progressTrack}
+                accessibilityRole="progressbar"
+                accessibilityValue={{ min: 0, max: 100, now: Math.min(displayedPercentage, 100) }}
+            >
+                <View style={[styles.progressFill, { width: progressWidth }]} />
+            </View>
+                <Text style={styles.progressText}>{completedLabel} / {plan.goal} {unit} · {displayedPercentage}%</Text></>}
         </View>
     </Pressable>;
 

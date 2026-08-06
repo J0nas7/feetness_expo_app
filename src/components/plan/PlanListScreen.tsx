@@ -7,7 +7,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { currentPeriodIndex, formatPeriod, periodIndex, Plan, sortPlans } from './model';
-import { PlanCard } from './PlanCard';
+import { planCardHeight, PlanCard } from './PlanCard';
 import { PlanEmptyState } from './PlanEmptyState';
 import { PlanToolbar } from './PlanToolbar';
 import { usePlans } from './usePlans';
@@ -87,7 +87,7 @@ export function PlanListScreen() {
         countBadge: { marginLeft: 8, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, backgroundColor: theme.colors.border },
         countText: { color: theme.colors.tertiaryText, fontSize: 12, fontWeight: '700' },
         sectionHeading: { color: theme.colors.text, fontSize: 20, fontWeight: '800' },
-        selectionRow: { height: 88, marginBottom: 10, borderRadius: 12, backgroundColor: theme.colors.background, alignItems: 'center', justifyContent: 'center' },
+        selectionRow: { marginBottom: 10, borderRadius: 12, backgroundColor: theme.colors.background, alignItems: 'center', justifyContent: 'center' },
         checkbox: { width: 24, height: 24, borderRadius: 7, borderWidth: 2, borderColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center' },
         noActivePlans: { color: theme.colors.tertiaryText, fontSize: 15, lineHeight: 22, textAlign: 'center', marginTop: 8 },
         floatingButton: { position: 'absolute', width: 60, height: 60, bottom: 20, borderRadius: 30, alignItems: 'center', justifyContent: 'center', zIndex: 10 },
@@ -108,7 +108,7 @@ export function PlanListScreen() {
 
     const renderSelectionRow = (plan: Plan) => <View
         key={plan.id}
-        style={styles.selectionRow}
+        style={[styles.selectionRow, { height: planCardHeight(plan) }]}
         ref={(ref) => { if (ref) selectionRowRefs.current.set(plan.id, ref); }}
         onLayout={() => selectionRowRefs.current.get(plan.id)?.measureInWindow((x, y, width, height) => selectionLayouts.current.set(plan.id, { x, y, width, height }))}
     >
