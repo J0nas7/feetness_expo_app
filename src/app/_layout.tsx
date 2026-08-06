@@ -16,6 +16,19 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
+  const renderPlanHeaderLeft = (title?: string) => (
+    <Pressable
+      onPress={() => router.back()}
+      hitSlop={12}
+      accessibilityRole="button"
+      accessibilityLabel="Gå tilbage"
+    >
+      <Text style={{ color: 'gray', fontWeight: 'bold' }}>
+        &lt; {title ?? `Tilbage`}
+      </Text>
+    </Pressable>
+  );
+
   const LightTheme: MyTheme = {
     ...DefaultTheme,
     colors: {
@@ -64,19 +77,39 @@ export default function RootLayout() {
             <Stack>
               <Stack.Screen name="onboarding" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="create-plan"
+                options={({ route }) => ({
+                  headerShown: true,
+                  headerLeft: () => renderPlanHeaderLeft(),
+                  title: (route.params as { copyFrom?: string } | undefined)?.copyFrom
+                    ? 'Kopiér plan'
+                    : 'Ny månedsplan',
+                })}
+              />
+              <Stack.Screen
+                name="edit-plan"
+                options={{
+                  headerShown: true,
+                  headerLeft: () => renderPlanHeaderLeft(),
+                  title: 'Rediger plan',
+                }}
+              />
+              <Stack.Screen
+                name="edit-bulk"
+                options={{
+                  headerShown: true,
+                  headerLeft: () => renderPlanHeaderLeft(),
+                  title: 'Rediger planer',
+                }}
+              />
               <Stack.Screen name="explore" options={{ headerShown: false }} />
               <Stack.Screen
                 name="finished-exercise"
                 options={{
                   headerShown: true,      // show header
                   title: 'Workout Complete', // custom title
-                  headerLeft: () => (
-                    <Pressable
-                      onPress={() => router.back()}
-                    >
-                      <Text style={{ color: 'gray', fontWeight: 'bold' }}>&lt; Fremskridt</Text>
-                    </Pressable>
-                  ),
+                  headerLeft: () => renderPlanHeaderLeft("Fremskridt"),
                 }}
               />
             </Stack>

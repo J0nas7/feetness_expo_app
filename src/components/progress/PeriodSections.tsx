@@ -1,5 +1,7 @@
+import { usePlans } from '@/components/plan/usePlans';
 import { MyTheme } from '@/types/theme';
 import { ProgressPeriod, Workout } from '@/types/WorkoutDTO';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { router } from 'expo-router';
 import React from 'react';
@@ -28,57 +30,112 @@ interface PeriodSectionsProps {
 }
 
 export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
-    return props.periods.map((period, idx) => {
+    const theme = useTheme() as MyTheme;
+    const { plans } = usePlans();
+    const styles = StyleSheet.create({
+        periodSection: {
+            marginBottom: 28,
+        },
+        periodTitle: {
+            fontSize: 20,
+            fontWeight: '600',
+            marginBottom: 8,
+            color: theme.colors.text,
+        },
+        summaryRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginBottom: 12,
+        },
+        summaryText: {
+            color: theme.colors.secondaryText,
+        },
+        workoutCard: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 12,
+            backgroundColor: theme.colors.surface,
+            borderRadius: 12,
+            marginBottom: 8,
+            boxShadow: '2px 2px 0 0 rgba(0, 0, 0, 0.6)',
+        },
+        workoutIcon: {
+            fontSize: 24,
+            marginRight: 12,
+        },
+        workoutTitle: {
+            fontWeight: '600',
+            color: theme.colors.text,
+        },
+        workoutMeta: {
+            fontSize: 12,
+            color: theme.colors.tertiaryText,
+        },
+        goalStatus: {
+            fontSize: 18,
+            marginLeft: 8,
+        },
+        planProgress: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 16,
+            padding: 12,
+            borderRadius: 12,
+            borderStyle: "solid",
+            borderColor: theme.colors.surface,
+            borderWidth: 1
+        },
+        planProgressContent: {
+            flex: 1,
+        },
+        planProgressLabels: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 8,
+        },
+        planProgressTitle: {
+            color: theme.colors.text,
+            fontSize: 13,
+            fontWeight: '700',
+        },
+        planProgressValue: {
+            color: theme.colors.tertiaryText,
+            fontSize: 12,
+            fontWeight: '600',
+        },
+        planProgressTrack: {
+            height: 8,
+            borderRadius: 4,
+            overflow: 'hidden',
+            backgroundColor: theme.colors.border,
+        },
+        planProgressFill: {
+            height: '100%',
+            borderRadius: 4,
+        },
+        planProgressChevron: {
+            marginLeft: 12,
+        },
+    });
 
-        const theme = useTheme() as MyTheme;
-        const styles = StyleSheet.create({
-            periodSection: {
-                marginBottom: 28,
-            },
-            periodTitle: {
-                fontSize: 20,
-                fontWeight: '600',
-                marginBottom: 8,
-                color: theme.colors.text,
-            },
-            summaryRow: {
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginBottom: 12,
-            },
-            summaryText: {
-                color: theme.colors.secondaryText,
-            },
-            workoutCard: {
-                flexDirection: 'row',
-                alignItems: 'center',
-                padding: 12,
-                backgroundColor: theme.colors.surface,
-                borderRadius: 12,
-                marginBottom: 8,
-                boxShadow: '2px 2px 0 0 rgba(0, 0, 0, 0.6)',
-            },
-            workoutIcon: {
-                fontSize: 24,
-                marginRight: 12,
-            },
-            workoutTitle: {
-                fontWeight: '600',
-                color: theme.colors.text,
-            },
-            workoutMeta: {
-                fontSize: 12,
-                color: theme.colors.tertiaryText,
-            },
-            goalStatus: {
-                fontSize: 18,
-                marginLeft: 8,
-            },
-        });
+    return props.periods.map((period, idx) => {
 
         const totalDistance = period.workouts.reduce((s, w) => s + w.distance, 0)
         const totalDuration = period.workouts.reduce((s, w) => s + w.elapsedTime, 0)
         const completedGoals = period.workouts.filter((w) => w.percentage >= 100).length
+        const monthlyPeriod = props.isMonthPeriod(period) ? period : null;
+        const monthlyPlan = monthlyPeriod
+            ? plans.find((plan) => plan.period === `${String(monthlyPeriod.month + 1).padStart(2, '0')}-${monthlyPeriod.year}`)
+            : undefined;
+        const completedPlanAmount = monthlyPlan?.metric === 'distance'
+            ? totalDistance / 1000
+            : totalDuration / 3600;
+        const planPercentage = monthlyPlan && monthlyPlan.goal > 0
+            ? completedPlanAmount / monthlyPlan.goal * 100
+            : 0;
+        const progressWidth = `${Math.min(Math.max(planPercentage, 0), 100)}%` as `${number}%`;
+        const planUnit = monthlyPlan?.metric === 'distance' ? 'km' : 'timer';
 
         const now = new Date();
 
@@ -170,6 +227,28 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
                     </Text>
                     <Text style={styles.summaryText}>🎯 {completedGoals} goals</Text>
                 </View>
+
+                {monthlyPeriod && monthlyPlan && <Pressable
+                    style={styles.planProgress}
+                    onPress={() => router.push({ pathname: '/edit-plan', params: { id: monthlyPlan.id } })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Rediger månedsplan for ${periodTitle}`}
+                >
+                    <View style={styles.planProgressContent}>
+                        <View style={styles.planProgressLabels}>
+                            <Text style={styles.planProgressTitle}>Månedsplan · {Math.round(planPercentage)}%</Text>
+                            <Text style={styles.planProgressValue}>{Number(completedPlanAmount.toFixed(1))} / {monthlyPlan.goal} {planUnit}</Text>
+                        </View>
+                        <View
+                            style={styles.planProgressTrack}
+                            accessibilityRole="progressbar"
+                            accessibilityValue={{ min: 0, max: 100, now: Math.min(Math.round(planPercentage), 100) }}
+                        >
+                            <View style={[styles.planProgressFill, { width: progressWidth, backgroundColor: planPercentage >= 100 ? theme.colors.success : theme.colors.primary }]} />
+                        </View>
+                    </View>
+                    <FontAwesome5 style={styles.planProgressChevron} name="chevron-right" size={14} color={theme.colors.tertiaryText} />
+                </Pressable>}
 
                 {period.workouts.map((workout) => {
                     const goalCompleted = workout.percentage >= 100;
