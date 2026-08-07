@@ -4,6 +4,14 @@ const path = require('path');
 
 const nativeFiles = [
   {
+    source: 'native_plugins/manual_live_activity/App/BackgroundSpeech.m',
+    destination: 'BackgroundSpeech.m',
+  },
+  {
+    source: 'native_plugins/manual_live_activity/App/BackgroundSpeech.swift',
+    destination: 'BackgroundSpeech.swift',
+  },
+  {
     source: 'native_plugins/manual_live_activity/App/TimeTrackingModule.swift',
     destination: 'TimeTrackingModule.swift',
   },

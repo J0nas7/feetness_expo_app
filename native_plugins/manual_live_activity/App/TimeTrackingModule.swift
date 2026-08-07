@@ -2,7 +2,7 @@ import ActivityKit
 import Foundation
 import React
 
-@available(iOS 16.1, *)
+@available(iOS 16.2, *)
 @objc(TimeTracking)
 class TimeTracking: RCTEventEmitter {
   private var currentActivity: Activity<TimeTrackingPlayerAttributes>?
