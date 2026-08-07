@@ -9,6 +9,7 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
+import { activityName, t } from '@/i18n';
 
 export interface ControlsProps {
     theme: MyTheme;
@@ -36,7 +37,7 @@ export const Controls: React.FC<ControlsProps> = (props) => {
                 <View>
                     {/* Number selector */}
                     <Text style={styles.label}>
-                        {props.mode === 'distance' ? 'Distance' : 'Duration'}
+                        {props.mode === 'distance' ? t('start.distance') : t('start.duration')}
                     </Text>
 
                     <View style={{
@@ -85,7 +86,7 @@ export const Controls: React.FC<ControlsProps> = (props) => {
 
                     {/* Toggle */}
                     <View style={styles.toggleContainer}>
-                        {([['distance', 'road', 'Distance'], ['duration', 'clock', 'Varighed']] as const).map(([value, icon, label]) => {
+                        {([['distance', 'road', t('start.distance')], ['duration', 'clock', t('start.duration')]] as const).map(([value, icon, label]) => {
                             const selected = props.mode === value;
                             return <Pressable key={value} style={[styles.toggleButton, selected && styles.toggleActive]} onPress={() => props.setMode(value)}>
                                 <FontAwesome5 name={icon} size={15} color={selected ? props.theme.colors.border : props.theme.colors.success} />
@@ -100,13 +101,13 @@ export const Controls: React.FC<ControlsProps> = (props) => {
                     </View>
 
                     {/* Activity select */}
-                    <Text style={styles.label}>Activity</Text>
+                    <Text style={styles.label}>{t('common.activity.label')}</Text>
 
                     <Pressable
                         style={styles.selectRow}
                         onPress={() => props.setActivityModalVisible(true)}
                     >
-                        <Text style={styles.selectText}>{props.activity}</Text>
+                        <Text style={styles.selectText}>{activityName(props.activity)}</Text>
                     </Pressable>
 
                     {/* START button */}
@@ -126,13 +127,13 @@ export const Controls: React.FC<ControlsProps> = (props) => {
                         }}
                         style={styles.startButton}
                     >
-                        <Text style={styles.startText}>START</Text>
+                        <Text style={styles.startText}>{t('start.start')}</Text>
                     </Pressable>
                 </View>
             ) : ( // Use Previous Workouts
                 <>
                     <Text style={styles.label}>
-                        Reuse previous workouts
+                        {t('start.reuse')}
                     </Text>
                     <FlatList<Workout>
                         data={props.savedWorkouts}
@@ -141,7 +142,7 @@ export const Controls: React.FC<ControlsProps> = (props) => {
                         contentContainerStyle={{ paddingBottom: 16 }}
                         ListEmptyComponent={
                             <Text style={{ color: props.theme.colors.tertiaryText, textAlign: 'center', marginVertical: 10 }}>
-                                No saved workouts
+                                {t('start.empty')}
                             </Text>
                         }
                         renderItem={({ item }) => (
@@ -164,7 +165,7 @@ export const Controls: React.FC<ControlsProps> = (props) => {
                 style={styles.togglerButton}
             >
                 <Text style={styles.togglerText}>
-                    {props.showCustom ? 'Use Previous Workouts' : 'Show Custom Settings'}
+                    {props.showCustom ? t('start.usePrevious') : t('start.custom')}
                 </Text>
             </Pressable>
         </View>

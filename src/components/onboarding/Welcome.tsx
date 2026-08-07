@@ -1,4 +1,5 @@
 import { BigLogo } from '@/components/global/BigLogo';
+import { t } from '@/i18n';
 import { PageTitles } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { useTheme } from '@react-navigation/native';
@@ -48,7 +49,7 @@ export const Welcome: React.FC<WelcomeProps> = (props) => {
                     onPress={() => props.onNext("Location")}
                     style={styles.button}
                 >
-                    <Text style={styles.startText}>Get started</Text>
+                    <Text style={styles.startText}>{t('onboarding.getStarted')}</Text>
                 </Pressable>
             </View>
         </View>

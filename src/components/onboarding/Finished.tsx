@@ -1,4 +1,5 @@
 import { BigLogo } from '@/components/global/BigLogo';
+import { t } from '@/i18n';
 import { FitnessLevel } from '@/components/onboarding/FitnessLevelPage';
 import { OnboardingData, PageTitles } from '@/types';
 import { MyTheme } from '@/types/theme';
@@ -183,7 +184,7 @@ export const Finished: React.FC<FinishedProps> = (props) => {
                 <View style={styles.icon}>
                     <BigLogo size={200} animated={true} />
                 </View>
-                <Text style={styles.welcomeText}>Welcome!</Text>
+                <Text style={styles.welcomeText}>{t('onboarding.welcome')}</Text>
 
                 {showButton && (
                     <Animated.View style={{ opacity: buttonOpacity, marginTop: 30 }}>

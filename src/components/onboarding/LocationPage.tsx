@@ -1,4 +1,5 @@
 import { BigLogo } from '@/components/global/BigLogo';
+import { t } from '@/i18n';
 import { PageTitles } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { requestLocationPermissions } from '@/utils/location/location';
@@ -70,9 +71,9 @@ export const LocationPage: React.FC<LocationPageProps> = (props) => {
             <View style={styles.content}>
                 <BigLogo size={200} icon="🏃‍♂️" />
                 <View>
-                    <Text style={styles.title}>Enable Your Location</Text>
-                    <Text style={styles.description}>To track your workouts,</Text>
-                    <Text style={[styles.description]}>we need your GPS location.</Text>
+                    <Text style={styles.title}>{t('onboarding.locationTitle')}</Text>
+                    <Text style={styles.description}>{t('onboarding.locationLine1')}</Text>
+                    <Text style={[styles.description]}>{t('onboarding.locationLine2')}</Text>
                 </View>
             </View>
         </SafeAreaView>

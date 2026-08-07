@@ -1,4 +1,5 @@
 import { MyTheme } from '@/types/theme';
+import { locale, t } from '@/i18n';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import { router } from 'expo-router';
@@ -6,7 +7,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { currentPeriodIndex, formatPeriod, periodIndex, Plan, sortPlans } from './model';
+import { currentPeriodIndex, PERIOD_PATTERN, periodIndex, Plan, sortPlans } from './model';
 import { planCardHeight, PlanCard } from './PlanCard';
 import { PlanEmptyState } from './PlanEmptyState';
 import { PlanToolbar } from './PlanToolbar';
@@ -28,6 +29,12 @@ export function PlanListScreen() {
     const pastPlans = useMemo(() => sortedPlans.filter((plan) => periodIndex(plan.period) < currentPeriodIndex), [sortedPlans]);
     const activePlans = useMemo(() => sortedPlans.filter((plan) => periodIndex(plan.period) >= currentPeriodIndex), [sortedPlans]);
     const allSelected = plans.length > 0 && selectedIds.length === plans.length;
+    const localizedPeriod = (period: string) => {
+        const match = PERIOD_PATTERN.exec(period);
+        return match
+            ? new Date(Number(match[2]), Number(match[1]) - 1).toLocaleString(locale === 'da' ? 'da-DK' : 'en-US', { month: 'short', year: 'numeric' })
+            : period;
+    };
 
     useFocusEffect(useCallback(() => {
         setSelectedIds([]);
@@ -56,17 +63,17 @@ export function PlanListScreen() {
         .onUpdate((event) => checkSelectionPosition(event.absoluteX, event.absoluteY))
         .onEnd(() => insideRows.current.clear());
 
-    const deletePlan = (plan: Plan) => Alert.alert('Slet plan?', 'Handlingen kan ikke fortrydes.', [
-        { text: 'Annuller', style: 'cancel' },
-        { text: 'Slet', style: 'destructive', onPress: () => savePlans(plans.filter((item) => item.id !== plan.id)) },
+    const deletePlan = (plan: Plan) => Alert.alert(t('plan.delete.title'), t('plan.delete.warning'), [
+        { text: t('common.actions.cancel'), style: 'cancel' },
+        { text: t('common.actions.delete'), style: 'destructive', onPress: () => savePlans(plans.filter((item) => item.id !== plan.id)) },
     ]);
 
     const deleteSelected = () => Alert.alert(
-        `Slet ${selectedIds.length} ${selectedIds.length === 1 ? 'plan' : 'planer'}?`,
-        'Handlingen kan ikke fortrydes.',
+        t(selectedIds.length === 1 ? 'plan.delete.selectedTitle' : 'plan.delete.selectedTitlePlural', { count: selectedIds.length }),
+        t('plan.delete.warning'),
         [
-            { text: 'Annuller', style: 'cancel' },
-            { text: 'Slet', style: 'destructive', onPress: async () => {
+            { text: t('common.actions.cancel'), style: 'cancel' },
+            { text: t('common.actions.delete'), style: 'destructive', onPress: async () => {
                 const selected = new Set(selectedIds);
                 await savePlans(plans.filter((plan) => !selected.has(plan.id)));
                 setSelectedIds([]);
@@ -112,7 +119,7 @@ export function PlanListScreen() {
         ref={(ref) => { if (ref) selectionRowRefs.current.set(plan.id, ref); }}
         onLayout={() => selectionRowRefs.current.get(plan.id)?.measureInWindow((x, y, width, height) => selectionLayouts.current.set(plan.id, { x, y, width, height }))}
     >
-        <Pressable style={styles.checkbox} onPress={() => toggleSelected(plan.id)} accessibilityLabel={`Vælg ${formatPeriod(plan.period)}`}>
+        <Pressable style={styles.checkbox} onPress={() => toggleSelected(plan.id)} accessibilityLabel={t('plan.accessibility.select', { period: localizedPeriod(plan.period) })}>
             {selectedIds.includes(plan.id) && <FontAwesome5 name="check" size={13} color={theme.colors.primary} />}
         </Pressable>
     </View>;
@@ -151,22 +158,22 @@ export function PlanListScreen() {
                 {pastPlans.length > 0 && <>
                     <Pressable style={styles.fixedHeader} onPress={() => { selectionLayouts.current.clear(); setHistoryExpanded((value) => !value); }}>
                         <FontAwesome5 name={historyExpanded ? 'chevron-down' : 'chevron-right'} size={14} color={theme.colors.tertiaryText} />
-                        <Text style={styles.historyTitle}>Historik</Text>
+                        <Text style={styles.historyTitle}>{t('plan.history')}</Text>
                         <View style={styles.countBadge}><Text style={styles.countText}>{pastPlans.length}</Text></View>
                     </Pressable>
                     {historyExpanded && pastPlans.map(renderCard)}
                 </>}
-                <View style={styles.fixedHeader}><Text style={styles.sectionHeading}>Aktuelle og kommende</Text></View>
-                {activePlans.length > 0 ? activePlans.map(renderCard) : <Text style={styles.noActivePlans}>Der er ingen aktuelle eller kommende planer endnu.</Text>}
+                <View style={styles.fixedHeader}><Text style={styles.sectionHeading}>{t('plan.current')}</Text></View>
+                {activePlans.length > 0 ? activePlans.map(renderCard) : <Text style={styles.noActivePlans}>{t('plan.noCurrent')}</Text>}
             </ScrollView>
         </View>}
 
-        {!bulkMode && plans.length > 0 && <Pressable style={[styles.floatingButton, styles.primaryFloating]} onPress={() => router.push('/create-plan')} accessibilityLabel="Opret plan">
+        {!bulkMode && plans.length > 0 && <Pressable style={[styles.floatingButton, styles.primaryFloating]} onPress={() => router.push('/create-plan')} accessibilityLabel={t('plan.accessibility.create')}>
             <FontAwesome5 name="plus" size={20} color={theme.colors.onPrimary} />
         </Pressable>}
         {bulkMode && selectedIds.length > 0 && <>
-            <Pressable style={[styles.floatingButton, styles.dangerFloating]} onPress={deleteSelected} accessibilityLabel={`Slet ${selectedIds.length} valgte planer`}><FontAwesome5 name="trash-alt" size={20} color="#FFFFFF" /></Pressable>
-            <Pressable style={[styles.floatingButton, styles.primaryFloating]} onPress={() => router.push({ pathname: '/edit-bulk', params: { ids: selectedIds.join(',') } })} accessibilityLabel={`Rediger ${selectedIds.length} valgte planer`}><FontAwesome5 name="pencil-alt" size={20} color={theme.colors.onPrimary} /></Pressable>
+            <Pressable style={[styles.floatingButton, styles.dangerFloating]} onPress={deleteSelected} accessibilityLabel={t(selectedIds.length === 1 ? 'plan.accessibility.deleteSelected' : 'plan.accessibility.deleteSelectedPlural', { count: selectedIds.length })}><FontAwesome5 name="trash-alt" size={20} color="#FFFFFF" /></Pressable>
+            <Pressable style={[styles.floatingButton, styles.primaryFloating]} onPress={() => router.push({ pathname: '/edit-bulk', params: { ids: selectedIds.join(',') } })} accessibilityLabel={t(selectedIds.length === 1 ? 'plan.accessibility.editSelected' : 'plan.accessibility.editSelectedPlural', { count: selectedIds.length })}><FontAwesome5 name="pencil-alt" size={20} color={theme.colors.onPrimary} /></Pressable>
         </>}
     </SafeAreaView>;
 }

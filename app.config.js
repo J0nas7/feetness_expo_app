@@ -7,6 +7,10 @@ export default {
     "icon": "./assets/images/icon.png",
     "scheme": "feetnessexpoapp",
     "userInterfaceStyle": "automatic",
+    "locales": {
+      "en": "./src/i18n/native/en.json",
+      "da": "./src/i18n/native/da.json"
+    },
     "newArchEnabled": true,
     "ios": {
       "appleTeamId": "GDKR254U4L",
@@ -19,6 +23,7 @@ export default {
         "com.apple.developer.healthkit": true
       },
       "infoPlist": {
+        "CFBundleLocalizations": ["en", "da"],
         "UIApplicationSupportsLiveActivities": true,
         "NSSupportsLiveActivities": true,
         "UIBackgroundModes": [
@@ -59,6 +64,15 @@ export default {
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": ["en", "da"],
+            "android": ["en", "da"]
+          }
+        }
+      ],
       [
         "expo-splash-screen",
         {

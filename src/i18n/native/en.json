@@ -1,0 +1,6 @@
+{
+  "NSHealthShareUsageDescription": "Feetness reads health data to track your running activity.",
+  "NSHealthUpdateUsageDescription": "Feetness writes workout data to Apple Health.",
+  "NSLocationWhenInUseUsageDescription": "Allow Feetness to use your location to track your workouts.",
+  "NSLocationAlwaysAndWhenInUseUsageDescription": "Allow Feetness to use your location in the background while a workout is active."
+}

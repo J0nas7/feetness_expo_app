@@ -1,4 +1,5 @@
 import { createOnboardingStyles } from '@/styles/modules/OnboardingStyles';
+import { t } from '@/i18n';
 import { PageTitles } from '@/types';
 import { MyTheme } from '@/types/theme';
 import Slider from '@react-native-community/slider';
@@ -40,7 +41,7 @@ export const WeightPage: React.FC<WeightPageProps> = (props) => {
 
     return (
         <View style={onboardingStyles.center}>
-            <Text style={onboardingStyles.title}>Your Weight</Text>
+            <Text style={onboardingStyles.title}>{t('onboarding.weight')}</Text>
 
             <View style={onboardingStyles.valueRow}>
                 <Pressable

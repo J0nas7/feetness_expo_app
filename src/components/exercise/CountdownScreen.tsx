@@ -1,4 +1,5 @@
 import { MyTheme } from '@/types/theme';
+import { t } from '@/i18n';
 import { speak, stopSpeak } from '@/utils/native/NativeSpeech';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -8,7 +9,13 @@ import Svg, { Circle } from 'react-native-svg';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const COUNTDOWN_SECONDS = 5;
-const SPEECH: Record<number, string> = { 5: 'Fem', 4: 'Fire', 3: 'Tre', 2: 'To', 1: 'En' };
+const SPEECH: Record<number, string> = {
+    5: t('exercise.speech.countdown.five'),
+    4: t('exercise.speech.countdown.four'),
+    3: t('exercise.speech.countdown.three'),
+    2: t('exercise.speech.countdown.two'),
+    1: t('exercise.speech.countdown.one'),
+};
 
 interface CountdownScreenProps {
     setIsCountingDown: React.Dispatch<React.SetStateAction<boolean>>;

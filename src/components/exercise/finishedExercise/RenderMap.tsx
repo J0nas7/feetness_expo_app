@@ -27,15 +27,15 @@ export const RenderMap = ({
         const green = "#2ecc71";
         const yellow = "#f1c40f";
         const red = "#e74c3c";
-        if (workout.exercise === "Cykling") {
+        if (workout.exercise === "cycling") {
             if (pace < 4) return green; // fast (<4 min/km) → green
             if (pace < 5) return yellow; // moderate (4–5 min/km) → yellow
             if (pace >= 5) return red; // slow (>5 min/km) → red
-        } else if (workout.exercise === "Løb") {
+        } else if (workout.exercise === "running") {
             if (pace < 5.5) return green; // fast (<5:30 min/km) → green
             if (pace < 6.5) return yellow; // moderate (5:30–6:30 min/km) → yellow
             if (pace >= 6.5) return red; // slow (>6:30 min/km) → red
-        } else if (workout.exercise === "Gågang") {
+        } else if (workout.exercise === "walking") {
             if (pace < 11) return green; // fast (<11 min/km) → green
             if (pace < 12) return yellow; // moderate (11–12 min/km) → yellow
             if (pace >= 12) return red; // slow (>12 min/km) → red
@@ -164,17 +164,17 @@ export const RenderMap = ({
                             ...styles.legendText,
                             color: paceToColor(
                                 (() => {
-                                    if (workout.exercise === "Cykling") return 3.9;
-                                    if (workout.exercise === "Løb") return 5;
-                                    if (workout.exercise === "Gågang") return 10.9;
+                                    if (workout.exercise === "cycling") return 3.9;
+                                    if (workout.exercise === "running") return 5;
+                                    if (workout.exercise === "walking") return 10.9;
                                     return 0;
                                 })()
                             )
                         }}>
                             {(() => {
-                                if (workout.exercise === "Cykling") return "<4 min/km";
-                                if (workout.exercise === "Løb") return "<5:30 min/km";
-                                if (workout.exercise === "Gågang") return "<10 min/km";
+                                if (workout.exercise === "cycling") return "<4 min/km";
+                                if (workout.exercise === "running") return "<5:30 min/km";
+                                if (workout.exercise === "walking") return "<10 min/km";
                                 return "";
                             })()}
                         </Text>
@@ -184,17 +184,17 @@ export const RenderMap = ({
                             ...styles.legendText,
                             color: paceToColor(
                                 (() => {
-                                    if (workout.exercise === "Cykling") return 4.5;
-                                    if (workout.exercise === "Løb") return 6;
-                                    if (workout.exercise === "Gågang") return 11.5;
+                                    if (workout.exercise === "cycling") return 4.5;
+                                    if (workout.exercise === "running") return 6;
+                                    if (workout.exercise === "walking") return 11.5;
                                     return 0;
                                 })()
                             )
                         }}>
                             {(() => {
-                                if (workout.exercise === "Cykling") return "4-5 min/km";
-                                if (workout.exercise === "Løb") return "5:30-6:30 min/km";
-                                if (workout.exercise === "Gågang") return "11-12 min/km";
+                                if (workout.exercise === "cycling") return "4-5 min/km";
+                                if (workout.exercise === "running") return "5:30-6:30 min/km";
+                                if (workout.exercise === "walking") return "11-12 min/km";
                                 return "";
                             })()}
                         </Text>
@@ -204,17 +204,17 @@ export const RenderMap = ({
                             ...styles.legendText,
                             color: paceToColor(
                                 (() => {
-                                    if (workout.exercise === "Cykling") return 5;
-                                    if (workout.exercise === "Løb") return 6.5;
-                                    if (workout.exercise === "Gågang") return 12;
+                                    if (workout.exercise === "cycling") return 5;
+                                    if (workout.exercise === "running") return 6.5;
+                                    if (workout.exercise === "walking") return 12;
                                     return 0;
                                 })()
                             )
                         }}>
                             {(() => {
-                                if (workout.exercise === "Cykling") return "Min. 5 min/km";
-                                if (workout.exercise === "Løb") return "Min. 6:30 min/km";
-                                if (workout.exercise === "Gågang") return "Min. 12 min/km";
+                                if (workout.exercise === "cycling") return "Min. 5 min/km";
+                                if (workout.exercise === "running") return "Min. 6:30 min/km";
+                                if (workout.exercise === "walking") return "Min. 12 min/km";
                                 return "";
                             })()}
                         </Text>

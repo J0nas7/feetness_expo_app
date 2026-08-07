@@ -1,4 +1,5 @@
 import { createOnboardingStyles } from '@/styles/modules/OnboardingStyles';
+import { t } from '@/i18n';
 import { MyTheme } from '@/types/theme';
 import { Pressable, Text, View } from 'react-native';
 
@@ -12,7 +13,7 @@ export const GenderPage: React.FC<GenderPageProps> = (props) => {
     const onboardingStyles = createOnboardingStyles(props.theme);
     return (
         <View style={onboardingStyles.center}>
-            <Text style={onboardingStyles.title}>Your Gender</Text>
+            <Text style={onboardingStyles.title}>{t('onboarding.gender')}</Text>
 
             <Pressable
                 style={[onboardingStyles.selectRow, { borderColor: props.theme.colors.border }]}

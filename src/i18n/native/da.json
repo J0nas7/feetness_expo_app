@@ -1,0 +1,6 @@
+{
+  "NSHealthShareUsageDescription": "Feetness læser sundhedsdata for at registrere din løbeaktivitet.",
+  "NSHealthUpdateUsageDescription": "Feetness gemmer træningsdata i Apple Sundhed.",
+  "NSLocationWhenInUseUsageDescription": "Tillad Feetness at bruge din lokalitet til at registrere dine træninger.",
+  "NSLocationAlwaysAndWhenInUseUsageDescription": "Tillad Feetness at bruge din lokalitet i baggrunden, mens en træning er aktiv."
+}

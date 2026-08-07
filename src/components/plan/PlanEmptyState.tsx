@@ -1,4 +1,5 @@
 import { MyTheme } from '@/types/theme';
+import { t } from '@/i18n';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import React from 'react';
@@ -16,8 +17,8 @@ export function PlanEmptyState({ onCreate }: { onCreate: () => void }) {
     });
     return <View style={styles.container}>
         <View style={styles.icon}><FontAwesome5 name="calendar-plus" size={30} color={theme.colors.primary} /></View>
-        <Text style={styles.title}>Din plan starter her</Text>
-        <Text style={styles.text}>Opret et månedligt mål for distance eller varighed, og hold fokus på din træning.</Text>
-        <Pressable style={styles.button} onPress={onCreate}><Text style={styles.buttonText}>Opret din første plan</Text></Pressable>
+        <Text style={styles.title}>{t('plan.empty')}</Text>
+        <Text style={styles.text}>{t('plan.emptyDescription')}</Text>
+        <Pressable style={styles.button} onPress={onCreate}><Text style={styles.buttonText}>{t('plan.create')}</Text></Pressable>
     </View>;
 }

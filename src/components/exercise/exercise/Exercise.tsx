@@ -2,6 +2,7 @@ import { createStyles } from '@/components/exercise/exercise/CreateStyles';
 import { GoalProgress } from '@/components/exercise/GoalProgress';
 import { loadPlans } from '@/components/plan/storage';
 import { useSpeech } from '@/hooks/useSpeech';
+import { activityName, t } from '@/i18n';
 import { OnboardingData, Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { hasBackgroundPermission, hasLocationPermission } from '@/utils/location/location';
@@ -21,7 +22,7 @@ import { ExerciseMap } from './ExerciseMap';
 import { CompactExerciseStats, ExerciseStats } from './ExerciseStats';
 
 export interface ExerciseProps {
-    exercise: "Cykling" | "Løb" | "Gågang";
+    exercise: "cycling" | "running" | "walking";
     goalAmount: number;
     goalMetric: "duration" | "distance";
 }
@@ -116,7 +117,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         } else if (applyingNativeCommandRef.current) {
             applyingNativeCommandRef.current = false;
         } else {
-            enqueueSpeech(isPaused ? 'Pause' : 'Fortsæt');
+            enqueueSpeech(t(isPaused ? 'common.actions.pause' : 'common.actions.resume'));
             setNativeWorkoutPaused(isPaused);
         }
     }, [isPaused]);
@@ -130,7 +131,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
             const shouldPause = command === 'pause';
             if (isPausedRef.current === shouldPause) return;
-            enqueueSpeech(shouldPause ? 'Pause' : 'Fortsæt');
+            enqueueSpeech(t(shouldPause ? 'common.actions.pause' : 'common.actions.resume'));
             setIsPaused(shouldPause);
         });
 
@@ -147,7 +148,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             const shouldPause = command === 'pause';
             if (isPausedRef.current === shouldPause) return;
             if (Platform.OS === 'ios') {
-                enqueueSpeech(shouldPause ? 'Pause' : 'Fortsæt');
+                enqueueSpeech(t(shouldPause ? 'common.actions.pause' : 'common.actions.resume'));
             }
             applyingNativeCommandRef.current = true;
             setIsPaused(shouldPause);
@@ -208,8 +209,14 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
             // Speak the message
             setTimeout(() => {
-                enqueueSpeech(props.exercise);
-                enqueueSpeech(`${props.goalAmount} ${(props.goalMetric === "distance" ? "kilometer" : "minutter")}`);
+                enqueueSpeech(activityName(props.exercise));
+                const unitKey = props.goalMetric === 'distance'
+                    ? (props.goalAmount === 1 ? 'kilometer' : 'kilometers')
+                    : (props.goalAmount === 1 ? 'minute' : 'minutes');
+                enqueueSpeech(t('exercise.speech.goal', {
+                    amount: props.goalAmount,
+                    unit: t(`exercise.speech.${unitKey}`),
+                }));
             }, 1000)
 
             return () => {
@@ -251,13 +258,13 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             let distanceInterval: number | null = null;
             let timeInterval: number | null = null;
 
-            if (props.exercise === "Cykling") {
+            if (props.exercise === "cycling") {
                 distanceInterval = 15; // Update every 15 meters for cycling
                 timeInterval = 5000; // Update every 5 seconds for cycling
-            } else if (props.exercise === "Løb") {
+            } else if (props.exercise === "running") {
                 distanceInterval = 5; // Update every 5 meters for running
                 timeInterval = 3000; // Update every 3 seconds for running
-            } else if (props.exercise === "Gågang") {
+            } else if (props.exercise === "walking") {
                 distanceInterval = 5; // Update every 5 meters for walking
                 timeInterval = 3000; // Update every 3 seconds for walking
             }
@@ -274,13 +281,13 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
             if (!foregroundGranted || !backgroundGranted) {
                 Alert.alert(
-                    'Location Permission Required',
+                    t('exercise.location.permissionTitle'),
                     Platform.OS === 'android'
-                        ? 'Feetness needs Location set to “Allow all the time” to track this workout with the screen locked.'
-                        : 'Feetness needs Always Location access to track this workout.',
+                        ? t('exercise.location.androidPermission')
+                        : t('exercise.location.iosPermission'),
                     [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Open Settings', onPress: () => void Linking.openSettings() },
+                        { text: t('common.actions.cancel'), style: 'cancel' },
+                        { text: t('exercise.location.openSettings'), onPress: () => void Linking.openSettings() },
                     ],
                 );
                 return;
@@ -292,15 +299,15 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 timeInterval: timeInterval,
                 showsBackgroundLocationIndicator: true,
                 foregroundService: {
-                    notificationTitle: 'Workout in progress',
-                    notificationBody: 'Tracking your route',
+                    notificationTitle: t('exercise.location.notificationTitle'),
+                    notificationBody: t('exercise.location.notificationBody'),
                 },
             });
         })().catch((error) => {
             console.error('Unable to start workout location tracking', error);
             Alert.alert(
-                'Location Tracking Unavailable',
-                'Feetness could not start location tracking. Check your location permissions and that Location is enabled.',
+                t('exercise.location.unavailableTitle'),
+                t('exercise.location.unavailableMessage'),
             );
         });
 
@@ -446,13 +453,13 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     }, []);
 
     const getMet = (exercise: string, paceMinPerKm: number) => {
-        if (exercise === "Gågang") {
+        if (exercise === "walking") {
             if (paceMinPerKm > 12) return 2.8;
             if (paceMinPerKm > 9) return 3.5;
             return 5.0;
         }
 
-        if (exercise === "Løb") {
+        if (exercise === "running") {
             const speedKmh = 60 / paceMinPerKm;
 
             if (speedKmh < 8) return 8.3;
@@ -461,7 +468,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             return 12.5;
         }
 
-        if (exercise === "Cykling") {
+        if (exercise === "cycling") {
             const speedKmh = 60 / paceMinPerKm;
 
             if (speedKmh < 15) return 4.5;
@@ -586,7 +593,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                         style={styles.closeMapButton}
                         onPress={() => setActiveView('summary')}
                         accessibilityRole="button"
-                        accessibilityLabel="Luk kortvisning"
+                        accessibilityLabel={t('exercise.closeMap')}
                     >
                         <FontAwesome5
                             name="times"
@@ -629,7 +636,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 ]}
                 onPress={() => setActiveView('map')}
                 accessibilityRole="button"
-                accessibilityLabel="Åbn kortvisning"
+                accessibilityLabel={t('exercise.openMap')}
             >
                 <FontAwesome5
                     name="expand-arrows-alt"
@@ -648,7 +655,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 style={[styles.goalSibling, styles.muteButton]}
                 onPress={toggleMute}
                 accessibilityRole="button"
-                accessibilityLabel={isMuted ? 'Slå stemmevejledning til' : 'Slå stemmevejledning fra'}
+                accessibilityLabel={t(isMuted ? 'exercise.enableVoice' : 'exercise.disableVoice')}
                 accessibilityState={{ checked: isMuted }}
             >
                 <FontAwesome6

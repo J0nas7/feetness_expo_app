@@ -1,4 +1,5 @@
 import { BigLogo } from '@/components/global/BigLogo';
+import { t } from '@/i18n';
 import { PageTitles } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { requestHealthDataPermissions } from '@/utils/requestHealthDataPermissions';
@@ -63,7 +64,7 @@ export const HealthDataPage: React.FC<HealthDataPageProps> = (props) => {
                 <BigLogo size={200} icon="❤️" />
 
                 <View>
-                    <Text style={styles.title}>Health</Text>
+                    <Text style={styles.title}>{t('onboarding.healthTitle')}</Text>
                     <Text style={styles.description}>
                         Back up your workout data in Apple Health
                     </Text>

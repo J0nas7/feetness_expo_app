@@ -24,7 +24,7 @@ const DEMO_WORKOUTS: Workout[] = Array.from({ length: 7 }).flatMap(
         );
 
         return Array.from({ length: workoutsThisMonth }).map((__, i) => {
-            const exerciseTypes = ['Løb', 'Cykling', 'Gågang'] as const;
+            const exerciseTypes = ['running', 'cycling', 'walking'] as const;
             const exercise =
                 exerciseTypes[Math.floor(Math.random() * exerciseTypes.length)];
 
@@ -38,8 +38,8 @@ const DEMO_WORKOUTS: Workout[] = Array.from({ length: 7 }).flatMap(
             return {
                 id: monthOffset * 10 + i,
                 exercise,
-                goalAmount: exercise === 'Cykling' ? 45 : 5,
-                goalMetric: exercise === 'Cykling' ? 'duration' : 'distance',
+                goalAmount: exercise === 'cycling' ? 45 : 5,
+                goalMetric: exercise === 'cycling' ? 'duration' : 'distance',
                 percentage: 80 + Math.floor(Math.random() * 50), // some fail, some pass
                 startTime: start.getTime(),
                 endTime: start.getTime(),

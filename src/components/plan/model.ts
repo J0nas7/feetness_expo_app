@@ -1,4 +1,10 @@
-export const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
+import { locale } from '@/i18n';
+
+const planLocale = locale === 'da' ? 'da-DK' : 'en-US';
+
+export const MONTHS = Array.from({ length: 12 }, (_, month) =>
+    new Intl.DateTimeFormat(planLocale, { month: 'short' }).format(new Date(2020, month, 1))
+);
 export const PERIOD_PATTERN = /^(0[1-9]|1[0-2])-(\d{4})$/;
 
 export type Metric = 'distance' | 'duration';
@@ -22,7 +28,9 @@ export const periodIndex = (period: string) => {
 
 export const formatPeriod = (period: string) => {
     const match = PERIOD_PATTERN.exec(period);
-    return match ? `${MONTHS[Number(match[1]) - 1]} ${match[2]}` : period;
+    return match
+        ? new Intl.DateTimeFormat(planLocale, { month: 'short', year: 'numeric' }).format(new Date(Number(match[2]), Number(match[1]) - 1, 1))
+        : period;
 };
 
 export const sortPlans = (plans: Plan[]) =>

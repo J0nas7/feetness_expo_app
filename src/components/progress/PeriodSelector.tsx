@@ -1,4 +1,5 @@
 import { MyTheme } from '@/types/theme'
+import { t } from '@/i18n'
 import { useTheme } from '@react-navigation/native'
 import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
@@ -41,7 +42,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = (props) => {
                         props.periodType === type && styles.periodOptionActive,
                     ]}
                 >
-                    {type.toUpperCase()}
+                    {t(`progress.period.selector.${type}`)}
                 </Text>
             ))}
         </View>

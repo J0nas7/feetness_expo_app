@@ -1,4 +1,5 @@
 import { createOnboardingStyles } from '@/styles/modules/OnboardingStyles';
+import { t } from '@/i18n';
 import { PageTitles } from '@/types';
 import { MyTheme } from '@/types/theme';
 import React, { useEffect, useRef, useState } from 'react';
@@ -61,7 +62,7 @@ export const FirstNamePage: React.FC<FirstNamePageProps> = (props) => {
                             color: props.theme.colors.text,
                             marginBottom: 20,
                         }}
-                        placeholder="First Name"
+                        placeholder={t('onboarding.firstName')}
                         placeholderTextColor={props.theme.colors.secondaryText}
                         value={localName}
                         onChangeText={setLocalName}

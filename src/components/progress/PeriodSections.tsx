@@ -1,4 +1,5 @@
 import { usePlans } from '@/components/plan/usePlans';
+import { activityName, locale, t } from '@/i18n';
 import { MyTheme } from '@/types/theme';
 import { ProgressPeriod, Workout } from '@/types/WorkoutDTO';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -14,9 +15,9 @@ import {
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 const EXERCISE_ICON: Record<string, string> = {
-    Løb: '🏃‍♂️',
-    Cykling: '🚴‍♀️',
-    Gågang: '🚶‍♂️',
+    running: '🏃‍♂️',
+    cycling: '🚴‍♀️',
+    walking: '🚶‍♂️',
 };
 
 interface PeriodSectionsProps {
@@ -139,9 +140,13 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
 
         const now = new Date();
 
+        const localeTag = locale === 'da' ? 'da-DK' : 'en-US';
         const periodTitle = props.isMonthPeriod(period)
-            ? new Date(period.year, period.month).toLocaleString('default', { month: 'long', year: 'numeric' })
-            : `Week ${String(period.week).padStart(2, '0')} (${new Date(period.workouts[0]?.startTime || now).toLocaleDateString()})`;
+            ? new Date(period.year, period.month).toLocaleString(localeTag, { month: 'long', year: 'numeric' })
+            : t('progress.period.week', {
+                week: String(period.week).padStart(2, '0'),
+                date: new Date(period.workouts[0]?.startTime || now).toLocaleDateString(localeTag),
+            });
 
         // Find three workouts that have the longest distance
         const longestDistanceWorkouts = [...period.workouts]
@@ -225,7 +230,9 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
                     <Text style={styles.summaryText}>
                         📏 {(totalDistance / 1000).toFixed(1)} km
                     </Text>
-                    <Text style={styles.summaryText}>🎯 {completedGoals} goals</Text>
+                    <Text style={styles.summaryText}>
+                        🎯 {t(completedGoals === 1 ? 'progress.summary.completedGoal' : 'progress.summary.completedGoals', { count: completedGoals })}
+                    </Text>
                 </View>
 
                 {monthlyPeriod && monthlyPlan && <Pressable
@@ -278,7 +285,7 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
 
                                 <View style={{ flex: 1 }}>
                                     <Text style={styles.workoutTitle}>
-                                        {workout.exercise} ·{' '}
+                                        {activityName(workout.exercise)} ·{' '}
                                         {workout.goalAmount}
                                         {workout.goalMetric === 'distance'
                                             ? ' km'

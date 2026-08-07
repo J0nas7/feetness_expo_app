@@ -45,7 +45,7 @@ struct ContentView: View {
                     .minimumScaleFactor(0.7)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text("Tryk for at lukke")
+                Text(localized("dismiss_hint"))
                     .font(.caption2)
                     .foregroundStyle(.white.opacity(0.7))
             }
@@ -54,7 +54,7 @@ struct ContentView: View {
         .contentShape(Rectangle())
         .onTapGesture { workout.dismissBucketAlert() }
         .accessibilityAddTraits(.isButton)
-        .accessibilityLabel("\(alert.title). \(alert.message). Tryk for at lukke")
+        .accessibilityLabel("\(alert.title). \(alert.message). \(localized("dismiss_hint"))")
     }
 
     private func bucketIcon(_ kind: String) -> String {
@@ -72,7 +72,7 @@ struct ContentView: View {
                 .foregroundStyle(.green)
             Text("Feetness")
                 .font(.headline)
-            Text("Start en træning på din iPhone")
+            Text(localized("start_on_iphone"))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -88,7 +88,7 @@ struct ContentView: View {
                     Circle()
                         .fill(workout.isPaused ? .yellow : workout.status == "finished" ? .gray : .green)
                         .frame(width: 7, height: 7)
-                    Text(workout.status == "finished" ? "Afsluttet" : workout.isPaused ? "På pause" : workout.exercise)
+                    Text(workout.status == "finished" ? localized("finished") : workout.isPaused ? localized("paused") : localizedExercise(workout.exercise))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -104,7 +104,7 @@ struct ContentView: View {
 
                 ProgressView(value: min(max(workout.percent / 100, 0), 1))
                     .tint(.green)
-                Text("\(Int(workout.percent.rounded())) % af mål")
+                Text(String(format: localized("goal_progress"), Int(workout.percent.rounded())))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -122,7 +122,7 @@ struct ContentView: View {
             Button {
                 workout.send(workout.isPaused ? "resume" : "pause")
             } label: {
-                Label(workout.isPaused ? "Fortsæt" : "Pause", systemImage: workout.isPaused ? "play.fill" : "pause.fill")
+                Label(workout.isPaused ? localized("resume") : localized("pause"), systemImage: workout.isPaused ? "play.fill" : "pause.fill")
                     .frame(maxWidth: .infinity)
             }
             .tint(workout.isPaused ? .green : .yellow)
@@ -131,7 +131,7 @@ struct ContentView: View {
             Button(role: .destructive) {
                 workout.send("stop")
             } label: {
-                Label("Stop", systemImage: "stop.fill")
+                Label(localized("stop"), systemImage: "stop.fill")
                     .frame(maxWidth: .infinity)
             }
             .disabled(!workout.isReachable)
@@ -143,7 +143,7 @@ struct ContentView: View {
 
     private var connectionLabel: some View {
         Label(
-            workout.isReachable ? "iPhone forbundet" : "Åbn Feetness på iPhone",
+            workout.isReachable ? localized("iphone_connected") : localized("open_on_iphone"),
             systemImage: workout.isReachable ? "iphone.radiowaves.left.and.right" : "iphone.slash"
         )
         .font(.caption2)
@@ -165,5 +165,14 @@ struct ContentView: View {
         guard pace.isFinite, pace > 0 else { return "–:––" }
         let minutes = Int(pace)
         return String(format: "%d:%02d", minutes, Int((pace - Double(minutes)) * 60))
+    }
+
+    private func localized(_ key: String) -> String {
+        NSLocalizedString(key, comment: "")
+    }
+
+    private func localizedExercise(_ exercise: String) -> String {
+        let keys = ["cycling": "cycling", "running": "running", "walking": "walking"]
+        return keys[exercise].map { localized($0) } ?? exercise
     }
 }

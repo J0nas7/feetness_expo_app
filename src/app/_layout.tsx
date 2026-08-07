@@ -1,4 +1,5 @@
 import { AppStateGate, OnboardingGate } from '@/components';
+import { t } from '@/i18n';
 import { MyTheme } from '@/types/theme';
 import '@/utils/location/workoutLocationTask';
 import { ActionSheetProvider } from '@expo/react-native-action-sheet';
@@ -21,10 +22,10 @@ export default function RootLayout() {
       onPress={() => router.back()}
       hitSlop={12}
       accessibilityRole="button"
-      accessibilityLabel="Gå tilbage"
+      accessibilityLabel={t('common.accessibility.goBack')}
     >
       <Text style={{ color: 'gray', fontWeight: 'bold' }}>
-        &lt; {title ?? `Tilbage`}
+        &lt; {title ?? t('common.actions.back')}
       </Text>
     </Pressable>
   );
@@ -83,8 +84,8 @@ export default function RootLayout() {
                   headerShown: true,
                   headerLeft: () => renderPlanHeaderLeft(),
                   title: (route.params as { copyFrom?: string } | undefined)?.copyFrom
-                    ? 'Kopiér plan'
-                    : 'Ny månedsplan',
+                    ? t('plan.navigation.copy')
+                    : t('plan.navigation.new'),
                 })}
               />
               <Stack.Screen
@@ -92,7 +93,7 @@ export default function RootLayout() {
                 options={{
                   headerShown: true,
                   headerLeft: () => renderPlanHeaderLeft(),
-                  title: 'Rediger plan',
+                  title: t('plan.navigation.edit'),
                 }}
               />
               <Stack.Screen
@@ -100,7 +101,7 @@ export default function RootLayout() {
                 options={{
                   headerShown: true,
                   headerLeft: () => renderPlanHeaderLeft(),
-                  title: 'Rediger planer',
+                  title: t('plan.navigation.editMultiple'),
                 }}
               />
               <Stack.Screen name="explore" options={{ headerShown: false }} />
@@ -108,8 +109,8 @@ export default function RootLayout() {
                 name="finished-exercise"
                 options={{
                   headerShown: true,      // show header
-                  title: 'Workout Complete', // custom title
-                  headerLeft: () => renderPlanHeaderLeft("Fremskridt"),
+                  title: t('exercise.workoutComplete'),
+                  headerLeft: () => renderPlanHeaderLeft(t('common.tabs.progress')),
                 }}
               />
             </Stack>

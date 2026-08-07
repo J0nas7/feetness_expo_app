@@ -1,0 +1,18 @@
+export default {
+  period: {
+    selector: { week: 'UGE', month: 'MÅNED' },
+    week: 'Uge {{week}} ({{date}})',
+    weekShort: 'U{{week}}',
+  },
+  metrics: {
+    workouts: 'Antal træninger',
+    distance: 'Samlet distance (km)',
+    duration: 'Samlet varighed (min)',
+    goals: 'Gennemførte mål',
+    pace: 'Gennemsnitstempo (min/km)',
+  },
+  summary: {
+    completedGoal: '{{count}} mål',
+    completedGoals: '{{count}} mål',
+  },
+} as const;

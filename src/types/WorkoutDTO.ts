@@ -1,4 +1,4 @@
-export type ExerciseType = "Cykling" | "Løb" | "Gågang";
+export type ExerciseType = "cycling" | "running" | "walking";
 export type GoalMetric = "duration" | "distance";
 
 export type Segment = {

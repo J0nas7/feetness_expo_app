@@ -1,0 +1,8 @@
+"goal" = "Goal: %d%%";
+"unknown_exercise" = "Unknown activity";
+"resume_workout" = "Resume workout";
+"pause_workout" = "Pause workout";
+"stop_workout" = "Stop workout";
+"cycling" = "Cycling";
+"running" = "Running";
+"walking" = "Walking";

@@ -1,4 +1,5 @@
 import { MyTheme } from '@/types/theme';
+import { locale, t } from '@/i18n';
 import { Workout } from '@/types/WorkoutDTO';
 import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -54,8 +55,10 @@ export function PlanCard({ plan, selected, bulkMode, onSelect, onCopy, onEdit, o
     const percentage = plan.goal > 0 ? completedAmount / plan.goal * 100 : 0;
     const displayedPercentage = Math.round(percentage);
     const progressWidth = `${Math.min(Math.max(percentage, 0), 100)}%` as `${number}%`;
-    const completedLabel = Number(completedAmount.toFixed(1));
-    const unit = plan.metric === 'distance' ? 'km' : 'timer';
+    const numberLocale = locale === 'da' ? 'da-DK' : 'en-US';
+    const completedLabel = completedAmount.toLocaleString(numberLocale, { maximumFractionDigits: 1 });
+    const goalLabel = plan.goal.toLocaleString(numberLocale, { maximumFractionDigits: 2 });
+    const unit = plan.metric === 'distance' ? 'km' : t('plan.card.hours');
     const styles = StyleSheet.create({
         wrapper: { marginBottom: 10, borderRadius: 14, overflow: 'hidden' },
         card: { flexDirection: 'row', height: cardHeight, padding: 15, borderRadius: 14, borderWidth: 2, borderColor: 'transparent', backgroundColor: theme.colors.background, alignItems: 'center' },
@@ -78,9 +81,9 @@ export function PlanCard({ plan, selected, bulkMode, onSelect, onCopy, onEdit, o
         <View style={styles.body}>
             <View style={styles.titleRow}>
                 <Text style={styles.title}>{formatPeriod(plan.period)}</Text>
-                {current && <View style={styles.badge}><Text style={styles.badgeText}>DENNE MÅNED</Text></View>}
+                {current && <View style={styles.badge}><Text style={styles.badgeText}>{t('plan.card.currentMonth')}</Text></View>}
             </View>
-            <Text style={styles.detail}>Mål: {plan.goal} {unit}</Text>
+            <Text style={styles.detail}>{t('plan.card.goal', { goal: goalLabel, unit })}</Text>
             {showProgress && <><View
                 style={styles.progressTrack}
                 accessibilityRole="progressbar"
@@ -88,14 +91,14 @@ export function PlanCard({ plan, selected, bulkMode, onSelect, onCopy, onEdit, o
             >
                 <View style={[styles.progressFill, { width: progressWidth }]} />
             </View>
-                <Text style={styles.progressText}>{completedLabel} / {plan.goal} {unit} · {displayedPercentage}%</Text></>}
+                <Text style={styles.progressText}>{completedLabel} / {goalLabel} {unit} · {displayedPercentage}%</Text></>}
         </View>
     </Pressable>;
 
     if (bulkMode) return <View style={styles.wrapper}>{card}</View>;
     return <Swipeable containerStyle={styles.wrapper} overshootRight={false} renderRightActions={() => <View style={styles.actions}>
-        <Pressable style={[styles.action, { backgroundColor: '#D99A00' }]} onPress={onCopy}><FontAwesome5 name="copy" size={17} color="#FFFFFF" /><Text style={styles.actionText}>Kopiér</Text></Pressable>
-        <Pressable style={[styles.action, { backgroundColor: '#2563EB' }]} onPress={onEdit}><FontAwesome5 name="pencil-alt" size={17} color="#FFFFFF" /><Text style={styles.actionText}>Rediger</Text></Pressable>
-        <Pressable style={[styles.action, { backgroundColor: theme.colors.notification }]} onPress={onDelete}><FontAwesome5 name="trash-alt" size={17} color="#FFFFFF" /><Text style={styles.actionText}>Slet</Text></Pressable>
+        <Pressable style={[styles.action, { backgroundColor: '#D99A00' }]} onPress={onCopy}><FontAwesome5 name="copy" size={17} color="#FFFFFF" /><Text style={styles.actionText}>{t('plan.card.copy')}</Text></Pressable>
+        <Pressable style={[styles.action, { backgroundColor: '#2563EB' }]} onPress={onEdit}><FontAwesome5 name="pencil-alt" size={17} color="#FFFFFF" /><Text style={styles.actionText}>{t('plan.card.edit')}</Text></Pressable>
+        <Pressable style={[styles.action, { backgroundColor: theme.colors.notification }]} onPress={onDelete}><FontAwesome5 name="trash-alt" size={17} color="#FFFFFF" /><Text style={styles.actionText}>{t('plan.card.delete')}</Text></Pressable>
     </View>}>{card}</Swipeable>;
 }

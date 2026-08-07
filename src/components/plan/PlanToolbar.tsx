@@ -1,4 +1,5 @@
 import { MyTheme } from '@/types/theme';
+import { t } from '@/i18n';
 import { useTheme } from '@react-navigation/native';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -14,10 +15,10 @@ export function PlanToolbar(props: Props) {
         action: { color: theme.colors.primary, fontWeight: '700' },
     });
     return <View style={styles.toolbar}>
-        <Text style={styles.title}>{props.bulkMode ? `${props.selectedCount} valgt` : 'Månedsplaner'}</Text>
+        <Text style={styles.title}>{props.bulkMode ? t('plan.toolbar.selected', { count: props.selectedCount }) : t('plan.title')}</Text>
         <View style={styles.actions}>
-            {props.bulkMode && <Pressable onPress={props.onToggleAll}><Text style={styles.action}>{props.allSelected ? 'Fravælg alle' : 'Vælg alle'}</Text></Pressable>}
-            {props.hasPlans && <Pressable onPress={props.onToggleBulkMode}><Text style={styles.action}>{props.bulkMode ? 'OK' : 'Rediger'}</Text></Pressable>}
+            {props.bulkMode && <Pressable onPress={props.onToggleAll}><Text style={styles.action}>{t(props.allSelected ? 'plan.toolbar.deselectAll' : 'plan.toolbar.selectAll')}</Text></Pressable>}
+            {props.hasPlans && <Pressable onPress={props.onToggleBulkMode}><Text style={styles.action}>{t(props.bulkMode ? 'plan.toolbar.done' : 'plan.toolbar.edit')}</Text></Pressable>}
         </View>
     </View>;
 }

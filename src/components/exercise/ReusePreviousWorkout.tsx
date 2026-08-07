@@ -1,4 +1,5 @@
 import { ExerciseType, GoalMetric, Workout } from '@/types';
+import { activityName, locale } from '@/i18n';
 import { MyTheme } from '@/types/theme';
 import { useTheme } from '@react-navigation/native';
 import React from 'react';
@@ -55,10 +56,10 @@ export const ReusePreviousWorkout: React.FC<Reuse & { item: Workout }> = (props)
             }}
         >
             <Text style={styles.savedWorkoutText}>
-                {props.item.exercise} – {workoutValue}
+                {activityName(props.item.exercise)} – {workoutValue}
             </Text>
             <Text style={styles.savedWorkoutDate}>
-                {new Date(props.item.id).toLocaleString()}
+                {new Date(props.item.id).toLocaleString(locale === 'da' ? 'da-DK' : 'en-US')}
             </Text>
         </Pressable>
     );

@@ -1,4 +1,5 @@
 import { MyTheme } from '@/types/theme';
+import { locale, t } from '@/i18n';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { router } from 'expo-router';
@@ -20,6 +21,9 @@ export function PlanFormScreen({ kind, planId, copyFrom, selectedIds = [] }: Pro
     const [bulkGoalMode, setBulkGoalMode] = useState<BulkGoalMode>('assign');
     const [bulkOperation, setBulkOperation] = useState<BulkOperation>('add');
     const isBulk = kind === 'bulk';
+    const formatSelectedPeriod = (selectedMonth: number, selectedYear: number) =>
+        new Intl.DateTimeFormat(locale === 'da' ? 'da-DK' : 'en-US', { month: 'long', year: 'numeric' })
+            .format(new Date(selectedYear, selectedMonth - 1, 1));
 
     useEffect(() => {
         loadPlans().then((storedPlans) => {
@@ -40,7 +44,7 @@ export function PlanFormScreen({ kind, planId, copyFrom, selectedIds = [] }: Pro
     const submit = async () => {
         const amount = Number(goal.replace(',', '.'));
         if (!goal.trim() || !Number.isFinite(amount) || amount <= 0) {
-            Alert.alert('Ugyldigt mål', 'Indtast et tal, der er større end 0.');
+            Alert.alert(t('plan.form.invalidGoalTitle'), t('plan.form.invalidGoalMessage'));
             return;
         }
 
@@ -48,7 +52,7 @@ export function PlanFormScreen({ kind, planId, copyFrom, selectedIds = [] }: Pro
             const ids = new Set(selectedIds);
             const nextGoal = (plan: Plan) => calculateBulkGoal(plan.goal, amount, bulkGoalMode, bulkOperation);
             if (plans.some((plan) => ids.has(plan.id) && nextGoal(plan) <= 0)) {
-                Alert.alert('Ugyldigt resultat', 'Ændringen ville give mindst én plan et mål på 0 eller mindre.');
+                Alert.alert(t('plan.form.invalidResultTitle'), t('plan.form.invalidResultMessage'));
                 return;
             }
             await savePlans(plans.map((plan) => ids.has(plan.id) ? { ...plan, metric, goal: Number(nextGoal(plan).toFixed(2)) } : plan));
@@ -58,7 +62,7 @@ export function PlanFormScreen({ kind, planId, copyFrom, selectedIds = [] }: Pro
 
         const period = `${String(month).padStart(2, '0')}-${year}`;
         if (plans.some((plan) => plan.period === period && plan.id !== planId)) {
-            Alert.alert('Planen findes allerede', `Der er allerede en plan for ${period}.`);
+            Alert.alert(t('plan.form.duplicateTitle'), t('plan.form.duplicateMessage', { period: formatSelectedPeriod(month, year) }));
             return;
         }
         const updatedPlan: Plan = { id: kind === 'edit' && planId ? planId : Date.now().toString(), period, metric, goal: amount };
@@ -66,9 +70,9 @@ export function PlanFormScreen({ kind, planId, copyFrom, selectedIds = [] }: Pro
         router.back();
     };
 
-    const remove = () => planId && Alert.alert('Slet plan?', 'Handlingen kan ikke fortrydes.', [
-        { text: 'Annuller', style: 'cancel' },
-        { text: 'Slet', style: 'destructive', onPress: async () => { await savePlans(plans.filter((plan) => plan.id !== planId)); router.back(); } },
+    const remove = () => planId && Alert.alert(t('plan.delete.title'), t('plan.delete.warning'), [
+        { text: t('common.actions.cancel'), style: 'cancel' },
+        { text: t('common.actions.delete'), style: 'destructive', onPress: async () => { await savePlans(plans.filter((plan) => plan.id !== planId)); router.back(); } },
     ]);
 
     const styles = StyleSheet.create({
@@ -82,7 +86,9 @@ export function PlanFormScreen({ kind, planId, copyFrom, selectedIds = [] }: Pro
 
     return <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-            <Text style={styles.intro}>{isBulk ? `${selectedIds.length} planer valgt` : copyFrom ? 'Mål og måleenhed er kopieret. Vælg måned for den nye plan.' : 'Vælg måned, måleenhed og mål.'}</Text>
+            <Text style={styles.intro}>{isBulk
+                ? t(selectedIds.length === 1 ? 'plan.form.selected' : 'plan.form.selectedPlural', { count: selectedIds.length })
+                : copyFrom ? t('plan.form.copiedIntro') : t('plan.form.defaultIntro')}</Text>
             <PlanFormFields
                 month={month} year={year} metric={metric} goal={goal} isBulk={isBulk}
                 bulkGoalMode={bulkGoalMode} bulkOperation={bulkOperation}
@@ -90,11 +96,13 @@ export function PlanFormScreen({ kind, planId, copyFrom, selectedIds = [] }: Pro
                 onBulkGoalModeChange={setBulkGoalMode} onBulkOperationChange={setBulkOperation}
             />
             <Pressable style={styles.save} onPress={submit}>
-                <Text style={styles.saveText}>{isBulk ? `Opdater ${selectedIds.length} planer` : kind === 'edit' ? 'Gem ændringer' : `Opret plan for ${String(month).padStart(2, '0')}-${year}`}</Text>
+                <Text style={styles.saveText}>{isBulk
+                    ? t(selectedIds.length === 1 ? 'plan.form.update' : 'plan.form.updatePlural', { count: selectedIds.length })
+                    : kind === 'edit' ? t('plan.form.saveChanges') : t('plan.form.createFor', { period: formatSelectedPeriod(month, year) })}</Text>
             </Pressable>
             {kind === 'edit' && <Pressable style={styles.delete} onPress={remove}>
                 <FontAwesome5 name="trash-alt" size={16} color={theme.colors.notification} />
-                <Text style={styles.deleteText}>Slet plan</Text>
+                <Text style={styles.deleteText}>{t('plan.form.deletePlan')}</Text>
             </Pressable>}
         </ScrollView>
     </KeyboardAvoidingView>;

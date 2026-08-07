@@ -1,4 +1,5 @@
 import { Controls, Map } from '@/components/startpage';
+import { activityName } from '@/i18n';
 import { createStartpageStyles } from '@/styles/modules/StartpageStyles';
 import { ExerciseType, GoalMetric, Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
@@ -18,7 +19,7 @@ export default function StartScreen() {
     const [mode, setMode] = useState<GoalMetric>('distance');
     const [distance, setDistance] = useState(5);   // km
     const [duration, setDuration] = useState(30);  // min
-    const [activity, setActivity] = useState<ExerciseType>('Cykling');
+    const [activity, setActivity] = useState<ExerciseType>('cycling');
     const [activityModalVisible, setActivityModalVisible] = useState(false);
     const [savedWorkouts, setSavedWorkouts] = useState<Workout[]>([]);
     const [showCustom, setShowCustom] = useState(true); // toggler
@@ -173,16 +174,16 @@ export default function StartScreen() {
                 />
 
                 <View style={styles.modalContainer}>
-                    {['Cykling', 'Løb', 'Gågang'].map((item) => (
+                    {(['cycling', 'running', 'walking'] as ExerciseType[]).map((item) => (
                         <Pressable
                             key={item}
                             style={styles.modalItem}
                             onPress={() => {
-                                setActivity(item as any);
+                                setActivity(item);
                                 setActivityModalVisible(false);
                             }}
                         >
-                            <Text style={styles.modalItemText}>{item}</Text>
+                            <Text style={styles.modalItemText}>{activityName(item)}</Text>
                         </Pressable>
                     ))}
                 </View>

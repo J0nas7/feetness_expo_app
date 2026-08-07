@@ -1,4 +1,5 @@
 import { MyTheme } from '@/types/theme';
+import { t } from '@/i18n';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import React from 'react';
@@ -46,20 +47,20 @@ export function PlanFormFields(props: Props) {
         hint: { color: theme.colors.tertiaryText, fontSize: 13, lineHeight: 18, marginTop: 10 },
     });
     const operations: { value: BulkOperation; label: string }[] = [
-        { value: 'add', label: 'Læg til' },
-        { value: 'subtract', label: 'Træk fra' },
-        { value: 'increasePercent', label: 'Forøg med %' },
-        { value: 'decreasePercent', label: 'Reducer med %' },
+        { value: 'add', label: t('plan.form.fields.add') },
+        { value: 'subtract', label: t('plan.form.fields.subtract') },
+        { value: 'increasePercent', label: t('plan.form.fields.increasePercent') },
+        { value: 'decreasePercent', label: t('plan.form.fields.decreasePercent') },
     ];
     const isPercent = props.bulkOperation === 'increasePercent' || props.bulkOperation === 'decreasePercent';
 
     return <>
         {!props.isBulk && <View style={styles.section}>
-            <Text style={styles.title}>Måned og år</Text>
+            <Text style={styles.title}>{t('plan.form.fields.monthYear')}</Text>
             <View style={styles.yearRow}>
-                <Pressable style={styles.yearButton} onPress={() => props.onYearChange(props.year - 1)} accessibilityLabel="Forrige år"><FontAwesome5 name="minus" size={14} color={theme.colors.text} /></Pressable>
+                <Pressable style={styles.yearButton} onPress={() => props.onYearChange(props.year - 1)} accessibilityLabel={t('plan.form.fields.previousYear')}><FontAwesome5 name="minus" size={14} color={theme.colors.text} /></Pressable>
                 <Text style={styles.yearText}>{props.year}</Text>
-                <Pressable style={styles.yearButton} onPress={() => props.onYearChange(props.year + 1)} accessibilityLabel="Næste år"><FontAwesome5 name="plus" size={14} color={theme.colors.text} /></Pressable>
+                <Pressable style={styles.yearButton} onPress={() => props.onYearChange(props.year + 1)} accessibilityLabel={t('plan.form.fields.nextYear')}><FontAwesome5 name="plus" size={14} color={theme.colors.text} /></Pressable>
             </View>
             <View style={styles.monthGrid}>{MONTHS.map((name, index) => {
                 const selected = props.month === index + 1;
@@ -70,21 +71,21 @@ export function PlanFormFields(props: Props) {
         </View>}
 
         <View style={styles.section}>
-            <Text style={styles.title}>Planens måleenhed</Text>
-            <View style={styles.segmented}>{([['distance', 'road', 'Distance'], ['duration', 'clock', 'Varighed']] as const).map(([value, icon, label]) => {
+            <Text style={styles.title}>{t('plan.form.fields.unitTitle')}</Text>
+            <View style={styles.segmented}>{([['distance', 'road'], ['duration', 'clock']] as const).map(([value, icon]) => {
                 const selected = props.metric === value;
                 return <Pressable key={value} style={[styles.segment, selected && styles.selectedButton]} onPress={() => props.onMetricChange(value)}>
                     <FontAwesome5 name={icon} size={15} color={selected ? theme.colors.onPrimary : theme.colors.tertiaryText} />
-                    <Text style={[styles.buttonText, selected && styles.selectedText]}>{label}</Text>
+                    <Text style={[styles.buttonText, selected && styles.selectedText]}>{t(`plan.form.fields.${value}`)}</Text>
                 </Pressable>;
             })}</View>
         </View>
 
         {props.isBulk && <View style={styles.section}>
-            <Text style={styles.title}>Sådan ændres målet</Text>
+            <Text style={styles.title}>{t('plan.form.fields.changeMethod')}</Text>
             <View style={styles.segmented}>
-                {([['assign', 'Samme mål'], ['relative', 'Relativ ændring']] as const).map(([value, label]) => <Pressable key={value} style={[styles.segment, props.bulkGoalMode === value && styles.selectedButton]} onPress={() => props.onBulkGoalModeChange(value)}>
-                    <Text style={[styles.buttonText, props.bulkGoalMode === value && styles.selectedText]}>{label}</Text>
+                {(['assign', 'relative'] as const).map((value) => <Pressable key={value} style={[styles.segment, props.bulkGoalMode === value && styles.selectedButton]} onPress={() => props.onBulkGoalModeChange(value)}>
+                    <Text style={[styles.buttonText, props.bulkGoalMode === value && styles.selectedText]}>{t(`plan.form.fields.${value}`)}</Text>
                 </Pressable>)}
             </View>
             {props.bulkGoalMode === 'relative' && <View style={styles.operations}>{operations.map((operation) => <Pressable key={operation.value} style={[styles.operation, props.bulkOperation === operation.value && styles.operationSelected]} onPress={() => props.onBulkOperationChange(operation.value)}>
@@ -93,12 +94,12 @@ export function PlanFormFields(props: Props) {
         </View>}
 
         <View style={styles.section}>
-            <Text style={styles.title}>{props.isBulk && props.bulkGoalMode === 'relative' ? 'Ændring' : 'Planens mål'}</Text>
+            <Text style={styles.title}>{t(props.isBulk && props.bulkGoalMode === 'relative' ? 'plan.form.fields.change' : 'plan.form.fields.goal')}</Text>
             <View style={styles.amount}>
                 <TextInput style={styles.input} keyboardType="decimal-pad" value={props.goal} onChangeText={props.onGoalChange} placeholder="0" placeholderTextColor={theme.colors.tertiaryText} returnKeyType="done" />
-                <Text style={styles.unit}>{props.isBulk && props.bulkGoalMode === 'relative' && isPercent ? '%' : props.metric === 'distance' ? 'km' : 'timer'}</Text>
+                <Text style={styles.unit}>{props.isBulk && props.bulkGoalMode === 'relative' && isPercent ? '%' : props.metric === 'distance' ? 'km' : t('plan.form.fields.hours')}</Text>
             </View>
-            {props.isBulk && <Text style={styles.hint}>{props.bulkGoalMode === 'assign' ? 'Alle valgte planer får det samme mål og den valgte måleenhed.' : 'Ændringen beregnes ud fra hver plans nuværende mål.'}</Text>}
+            {props.isBulk && <Text style={styles.hint}>{t(props.bulkGoalMode === 'assign' ? 'plan.form.fields.assignHint' : 'plan.form.fields.relativeHint')}</Text>}
         </View>
     </>;
 }

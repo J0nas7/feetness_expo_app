@@ -1,4 +1,5 @@
 import { MyTheme } from '@/types/theme';
+import { locale, t } from '@/i18n';
 import { ProgressPeriod } from '@/types/WorkoutDTO';
 import { useTheme } from '@react-navigation/native';
 import React, { useEffect, useRef } from 'react';
@@ -49,11 +50,11 @@ export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = (props)
     const maxBarValue = Math.max(...values, 1);
 
     const metricLabel: Record<BarMetric, string> = {
-        workouts: 'Number of Workouts',
-        distance: 'Total Distance (km)',
-        duration: 'Total Duration (min)',
-        goals: 'Goals Completed',
-        pace: 'Average Pace (min/km)',
+        workouts: t('progress.metrics.workouts'),
+        distance: t('progress.metrics.distance'),
+        duration: t('progress.metrics.duration'),
+        goals: t('progress.metrics.goals'),
+        pace: t('progress.metrics.pace'),
     };
 
     // Create a ref array for animated heights and labels
@@ -196,9 +197,9 @@ export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = (props)
 
                                 <Text style={styles.barLabel}>
                                     {m.week !== undefined
-                                        ? `W${String(m.week).padStart(2, '0')}` // Week format
+                                        ? t('progress.period.weekShort', { week: String(m.week).padStart(2, '0') })
                                         : m.month !== undefined
-                                            ? new Date(m.year, m.month).toLocaleString('default', { month: 'short' }) // Month format
+                                            ? new Date(m.year, m.month).toLocaleString(locale === 'da' ? 'da-DK' : 'en-US', { month: 'short' })
                                             : ''}
                                 </Text>
                             </View>

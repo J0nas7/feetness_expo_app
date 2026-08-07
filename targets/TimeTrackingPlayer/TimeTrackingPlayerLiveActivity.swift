@@ -12,9 +12,9 @@ import SwiftUI
 @available(iOS 16.2, *)
 struct TimeTrackingPlayerLiveActivity: Widget {
     var exerciseIcons = [
-        "Cykling": "figure.outdoor.cycle",
-        "Løb": "figure.run",
-        "Gågang": "figure.walk"
+        "cycling": "figure.outdoor.cycle",
+        "running": "figure.run",
+        "walking": "figure.walk"
     ]
 
     var body: some WidgetConfiguration {
@@ -42,7 +42,7 @@ struct TimeTrackingPlayerLiveActivity: Widget {
                     }
 
                     HStack {
-                        Text("Mål: \(Int(context.state.percent))%")
+                        Text(String(format: localized("goal"), Int(context.state.percent)))
                             .font(.system(size: 18))
                             .foregroundColor(.gray)
 
@@ -59,11 +59,11 @@ struct TimeTrackingPlayerLiveActivity: Widget {
 
                 VStack(alignment: .trailing) {
                     HStack {
-                        Image(systemName: exerciseIcons[context.state.exercise ?? "Ukendt øvelse"] ?? "figure.run")
+                        Image(systemName: exerciseIcons[context.state.exercise ?? ""] ?? "figure.run")
                             .foregroundColor(.green)
 
                         VStack(alignment: .trailing) {
-                            Text("\(context.state.exercise ?? "Ukendt øvelse")")
+                            Text(localizedExercise(context.state.exercise))
                                 .font(.system(size: 18))
                                 .foregroundColor(.gray)
 
@@ -113,20 +113,20 @@ struct TimeTrackingPlayerLiveActivity: Widget {
                     controlIcon("play.fill", color: .green)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Fortsæt træning")
+                .accessibilityLabel(localized("resume_workout"))
             } else {
                 Button(intent: PauseWorkoutIntent()) {
                     controlIcon("pause.fill", color: .orange)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Pause træning")
+                .accessibilityLabel(localized("pause_workout"))
             }
 
             Button(intent: StopWorkoutIntent()) {
                 controlIcon("stop.fill", color: .red)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Stop træning")
+            .accessibilityLabel(localized("stop_workout"))
         }
     }
 
@@ -138,6 +138,14 @@ struct TimeTrackingPlayerLiveActivity: Widget {
                 Image(systemName: systemName)
                     .foregroundColor(.white)
             )
+    }
+
+    private func localized(_ key: String) -> String { NSLocalizedString(key, comment: "") }
+
+    private func localizedExercise(_ exercise: String?) -> String {
+        let keys = ["cycling": "cycling", "running": "running", "walking": "walking"]
+        guard let exercise else { return localized("unknown_exercise") }
+        return keys[exercise].map { localized($0) } ?? exercise
     }
 }
 

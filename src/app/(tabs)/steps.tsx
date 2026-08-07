@@ -2,6 +2,7 @@
 // DEMO VERSION – custom bar chart (no chart-kit, no HealthKit)
 
 import { MyTheme } from '@/types/theme';
+import { locale, t } from '@/i18n';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import React, { useEffect, useRef } from 'react';
 import { Animated as RNAnimated, StyleSheet, Text, View } from 'react-native';
@@ -13,7 +14,7 @@ const STEP_GOAL = 5000;
 // ---------------- Demo Data ----------------
 const demoStepsToday = 3842;
 const demoDistanceKm = 2.97;
-const demoFloors = 6;
+const demoFloors: number = 6;
 
 // Past 7 days, excluding today (oldest → newest)
 const demoWeeklySteps = [4200, 5100, 3100, 6100, 4800, 7200, 5600];
@@ -70,7 +71,7 @@ export default function StepCounterView() {
                 <View style={styles.metrics}>
                     <View style={styles.metric}>
                         <Text style={styles.metricIcon}>📍</Text>
-                        <Text style={styles.metricValue}>{demoDistanceKm.toFixed(2)} km</Text>
+                        <Text style={styles.metricValue}>{demoDistanceKm.toLocaleString(locale === 'da' ? 'da-DK' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} km</Text>
                     </View>
                     <View style={styles.metric}>
                         <Text style={styles.metricIcon}>🏁</Text>
@@ -78,7 +79,7 @@ export default function StepCounterView() {
                     </View>
                     <View style={styles.metric}>
                         <Text style={styles.metricIcon}>👣</Text>
-                        <Text style={styles.metricValue}>{demoFloors} floors</Text>
+                        <Text style={styles.metricValue}>{t(demoFloors === 1 ? 'steps.floor' : 'steps.floors', { count: demoFloors })}</Text>
                     </View>
                 </View>
 
@@ -163,7 +164,9 @@ const StepsCircle: React.FC<StepsCircleProps> = ({ steps, goal }) => {
                     originY={radius + strokeWidth}
                 />
             </Svg>
-            <Text style={styles.circleText}>{steps.toLocaleString()} steps</Text>
+            <Text style={styles.circleText}>
+                {t(steps === 1 ? 'steps.step' : 'steps.steps', { count: steps.toLocaleString(locale === 'da' ? 'da-DK' : 'en-US') })}
+            </Text>
         </View>
     );
 };
@@ -231,7 +234,7 @@ const StepsBarChart: React.FC<{ values: number[] }> = ({ values }) => {
 
     return (
         <View style={styles.chartArea}>
-            <Text style={styles.chartTitle}>Last 7 days</Text>
+            <Text style={styles.chartTitle}>{t('steps.lastSevenDays')}</Text>
             <View style={styles.chart}>
                 {values.map((v, idx) => (
                     <View key={idx} style={styles.barWrapper}>
@@ -250,7 +253,7 @@ const StepsBarChart: React.FC<{ values: number[] }> = ({ values }) => {
                             ]}
                         />
 
-                        <Text style={styles.barLabel}>{7 - idx}d</Text>
+                        <Text style={styles.barLabel}>{t('steps.daysAgo', { count: 7 - idx })}</Text>
                     </View>
                 ))}
             </View>

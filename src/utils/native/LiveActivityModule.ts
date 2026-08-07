@@ -1,4 +1,5 @@
 import { EmitterSubscription, NativeEventEmitter, NativeModules, Platform } from 'react-native';
+import { activityName } from '@/i18n';
 
 const { TimeTracking } = NativeModules;
 const { BackgroundSpeechAndroid } = NativeModules;
@@ -22,7 +23,7 @@ interface UpdateLiveActivityParams {
     timeSpend: string;
     percent: number;
     pace: number;
-    exercise?: "Cykling" | "Løb" | "Gågang";
+    exercise?: "cycling" | "running" | "walking";
     goalAmount?: number;
     goalMetric?: "min" | "km";
 }
@@ -69,7 +70,7 @@ export function isNativeWorkoutPaused(): boolean {
 }
 
 interface AndroidWorkoutNotificationParams {
-    exercise: "Cykling" | "Løb" | "Gågang";
+    exercise: "cycling" | "running" | "walking";
     distanceKm: number;
     elapsedSeconds: number;
     percent: number;
@@ -84,14 +85,14 @@ export function startAndroidWorkoutNotification(
     goalMetric: AndroidWorkoutNotificationParams['goalMetric'],
 ) {
     if (Platform.OS === 'android' && BackgroundSpeechAndroid?.startWorkout) {
-        BackgroundSpeechAndroid.startWorkout(exercise, goalAmount, goalMetric);
+        BackgroundSpeechAndroid.startWorkout(activityName(exercise), goalAmount, goalMetric);
     }
 }
 
 export function updateAndroidWorkoutNotification(params: AndroidWorkoutNotificationParams) {
     if (Platform.OS === 'android' && BackgroundSpeechAndroid?.updateWorkout) {
         BackgroundSpeechAndroid.updateWorkout(
-            params.exercise,
+            activityName(params.exercise),
             params.distanceKm,
             params.elapsedSeconds,
             params.percent,
