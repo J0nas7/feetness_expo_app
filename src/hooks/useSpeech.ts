@@ -9,6 +9,13 @@ type ProgressUpdate = {
     workoutPercentage: number;
 };
 
+export type ProgressBucketUpdate = {
+    kind: 'workoutGoal' | 'distance' | 'monthPlan';
+    title: string;
+    message: string;
+    displayMessage: string;
+};
+
 const estimatedSpeechDuration = (text: string) => {
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
     return Math.max(1400, wordCount * 480 + 600);
@@ -92,6 +99,7 @@ export function useSpeech() {
     }, []);
 
     const speakProgressUpdates = useCallback((update: ProgressUpdate) => {
+        const bucketUpdates: ProgressBucketUpdate[] = [];
         const timeBucket = Math.floor(update.elapsed / 300);
         if (timeBucket > lastTimeBucketRef.current) {
             lastTimeBucketRef.current = timeBucket;
@@ -111,17 +119,31 @@ export function useSpeech() {
         const percentageBucket = Math.floor(update.workoutPercentage / 20);
         if (percentageBucket > 0 && percentageBucket > lastWorkoutPercentageBucketRef.current) {
             lastWorkoutPercentageBucketRef.current = percentageBucket;
-            enqueueSpeech(`Du har nået ${percentageBucket * 20} procent af dit mål.`);
+            const message = `Du har nået ${percentageBucket * 20} procent af dit mål.`;
+            enqueueSpeech(message);
+            bucketUpdates.push({
+                kind: 'workoutGoal',
+                title: 'Mål-fremskridt',
+                message,
+                displayMessage: `Du har nået\n${percentageBucket * 20} procent\naf dit mål`,
+            });
         }
 
         const distanceBucket = Math.floor(update.distance / 1000);
         if (distanceBucket > 0 && distanceBucket > lastDistanceBucketRef.current) {
             lastDistanceBucketRef.current = distanceBucket;
-            enqueueSpeech(`Du har nået ${distanceBucket} kilometer.`);
+            const message = `Du har nået ${distanceBucket} kilometer.`;
+            enqueueSpeech(message);
+            bucketUpdates.push({
+                kind: 'distance',
+                title: 'Distance',
+                message,
+                displayMessage: `Du har nået\n${distanceBucket} kilometer`,
+            });
         }
 
         const monthPlan = monthPlanRef.current;
-        if (!monthPlan || monthPlan.goal <= 0) return;
+        if (!monthPlan || monthPlan.goal <= 0) return bucketUpdates;
         const currentWorkoutAmount = monthPlan.metric === 'distance'
             ? update.distance / 1000
             : update.elapsed / 3600;
@@ -129,8 +151,17 @@ export function useSpeech() {
         const monthBucket = Math.floor(Math.min(completedAmount / monthPlan.goal * 100, 100) / 10);
         if (monthBucket > 0 && monthBucket > lastMonthPlanBucketRef.current) {
             lastMonthPlanBucketRef.current = monthBucket;
-            enqueueSpeech(`Du har nået ${monthBucket * 10} procent af din månedsplan.`);
+            const message = `Du har nået ${monthBucket * 10} procent af din månedsplan.`;
+            enqueueSpeech(message);
+            bucketUpdates.push({
+                kind: 'monthPlan',
+                title: 'Månedsplan',
+                message,
+                displayMessage: `Du har nået\n${monthBucket * 10} procent\naf din månedsplan`,
+            });
         }
+
+        return bucketUpdates;
     }, [enqueueSpeech]);
 
     return {

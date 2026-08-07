@@ -4,12 +4,64 @@ struct ContentView: View {
     @EnvironmentObject private var workout: WatchWCManager
 
     var body: some View {
-        Group {
-            if workout.isActive || workout.status == "finished" {
-                workoutView
-            } else {
-                waitingView
+        ZStack {
+            Group {
+                if workout.isActive || workout.status == "finished" {
+                    workoutView
+                } else {
+                    waitingView
+                }
             }
+
+            if let alert = workout.bucketAlert {
+                bucketOverlay(alert)
+                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
+                    .zIndex(1)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: workout.bucketAlert)
+    }
+
+    private func bucketOverlay(_ alert: WatchBucketAlert) -> some View {
+        ZStack {
+            Color.black
+            .ignoresSafeArea()
+
+            VStack(spacing: 7) {
+                Image(systemName: bucketIcon(alert.kind))
+                    .font(.system(size: 32, weight: .semibold))
+                    .foregroundStyle(.green)
+
+                Text(alert.title)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+
+                Text(alert.displayMessage)
+                    .font(.callout)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(4)
+                    .minimumScaleFactor(0.7)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("Tryk for at lukke")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+            .padding()
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { workout.dismissBucketAlert() }
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel("\(alert.title). \(alert.message). Tryk for at lukke")
+    }
+
+    private func bucketIcon(_ kind: String) -> String {
+        switch kind {
+        case "distance": return "figure.run"
+        case "monthPlan": return "calendar"
+        default: return "target"
         }
     }
 

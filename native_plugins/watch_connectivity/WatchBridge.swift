@@ -21,7 +21,9 @@ private final class PhoneWatchSession: NSObject, WCSessionDelegate {
     guard WCSession.isSupported() else { return }
 
     let session = WCSession.default
-    guard session.activationState == .activated else { return }
+    guard session.activationState == .activated,
+          session.isPaired,
+          session.isWatchAppInstalled else { return }
 
     do {
       try session.updateApplicationContext(snapshot)
@@ -33,6 +35,10 @@ private final class PhoneWatchSession: NSObject, WCSessionDelegate {
       session.sendMessage(snapshot, replyHandler: nil) { error in
         print("Unable to send live Watch workout update: \(error)")
       }
+    }
+
+    if snapshot["bucketUpdates"] != nil {
+      session.transferUserInfo(snapshot)
     }
   }
 

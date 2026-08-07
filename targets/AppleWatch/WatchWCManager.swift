@@ -1,6 +1,15 @@
 import Foundation
 import Combine
 import WatchConnectivity
+import WatchKit
+
+struct WatchBucketAlert: Identifiable, Equatable {
+    let id: String
+    let kind: String
+    let title: String
+    let message: String
+    let displayMessage: String
+}
 
 @MainActor
 final class WatchWCManager: NSObject, ObservableObject {
@@ -16,6 +25,11 @@ final class WatchWCManager: NSObject, ObservableObject {
     @Published private(set) var goalAmount = 0.0
     @Published private(set) var goalMetric = "distance"
     @Published private(set) var isReachable = false
+    @Published private(set) var bucketAlert: WatchBucketAlert?
+
+    private var seenBucketIDs = Set<String>()
+    private var pendingBucketAlerts: [WatchBucketAlert] = []
+    private var bucketDismissTask: Task<Void, Never>?
 
     private override init() {
         super.init()
@@ -41,6 +55,53 @@ final class WatchWCManager: NSObject, ObservableObject {
         }
     }
 
+    func dismissBucketAlert() {
+        bucketDismissTask?.cancel()
+        bucketDismissTask = nil
+        bucketAlert = nil
+        showNextBucketAlert()
+    }
+
+    private func enqueueBucketAlerts(from message: [String: Any]) {
+        guard let updates = message["bucketUpdates"] as? [[String: Any]] else { return }
+
+        for update in updates {
+            guard let id = update["id"] as? String,
+                  let kind = update["kind"] as? String,
+                  let title = update["title"] as? String,
+                  let text = update["message"] as? String,
+                  let displayText = update["displayMessage"] as? String,
+                  let createdAt = update["createdAt"] as? Double,
+                  Date().timeIntervalSince1970 * 1_000 - createdAt < 30_000,
+                  seenBucketIDs.insert(id).inserted else { continue }
+
+            pendingBucketAlerts.append(
+                WatchBucketAlert(
+                    id: id,
+                    kind: kind,
+                    title: title,
+                    message: text,
+                    displayMessage: displayText
+                )
+            )
+        }
+
+        showNextBucketAlert()
+    }
+
+    private func showNextBucketAlert() {
+        guard bucketAlert == nil, !pendingBucketAlerts.isEmpty else { return }
+        bucketAlert = pendingBucketAlerts.removeFirst()
+        WKInterfaceDevice.current().play(.notification)
+
+        bucketDismissTask?.cancel()
+        bucketDismissTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 30_000_000_000)
+            guard !Task.isCancelled else { return }
+            self?.dismissBucketAlert()
+        }
+    }
+
     private func apply(_ message: [String: Any]) {
         guard let incomingStatus = message["status"] as? String else { return }
         status = incomingStatus
@@ -52,6 +113,7 @@ final class WatchWCManager: NSObject, ObservableObject {
         percent = message["percent"] as? Double ?? percent
         goalAmount = message["goalAmount"] as? Double ?? goalAmount
         goalMetric = message["goalMetric"] as? String ?? goalMetric
+        enqueueBucketAlerts(from: message)
     }
 }
 
@@ -81,5 +143,9 @@ extension WatchWCManager: WCSessionDelegate {
         didReceiveApplicationContext applicationContext: [String: Any]
     ) {
         Task { @MainActor in self.apply(applicationContext) }
+    }
+
+    nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
+        Task { @MainActor in self.apply(userInfo) }
     }
 }

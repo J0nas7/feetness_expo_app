@@ -12,6 +12,14 @@ export interface WatchWorkoutSnapshot {
     percent?: number;
     goalAmount?: number;
     goalMetric?: 'duration' | 'distance';
+    bucketUpdates?: {
+        id: string;
+        kind: 'workoutGoal' | 'distance' | 'monthPlan';
+        title: string;
+        message: string;
+        displayMessage: string;
+        createdAt: number;
+    }[];
 }
 
 const { WatchBridge } = NativeModules;

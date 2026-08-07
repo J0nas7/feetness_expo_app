@@ -341,6 +341,18 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             goalMetric: props.goalMetric === 'duration' ? 'min' : 'km',
         });
 
+        const bucketTimestamp = Date.now();
+        const bucketUpdates = speakProgressUpdates({
+            elapsed,
+            distance,
+            pace: paceRef.current,
+            workoutPercentage: percentageRef.current,
+        }).map((update, index) => ({
+            ...update,
+            id: `${bucketTimestamp}-${index}`,
+            createdAt: bucketTimestamp,
+        }));
+
         publishWatchWorkout({
             status: isPausedRef.current ? 'paused' : 'running',
             exercise: props.exercise,
@@ -351,13 +363,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             percent: percentageRef.current,
             goalAmount: props.goalAmount,
             goalMetric: props.goalMetric,
-        });
-
-        speakProgressUpdates({
-            elapsed,
-            distance,
-            pace: paceRef.current,
-            workoutPercentage: percentageRef.current,
+            bucketUpdates: bucketUpdates.length > 0 ? bucketUpdates : undefined,
         });
     }
 
