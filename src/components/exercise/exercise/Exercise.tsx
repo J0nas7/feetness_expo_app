@@ -7,8 +7,8 @@ import { MyTheme } from '@/types/theme';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
 import { hasBackgroundPermission, hasLocationPermission } from '@/utils/location/location';
-import { resetWorkoutStoreAndNotify, subscribeToWorkout } from '@/utils/location/workoutStore';
-import { endLiveActivity, startLiveActivity, updateLiveActivity } from '@/utils/native/LiveActivityModule';
+import { resetWorkoutLocationAnchor, resetWorkoutStoreAndNotify, subscribeToWorkout } from '@/utils/location/workoutStore';
+import { endLiveActivity, setNativeWorkoutPaused, startLiveActivity, subscribeToWorkoutCommands, updateLiveActivity } from '@/utils/native/LiveActivityModule';
 import { sendWorkoutUpdate } from '@/utils/native/WatchBridge';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
@@ -73,6 +73,9 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     const caloriesRef = React.useRef<number>(0);
     const activeStartTimeRef = React.useRef<number | null>(null);
     const totalActiveMsRef = React.useRef<number>(0);
+    const stopExerciseRef = React.useRef<() => Promise<void>>(async () => {});
+    const pauseStateInitializedRef = React.useRef(false);
+    const applyingNativeCommandRef = React.useRef(false);
 
     const prevLocationRef = React.useRef<Location.LocationObjectCoords | null>(null);
     const prevTimeRef = React.useRef<number | null>(null);
@@ -91,7 +94,36 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     useEffect(() => { paceRef.current = pace; }, [pace]);
     useEffect(() => { isPausedRef.current = isPaused }, [isPaused]);
 
-    useEffect(() => { workoutPausesOrStarts_Resumes() }, [isPaused]);
+    useEffect(() => {
+        workoutPausesOrStarts_Resumes();
+        resetWorkoutLocationAnchor();
+
+        if (!pauseStateInitializedRef.current) {
+            pauseStateInitializedRef.current = true;
+        } else if (applyingNativeCommandRef.current) {
+            applyingNativeCommandRef.current = false;
+        } else {
+            enqueueSpeech(isPaused ? 'Pause' : 'Fortsæt');
+            setNativeWorkoutPaused(isPaused);
+        }
+    }, [isPaused]);
+
+    useEffect(() => {
+        const subscription = subscribeToWorkoutCommands((command) => {
+            if (command === 'stop') {
+                void stopExerciseRef.current();
+                return;
+            }
+
+            const shouldPause = command === 'pause';
+            if (isPausedRef.current === shouldPause) return;
+            enqueueSpeech(shouldPause ? 'Pause' : 'Fortsæt');
+            applyingNativeCommandRef.current = true;
+            setIsPaused(shouldPause);
+        });
+
+        return () => subscription?.remove();
+    }, []);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -447,6 +479,8 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             console.error('Error stopping workout', error);
         }
     };
+
+    stopExerciseRef.current = stopExercise;
 
     return (
         <View style={styles.container}>

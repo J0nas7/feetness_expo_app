@@ -1,6 +1,11 @@
-import { NativeModules, Platform } from 'react-native';
+import { EmitterSubscription, NativeEventEmitter, NativeModules, Platform } from 'react-native';
 
 const { TimeTracking } = NativeModules;
+const workoutEventEmitter = Platform.OS === 'ios' && TimeTracking
+    ? new NativeEventEmitter(TimeTracking)
+    : null;
+
+export type WorkoutCommand = 'pause' | 'resume' | 'stop';
 
 export function startLiveActivity() {
     console.log("startLiveActivity TimeTracking Live Activity", TimeTracking)
@@ -41,4 +46,27 @@ export function endLiveActivity() {
         console.log("Ending TimeTracking Live Activity")
         TimeTracking.endActivity();
     }
+}
+
+export function setNativeWorkoutPaused(isPaused: boolean) {
+    if (Platform.OS === 'ios' && TimeTracking?.setWorkoutPaused) {
+        TimeTracking.setWorkoutPaused(isPaused);
+    }
+}
+
+export function isNativeWorkoutPaused(): boolean {
+    if (Platform.OS !== 'ios' || !TimeTracking?.isWorkoutPaused) return false;
+    return Boolean(TimeTracking.isWorkoutPaused());
+}
+
+export function subscribeToWorkoutCommands(
+    listener: (command: WorkoutCommand) => void,
+): EmitterSubscription | null {
+    if (!workoutEventEmitter) return null;
+
+    return workoutEventEmitter.addListener('workoutCommand', ({ command }) => {
+        if (command === 'pause' || command === 'resume' || command === 'stop') {
+            listener(command);
+        }
+    });
 }

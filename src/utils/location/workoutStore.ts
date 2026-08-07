@@ -145,6 +145,11 @@ export const resetWorkoutStore = () => {
     elevationGainTotal = 0;
 };
 
+export const resetWorkoutLocationAnchor = () => {
+    prevCoords = null;
+    prevTime = null;
+};
+
 /**
  * Reset store AND notify subscribers with empty data
  */

@@ -1,6 +1,7 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { storeLocationUpdate } from './workoutStore';
+import { isNativeWorkoutPaused } from '../native/LiveActivityModule';
 
 export const WORKOUT_LOCATION_TASK = 'WORKOUT_LOCATION_TASK';
 
@@ -15,6 +16,7 @@ TaskManager.defineTask(WORKOUT_LOCATION_TASK, async ({ data, error }) => {
     };
 
     if (!locations?.length) return;
+    if (isNativeWorkoutPaused()) return;
 
     for (const location of locations) {
         storeLocationUpdate(location);

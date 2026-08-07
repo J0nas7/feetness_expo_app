@@ -19,6 +19,7 @@ public struct TimeTrackingPlayerAttributes: ActivityAttributes {
         var exercise: String?
         var goalAmount: Double?
         var goalMetric: String?
+        var isPaused: Bool
     }
 
     // Fixed non-changing properties about your activity go here!

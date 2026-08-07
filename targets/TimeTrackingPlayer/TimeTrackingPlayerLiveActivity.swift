@@ -73,29 +73,7 @@ struct TimeTrackingPlayerLiveActivity: Widget {
                         }
                     }
 
-                    HStack {
-                        // Red button as a link
-                        Link(destination: URL(string: "feetness://endLiveActivity")!) {
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 44, height: 44)
-                                .overlay(
-                                    Image(systemName: "stop.fill")
-                                        .foregroundColor(.white)
-                                )
-                        }
-
-                        // Green button as a link
-                        Link(destination: URL(string: "feetness://startLiveActivity")!) {
-                            Circle()
-                                .fill(Color.green)
-                                .frame(width: 44, height: 44)
-                                .overlay(
-                                    Image(systemName: "play.fill")
-                                        .foregroundColor(.white)
-                                )
-                        }
-                    }
+                    workoutControls(isPaused: context.state.isPaused)
                 }
             }
             .padding(10)
@@ -113,7 +91,7 @@ struct TimeTrackingPlayerLiveActivity: Widget {
                     Text("Trailing")
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    Text("Bottom")
+                    workoutControls(isPaused: context.state.isPaused)
                 }
             } compactLeading: {
                 Text("L")
@@ -122,9 +100,44 @@ struct TimeTrackingPlayerLiveActivity: Widget {
             } minimal: {
                 Text("M")
             }
-            .widgetURL(URL(string: "feetness://endLiveActivity"))
+            .widgetURL(URL(string: "feetnessexpoapp://"))
             .keylineTint(Color.red)
         }
+    }
+
+    @ViewBuilder
+    private func workoutControls(isPaused: Bool) -> some View {
+        HStack(spacing: 14) {
+            if isPaused {
+                Button(intent: ResumeWorkoutIntent()) {
+                    controlIcon("play.fill", color: .green)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Fortsæt træning")
+            } else {
+                Button(intent: PauseWorkoutIntent()) {
+                    controlIcon("pause.fill", color: .orange)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Pause træning")
+            }
+
+            Button(intent: StopWorkoutIntent()) {
+                controlIcon("stop.fill", color: .red)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Stop træning")
+        }
+    }
+
+    private func controlIcon(_ systemName: String, color: Color) -> some View {
+        Circle()
+            .fill(color)
+            .frame(width: 44, height: 44)
+            .overlay(
+                Image(systemName: systemName)
+                    .foregroundColor(.white)
+            )
     }
 }
 
@@ -143,7 +156,8 @@ extension TimeTrackingPlayerAttributes.ContentState {
             pace: 0.0,
             exercise: "Ukendt øvelse",
             goalAmount: nil,
-            goalMetric: nil
+            goalMetric: nil,
+            isPaused: false
         )
      }
 }

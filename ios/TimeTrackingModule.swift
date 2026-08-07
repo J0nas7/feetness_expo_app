@@ -7,17 +7,57 @@
 
 import Foundation
 import ActivityKit
+import React
 
 @available(iOS 16.1, *)
 @objc(TimeTracking)
-class TimeTracking: NSObject {
+class TimeTracking: RCTEventEmitter {
 
   private var currentActivity: Activity<TimeTrackingPlayerAttributes>?
+  private var hasListeners = false
+
+  override init() {
+    super.init()
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleWorkoutCommand(_:)),
+      name: workoutCommandNotification,
+      object: nil
+    )
+  }
+
+  deinit {
+    NotificationCenter.default.removeObserver(self)
+  }
+
+  override static func requiresMainQueueSetup() -> Bool { true }
+
+  override func supportedEvents() -> [String]! { ["workoutCommand"] }
+
+  override func startObserving() {
+    hasListeners = true
+    if let command = WorkoutController.shared.pendingCommand {
+      sendEvent(withName: "workoutCommand", body: ["command": command])
+      WorkoutController.shared.clearPendingCommand()
+    }
+  }
+
+  override func stopObserving() { hasListeners = false }
+
+  @objc private func handleWorkoutCommand(_ notification: Notification) {
+    guard hasListeners, let command = notification.object as? String else { return }
+    DispatchQueue.main.async { [weak self] in
+      guard let self, self.hasListeners else { return }
+      self.sendEvent(withName: "workoutCommand", body: ["command": command])
+      WorkoutController.shared.clearPendingCommand()
+    }
+  }
 
   @objc(startActivity)
   func startActivity() {
     do {
       if #available(iOS 16.1, *) {
+        WorkoutController.shared.reset()
         let timeTrackingAttributes = TimeTrackingPlayerAttributes(name: "Time Tracking")
         let timeTrackingContentState = TimeTrackingPlayerAttributes.ContentState.init(
           distance: "0 km",
@@ -26,7 +66,8 @@ class TimeTracking: NSObject {
           pace: 0.0,
           exercise: nil,
           goalAmount: nil,
-          goalMetric: nil
+          goalMetric: nil,
+          isPaused: false
         )
 
         print("Swift Start TimeTracking Live Activity")
@@ -64,7 +105,8 @@ class TimeTracking: NSObject {
           pace: pace.doubleValue,
           exercise: exercise,
           goalAmount: goalAmount?.doubleValue,
-          goalMetric: goalMetric
+          goalMetric: goalMetric,
+          isPaused: WorkoutController.shared.isPaused
         )
 
         Task {
@@ -96,5 +138,17 @@ class TimeTracking: NSObject {
       }
     }
   }
-}
 
+  @objc(setWorkoutPaused:)
+  func setWorkoutPaused(_ paused: Bool) {
+    Task {
+      await WorkoutController.shared.setPaused(paused, notifyReact: false)
+      WorkoutController.shared.clearPendingCommand()
+    }
+  }
+
+  @objc(isWorkoutPaused)
+  func isWorkoutPaused() -> NSNumber {
+    NSNumber(value: WorkoutController.shared.isPaused)
+  }
+}

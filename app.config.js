@@ -66,6 +66,7 @@ export default {
         }
       ],
       "./native_plugins/withLiveActivitiesIOS",
+      "./native_plugins/withTimeTrackingModule",
       "./native_plugins/withAndroidSetup",
       "./native_plugins/android_speech/app.plugin.js",
       "@bacons/apple-targets",
