@@ -10,6 +10,26 @@ export const createStyles = (theme: MyTheme) =>
         mapContainer: {
             height: '60%', // Map takes 60% of the screen
         },
+        fullMapContainer: {
+            flex: 1,
+        },
+        closeMapButton: {
+            position: 'absolute',
+            right: 16,
+            bottom: 16,
+            zIndex: 11,
+            elevation: 11,
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: theme.colors.primary,
+            shadowColor: theme.colors.text,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+        },
         map: {
             width: '100%',
             height: '100%',
@@ -61,25 +81,35 @@ export const createStyles = (theme: MyTheme) =>
             zIndex: 10,
             elevation: 10, // Android
         },
-        muteButton: {
+        goalSibling: {
             position: 'absolute',
-            top: '60%',
+            top: '60%', // slightly above the split (70/30)
             left: '50%',
+            zIndex: 11,
+            elevation: 11, // Android
+
             width: 48,
             height: 48,
-            transform: [
-                { translateX: 82 },
-                { translateY: -24 },
-            ],
+
             borderRadius: 24,
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: theme.colors.primary,
-            zIndex: 11,
-            elevation: 11,
             shadowColor: theme.colors.text,
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.2,
             shadowRadius: 4,
+        },
+        mapButton: {
+            transform: [
+                { translateX: -130 },
+                { translateY: -24 },
+            ],
+        },
+        muteButton: {
+            transform: [
+                { translateX: 82 },
+                { translateY: -24 },
+            ],
         },
     })

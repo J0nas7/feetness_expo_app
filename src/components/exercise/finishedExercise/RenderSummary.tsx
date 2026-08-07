@@ -1,3 +1,4 @@
+import { createStyles } from '@/components/exercise/exercise/CreateStyles';
 import { GoalProgress } from '@/components/exercise/GoalProgress';
 import { Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
@@ -58,6 +59,8 @@ export const RenderSummary = ({
 
         return "#95a5a6";
     };
+
+    const createStyle = createStyles(theme);
 
     const styles = StyleSheet.create({
         container: {
@@ -172,9 +175,8 @@ export const RenderSummary = ({
 
     return (
         <View style={styles.container}>
-            <Pressable
+            <View
                 style={styles.mapContainer}
-                onPress={() => setActiveTab('map')}
             >
                 <View style={[styles.grid, styles.mapLegends]}>
                     <View style={styles.legendItem}>
@@ -238,13 +240,7 @@ export const RenderSummary = ({
                         </Text>
                     </View>
                 </View>
-                <View style={styles.gestureIndicate}>
-                    <FontAwesome5
-                        name="maximize"
-                        size={50}
-                        color={theme.colors.primary}
-                    />
-                </View>
+
                 <MapView
                     ref={mapRef}
                     style={styles.map}
@@ -282,7 +278,7 @@ export const RenderSummary = ({
                     locations={[0, 1]}
                     pointerEvents="none"
                 />
-            </Pressable>
+            </View>
             <View style={styles.statsContainer}>
                 <View style={styles.grid}>
                     <View style={styles.statItem}>
@@ -313,6 +309,21 @@ export const RenderSummary = ({
                     </View>
                 </View>
             </View>
+
+            <Pressable
+                style={[
+                    createStyle.goalSibling,
+                    createStyle.mapButton,
+                ]}
+                onPress={() => setActiveTab('map')}
+                accessibilityRole="button"
+            >
+                <FontAwesome5
+                    name="expand-arrows-alt"
+                    size={22}
+                    color={theme.colors.onPrimary}
+                />
+            </Pressable>
             <View style={styles.goalOverlay}>
                 <GoalProgress
                     percentage={workout.percentage}
@@ -320,6 +331,6 @@ export const RenderSummary = ({
                     goalMetric={workout.goalMetric}
                 />
             </View>
-        </View>
+        </View >
     )
 }

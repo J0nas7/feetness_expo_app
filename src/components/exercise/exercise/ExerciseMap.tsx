@@ -9,7 +9,8 @@ interface ExerciseMapProps {
     location: { latitude: number; longitude: number } | null;
     segments: { coords: { latitude: number; longitude: number }[]; pace: number }[];
     startPoint: { latitude: number; longitude: number } | undefined;
-    mapRef: React.RefObject<MapView | null>
+    mapRef: React.RefObject<MapView | null>;
+    showUserLocation: boolean;
 }
 
 export const ExerciseMap: React.FC<ExerciseMapProps> = (props) => {
@@ -29,8 +30,8 @@ export const ExerciseMap: React.FC<ExerciseMapProps> = (props) => {
             <MapView
                 ref={props.mapRef}
                 style={{ width: '100%', height: '100%' }}
-                followsUserLocation
-                showsUserLocation
+                followsUserLocation={props.showUserLocation}
+                showsUserLocation={props.showUserLocation}
                 region={{
                     latitude: props.location?.latitude || 0,
                     longitude: props.location?.longitude || 0,

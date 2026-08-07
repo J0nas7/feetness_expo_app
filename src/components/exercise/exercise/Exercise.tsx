@@ -4,12 +4,12 @@ import { loadPlans } from '@/components/plan/storage';
 import { useSpeech } from '@/hooks/useSpeech';
 import { OnboardingData, Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
-import { FontAwesome6 } from '@expo/vector-icons';
-import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
 import { hasBackgroundPermission, hasLocationPermission } from '@/utils/location/location';
+import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
 import { resetWorkoutLocationAnchor, resetWorkoutStoreAndNotify, subscribeToWorkout } from '@/utils/location/workoutStore';
 import { endAndroidWorkoutNotification, endLiveActivity, setNativeWorkoutPaused, startAndroidWorkoutNotification, startLiveActivity, subscribeToWorkoutCommands, updateAndroidWorkoutNotification, updateLiveActivity } from '@/utils/native/LiveActivityModule';
 import { publishWatchWorkout, subscribeToWatchWorkoutCommands } from '@/utils/native/WatchBridge';
+import { FontAwesome5, FontAwesome6 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import * as Location from 'expo-location';
@@ -29,6 +29,7 @@ export interface ExerciseProps {
 export const Exercise: React.FC<ExerciseProps> = (props) => {
     const theme = useTheme() as MyTheme;
     const { enqueueSpeech, isMuted, resetProgress, setMonthPlanProgress, speakProgressUpdates, start: startSpeech, stop: stopSpeech, toggleMute } = useSpeech();
+    const [activeView, setActiveView] = useState<'summary' | 'map'>('summary');
     const [isPaused, setIsPaused] = useState(false); // pause/resume
     const [startTime, setStartTime] = useState<number>(Date.now()); // Start time in milliseconds
     const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
@@ -73,7 +74,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     const caloriesRef = React.useRef<number>(0);
     const activeStartTimeRef = React.useRef<number | null>(null);
     const totalActiveMsRef = React.useRef<number>(0);
-    const stopExerciseRef = React.useRef<() => Promise<void>>(async () => {});
+    const stopExerciseRef = React.useRef<() => Promise<void>>(async () => { });
     const pauseStateInitializedRef = React.useRef(false);
     const applyingNativeCommandRef = React.useRef(false);
 
@@ -556,6 +557,34 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
     stopExerciseRef.current = stopExercise;
 
+    if (activeView === 'map') {
+        return (
+            <View style={styles.container}>
+                <View style={styles.fullMapContainer}>
+                    <ExerciseMap
+                        location={location}
+                        segments={segments}
+                        startPoint={startPoint}
+                        mapRef={mapRef}
+                        showUserLocation={false}
+                    />
+                </View>
+                <Pressable
+                    style={styles.closeMapButton}
+                    onPress={() => setActiveView('summary')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Luk kortvisning"
+                >
+                    <FontAwesome5
+                        name="times"
+                        size={22}
+                        color={theme.colors.onPrimary}
+                    />
+                </Pressable>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.mapContainer}>
@@ -564,6 +593,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                     segments={segments}
                     startPoint={startPoint}
                     mapRef={mapRef}
+                    showUserLocation
                 />
             </View>
 
@@ -578,6 +608,21 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 stopExercise={stopExercise}
             />
 
+            <Pressable
+                style={[
+                    styles.goalSibling,
+                    styles.mapButton,
+                ]}
+                onPress={() => setActiveView('map')}
+                accessibilityRole="button"
+                accessibilityLabel="Åbn kortvisning"
+            >
+                <FontAwesome5
+                    name="expand-arrows-alt"
+                    size={22}
+                    color={theme.colors.onPrimary}
+                />
+            </Pressable>
             <View style={styles.goalOverlay}>
                 <GoalProgress
                     percentage={percentage}
@@ -586,7 +631,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 />
             </View>
             <Pressable
-                style={styles.muteButton}
+                style={[styles.goalSibling, styles.muteButton]}
                 onPress={toggleMute}
                 accessibilityRole="button"
                 accessibilityLabel={isMuted ? 'Slå stemmevejledning til' : 'Slå stemmevejledning fra'}
