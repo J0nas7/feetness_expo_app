@@ -9,7 +9,7 @@ import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
 import { hasBackgroundPermission, hasLocationPermission } from '@/utils/location/location';
 import { resetWorkoutLocationAnchor, resetWorkoutStoreAndNotify, subscribeToWorkout } from '@/utils/location/workoutStore';
 import { endAndroidWorkoutNotification, endLiveActivity, setNativeWorkoutPaused, startAndroidWorkoutNotification, startLiveActivity, subscribeToWorkoutCommands, updateAndroidWorkoutNotification, updateLiveActivity } from '@/utils/native/LiveActivityModule';
-import { sendWorkoutUpdate } from '@/utils/native/WatchBridge';
+import { publishWatchWorkout, subscribeToWatchWorkoutCommands } from '@/utils/native/WatchBridge';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import * as Location from 'expo-location';
@@ -98,6 +98,18 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         workoutPausesOrStarts_Resumes();
         resetWorkoutLocationAnchor();
 
+        publishWatchWorkout({
+            status: isPaused ? 'paused' : 'running',
+            exercise: props.exercise,
+            distance: distanceRef.current,
+            pace: paceRef.current,
+            elapsed: elapsedTimeRef.current,
+            calories: caloriesRef.current,
+            percent: percentageRef.current,
+            goalAmount: props.goalAmount,
+            goalMetric: props.goalMetric,
+        });
+
         if (!pauseStateInitializedRef.current) {
             pauseStateInitializedRef.current = true;
         } else if (applyingNativeCommandRef.current) {
@@ -107,6 +119,22 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             setNativeWorkoutPaused(isPaused);
         }
     }, [isPaused]);
+
+    useEffect(() => {
+        const subscription = subscribeToWatchWorkoutCommands((command) => {
+            if (command === 'stop') {
+                void stopExerciseRef.current();
+                return;
+            }
+
+            const shouldPause = command === 'pause';
+            if (isPausedRef.current === shouldPause) return;
+            enqueueSpeech(shouldPause ? 'Pause' : 'Fortsæt');
+            setIsPaused(shouldPause);
+        });
+
+        return () => subscription?.remove();
+    }, [enqueueSpeech]);
 
     useEffect(() => {
         const subscription = subscribeToWorkoutCommands((command) => {
@@ -312,7 +340,17 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             goalMetric: props.goalMetric === 'duration' ? 'min' : 'km',
         });
 
-        sendWorkoutUpdate(distance, paceRef.current, elapsed);
+        publishWatchWorkout({
+            status: isPausedRef.current ? 'paused' : 'running',
+            exercise: props.exercise,
+            distance,
+            pace: paceRef.current,
+            elapsed,
+            calories,
+            percent: percentageRef.current,
+            goalAmount: props.goalAmount,
+            goalMetric: props.goalMetric,
+        });
 
         speakProgressUpdates({
             elapsed,
@@ -456,6 +494,17 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             // Stop live activity
             endLiveActivity();
             endAndroidWorkoutNotification();
+            publishWatchWorkout({
+                status: 'finished',
+                exercise: props.exercise,
+                distance: distanceRef.current,
+                pace: paceRef.current,
+                elapsed: elapsedTimeRef.current,
+                calories: caloriesRef.current,
+                percent: percentageRef.current,
+                goalAmount: props.goalAmount,
+                goalMetric: props.goalMetric,
+            });
 
             locationSubRef.current?.remove();
             locationSubRef.current = null;

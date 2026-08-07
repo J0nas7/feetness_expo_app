@@ -4,15 +4,7 @@ module.exports = config => ({
 
     name: "FeetnessWatch",
 
-    ios: {
-        deploymentTarget: "10.0"
-    },
+    deploymentTarget: "10.0",
 
-    entitlements: {
-        "com.apple.security.application-groups": [
-            "group.com.j0nas7.feetness_expo_app"
-        ],
-
-        "com.apple.developer.healthkit": true
-    }
+    entitlements: {}
 });

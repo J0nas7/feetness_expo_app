@@ -23,6 +23,14 @@ const nativeFiles = [
     source: 'targets/TimeTrackingPlayer/TimeTrackingPlayerAttributes.swift',
     destination: 'TimeTrackingPlayerAttributes.swift',
   },
+  {
+    source: 'native_plugins/watch_connectivity/WatchBridge.swift',
+    destination: 'WatchBridge.swift',
+  },
+  {
+    source: 'native_plugins/watch_connectivity/WatchBridgeHeader.mm',
+    destination: 'WatchBridgeHeader.mm',
+  },
 ];
 
 module.exports = function withTimeTrackingModule(config) {

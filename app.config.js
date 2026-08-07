@@ -9,6 +9,7 @@ export default {
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "appleTeamId": "GDKR254U4L",
       "supportsTablet": true,
       "bundleIdentifier": "com.j0nas7.feetness-expo-app",
       "entitlements": {
