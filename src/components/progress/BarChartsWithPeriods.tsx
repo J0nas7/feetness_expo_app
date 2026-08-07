@@ -96,7 +96,7 @@ export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = (props)
         subtitle: {
             fontSize: 14,
             fontWeight: '800',
-            marginBottom: 16,
+            marginBottom: 50,
             textAlign: 'center',
             color: theme.colors.secondaryText,
         },
@@ -104,7 +104,7 @@ export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = (props)
             flexDirection: 'row',
             justifyContent: 'center',
             gap: 16,
-            marginBottom: 50,
+            marginBottom: 16,
             fontSize: 20,
         },
         metricIcon: {
@@ -165,6 +165,10 @@ export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = (props)
                 ))}
             </View>
 
+            <Text style={styles.subtitle}>
+                {metricLabel[metric]}
+            </Text>
+
             <View style={styles.chart}>
                 {props.periods
                     .slice()
@@ -202,10 +206,6 @@ export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = (props)
                     })
                 }
             </View>
-
-            <Text style={styles.subtitle}>
-                {metricLabel[metric]}
-            </Text>
         </>
     )
 }

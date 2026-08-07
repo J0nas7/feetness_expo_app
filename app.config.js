@@ -46,6 +46,8 @@ export default {
       "permissions": [
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "POST_NOTIFICATIONS",
+        "POST_PROMOTED_NOTIFICATIONS",
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION"
       ]

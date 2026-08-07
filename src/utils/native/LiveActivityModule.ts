@@ -1,8 +1,10 @@
 import { EmitterSubscription, NativeEventEmitter, NativeModules, Platform } from 'react-native';
 
 const { TimeTracking } = NativeModules;
-const workoutEventEmitter = Platform.OS === 'ios' && TimeTracking
-    ? new NativeEventEmitter(TimeTracking)
+const { BackgroundSpeechAndroid } = NativeModules;
+const workoutNativeModule = Platform.OS === 'ios' ? TimeTracking : BackgroundSpeechAndroid;
+const workoutEventEmitter = workoutNativeModule
+    ? new NativeEventEmitter(workoutNativeModule)
     : null;
 
 export type WorkoutCommand = 'pause' | 'resume' | 'stop';
@@ -51,12 +53,59 @@ export function endLiveActivity() {
 export function setNativeWorkoutPaused(isPaused: boolean) {
     if (Platform.OS === 'ios' && TimeTracking?.setWorkoutPaused) {
         TimeTracking.setWorkoutPaused(isPaused);
+    } else if (Platform.OS === 'android' && BackgroundSpeechAndroid?.setWorkoutPaused) {
+        BackgroundSpeechAndroid.setWorkoutPaused(isPaused);
     }
 }
 
 export function isNativeWorkoutPaused(): boolean {
-    if (Platform.OS !== 'ios' || !TimeTracking?.isWorkoutPaused) return false;
-    return Boolean(TimeTracking.isWorkoutPaused());
+    if (Platform.OS === 'ios' && TimeTracking?.isWorkoutPaused) {
+        return Boolean(TimeTracking.isWorkoutPaused());
+    }
+    if (Platform.OS === 'android' && BackgroundSpeechAndroid?.isWorkoutPaused) {
+        return Boolean(BackgroundSpeechAndroid.isWorkoutPaused());
+    }
+    return false;
+}
+
+interface AndroidWorkoutNotificationParams {
+    exercise: "Cykling" | "Løb" | "Gågang";
+    distanceKm: number;
+    elapsedSeconds: number;
+    percent: number;
+    pace: number;
+    goalAmount: number;
+    goalMetric: "min" | "km";
+}
+
+export function startAndroidWorkoutNotification(
+    exercise: AndroidWorkoutNotificationParams['exercise'],
+    goalAmount: number,
+    goalMetric: AndroidWorkoutNotificationParams['goalMetric'],
+) {
+    if (Platform.OS === 'android' && BackgroundSpeechAndroid?.startWorkout) {
+        BackgroundSpeechAndroid.startWorkout(exercise, goalAmount, goalMetric);
+    }
+}
+
+export function updateAndroidWorkoutNotification(params: AndroidWorkoutNotificationParams) {
+    if (Platform.OS === 'android' && BackgroundSpeechAndroid?.updateWorkout) {
+        BackgroundSpeechAndroid.updateWorkout(
+            params.exercise,
+            params.distanceKm,
+            params.elapsedSeconds,
+            params.percent,
+            params.pace,
+            params.goalAmount,
+            params.goalMetric,
+        );
+    }
+}
+
+export function endAndroidWorkoutNotification() {
+    if (Platform.OS === 'android' && BackgroundSpeechAndroid?.endWorkout) {
+        BackgroundSpeechAndroid.endWorkout();
+    }
 }
 
 export function subscribeToWorkoutCommands(

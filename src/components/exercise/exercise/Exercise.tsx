@@ -8,14 +8,14 @@ import { FontAwesome6 } from '@expo/vector-icons';
 import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
 import { hasBackgroundPermission, hasLocationPermission } from '@/utils/location/location';
 import { resetWorkoutLocationAnchor, resetWorkoutStoreAndNotify, subscribeToWorkout } from '@/utils/location/workoutStore';
-import { endLiveActivity, setNativeWorkoutPaused, startLiveActivity, subscribeToWorkoutCommands, updateLiveActivity } from '@/utils/native/LiveActivityModule';
+import { endAndroidWorkoutNotification, endLiveActivity, setNativeWorkoutPaused, startAndroidWorkoutNotification, startLiveActivity, subscribeToWorkoutCommands, updateAndroidWorkoutNotification, updateLiveActivity } from '@/utils/native/LiveActivityModule';
 import { sendWorkoutUpdate } from '@/utils/native/WatchBridge';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, Linking, Platform, Pressable, View } from 'react-native';
+import { Alert, Linking, PermissionsAndroid, Platform, Pressable, View } from 'react-native';
 import MapView from 'react-native-maps';
 import { ExerciseMap } from './ExerciseMap';
 import { ExerciseStats } from './ExerciseStats';
@@ -117,7 +117,9 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
             const shouldPause = command === 'pause';
             if (isPausedRef.current === shouldPause) return;
-            enqueueSpeech(shouldPause ? 'Pause' : 'Fortsæt');
+            if (Platform.OS === 'ios') {
+                enqueueSpeech(shouldPause ? 'Pause' : 'Fortsæt');
+            }
             applyingNativeCommandRef.current = true;
             setIsPaused(shouldPause);
         });
@@ -193,7 +195,19 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         let cancelled = false;
 
         (async () => {
+            if (Platform.OS === 'android' && Platform.Version >= 33) {
+                await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+                );
+            }
+
+            if (cancelled) return;
             startLiveActivity();
+            startAndroidWorkoutNotification(
+                props.exercise,
+                props.goalAmount,
+                props.goalMetric === 'duration' ? 'min' : 'km',
+            );
 
             updateLiveActivity({
                 distance: `0,0 km, `,
@@ -286,6 +300,16 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             exercise: props.exercise,
             goalAmount: props.goalAmount,
             goalMetric: props.goalMetric === "duration" ? "min" : "km"
+        });
+
+        updateAndroidWorkoutNotification({
+            exercise: props.exercise,
+            distanceKm: distance / 1000,
+            elapsedSeconds: elapsed,
+            percent: percentageRef.current,
+            pace: paceRef.current,
+            goalAmount: props.goalAmount,
+            goalMetric: props.goalMetric === 'duration' ? 'min' : 'km',
         });
 
         sendWorkoutUpdate(distance, paceRef.current, elapsed);
@@ -431,6 +455,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
             // Stop live activity
             endLiveActivity();
+            endAndroidWorkoutNotification();
 
             locationSubRef.current?.remove();
             locationSubRef.current = null;
