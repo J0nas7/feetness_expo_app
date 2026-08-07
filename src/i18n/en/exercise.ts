@@ -16,6 +16,7 @@ export default {
     save: 'Save workout', saving: 'Saving…', invalidTitle: 'Check the workout details', invalidMessage: 'Enter a valid date and time, a duration greater than 0, and non-negative distance and calories. The goal must be greater than 0.',
     saveErrorTitle: 'Could not save workout', saveErrorMessage: 'Your changes were not saved. Please try again.',
   },
+  createWorkout: { navigationTitle: 'Create workout', title: 'Add workout', intro: 'Enter a workout manually. Pace and goal progress are calculated automatically.', save: 'Create workout', accessibility: 'Create workout' },
   goalOf: 'of {{amount}} {{unit}}', slideToPause: 'SLIDE TO PAUSE', openMap: 'Open map', closeMap: 'Close map',
   enableVoice: 'Enable voice guidance', disableVoice: 'Disable voice guidance', time: 'Time', steps: 'Steps', finish: 'Finish',
 } as const;

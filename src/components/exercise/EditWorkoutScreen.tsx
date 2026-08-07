@@ -22,17 +22,34 @@ const dateParts = (timestamp: number) => {
 
 const parseNumber = (value: string) => Number(value.trim().replace(',', '.'));
 
-export function EditWorkoutScreen({ workout }: { workout: Workout }) {
+type WorkoutFormProps = { mode?: 'create' | 'edit'; workout?: Workout };
+
+export function EditWorkoutScreen({ mode = 'edit', workout }: WorkoutFormProps) {
     const theme = useTheme() as MyTheme;
-    const initialDate = useMemo(() => dateParts(workout.startTime), [workout.startTime]);
-    const [exercise, setExercise] = useState(workout.exercise);
+    const source = useMemo<Workout>(() => workout ?? ({
+        id: Date.now(),
+        exercise: 'running',
+        goalAmount: 5,
+        goalMetric: 'distance',
+        percentage: 0,
+        startTime: Date.now(),
+        endTime: Date.now(),
+        distance: 0,
+        elapsedTime: 30 * 60,
+        calories: 0,
+        pace: 0,
+        path: [],
+        segments: [],
+    }), [workout]);
+    const initialDate = useMemo(() => dateParts(source.startTime), [source.startTime]);
+    const [exercise, setExercise] = useState(source.exercise);
     const [date, setDate] = useState(initialDate.date);
     const [time, setTime] = useState(initialDate.time);
-    const [distance, setDistance] = useState(String(Number((workout.distance / 1000).toFixed(2))));
-    const [duration, setDuration] = useState(String(Number((workout.elapsedTime / 60).toFixed(1))));
-    const [calories, setCalories] = useState(String(Math.round(workout.calories)));
-    const [goalMetric, setGoalMetric] = useState<GoalMetric>(workout.goalMetric);
-    const [goalAmount, setGoalAmount] = useState(String(workout.goalAmount));
+    const [distance, setDistance] = useState(String(Number((source.distance / 1000).toFixed(2))));
+    const [duration, setDuration] = useState(String(Number((source.elapsedTime / 60).toFixed(1))));
+    const [calories, setCalories] = useState(String(Math.round(source.calories)));
+    const [goalMetric, setGoalMetric] = useState<GoalMetric>(source.goalMetric);
+    const [goalAmount, setGoalAmount] = useState(String(source.goalAmount));
     const [saving, setSaving] = useState(false);
 
     const styles = StyleSheet.create({
@@ -109,7 +126,7 @@ export function EditWorkoutScreen({ workout }: { workout: Workout }) {
         const distanceMeters = distanceKm * 1000;
         const completed = goalMetric === 'distance' ? distanceKm : durationMinutes;
         const updated: Workout = {
-            ...workout,
+            ...source,
             exercise,
             startTime: start.getTime(),
             endTime: start.getTime() + elapsedTime * 1000,
@@ -125,9 +142,9 @@ export function EditWorkoutScreen({ workout }: { workout: Workout }) {
         try {
             const stored = await AsyncStorage.getItem(STORAGE_KEY);
             const workouts: Workout[] = stored ? JSON.parse(stored) : [];
-            const exists = workouts.some((item) => item.id === workout.id);
+            const exists = mode === 'edit' && workouts.some((item) => item.id === source.id);
             await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(exists
-                ? workouts.map((item) => item.id === workout.id ? updated : item)
+                ? workouts.map((item) => item.id === source.id ? updated : item)
                 : [...workouts, updated]));
             router.back();
         } catch {
@@ -139,8 +156,8 @@ export function EditWorkoutScreen({ workout }: { workout: Workout }) {
     return <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
             <View style={styles.hero}>
-                <Text style={styles.heroTitle}>{t('exercise.editWorkout.title')}</Text>
-                <Text style={styles.heroText}>{t('exercise.editWorkout.intro')}</Text>
+                <Text style={styles.heroTitle}>{t(mode === 'create' ? 'exercise.createWorkout.title' : 'exercise.editWorkout.title')}</Text>
+                <Text style={styles.heroText}>{t(mode === 'create' ? 'exercise.createWorkout.intro' : 'exercise.editWorkout.intro')}</Text>
             </View>
 
             <View style={styles.section}>
@@ -188,7 +205,7 @@ export function EditWorkoutScreen({ workout }: { workout: Workout }) {
             onPress={save}
             disabled={saving}
             accessibilityRole="button"
-            accessibilityLabel={saving ? t('exercise.editWorkout.saving') : t('exercise.editWorkout.save')}
+            accessibilityLabel={saving ? t('exercise.editWorkout.saving') : t(mode === 'create' ? 'exercise.createWorkout.save' : 'exercise.editWorkout.save')}
             accessibilityState={{ disabled: saving }}
         >
             <FontAwesome5 name={saving ? 'hourglass-half' : 'check'} size={22} color={theme.colors.onPrimary} />

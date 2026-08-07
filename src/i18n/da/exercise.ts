@@ -16,6 +16,7 @@ export default {
     save: 'Gem træning', saving: 'Gemmer…', invalidTitle: 'Kontrollér træningens oplysninger', invalidMessage: 'Indtast en gyldig dato og tid, en varighed over 0 samt en ikke-negativ distance og kaloriemængde. Målet skal være større end 0.',
     saveErrorTitle: 'Træningen kunne ikke gemmes', saveErrorMessage: 'Dine ændringer blev ikke gemt. Prøv igen.',
   },
+  createWorkout: { navigationTitle: 'Opret træning', title: 'Tilføj træning', intro: 'Indtast en træning manuelt. Tempo og målfremskridt beregnes automatisk.', save: 'Opret træning', accessibility: 'Opret træning' },
   goalOf: 'af {{amount}} {{unit}}', slideToPause: 'SKUB FOR AT PAUSE', openMap: 'Åbn kort', closeMap: 'Luk kort',
   enableVoice: 'Slå stemmevejledning til', disableVoice: 'Slå stemmevejledning fra', time: 'Tid', steps: 'Skridt', finish: 'Mål',
 } as const;

@@ -1,12 +1,15 @@
 import { BarChartsWithPeriods, BigLogo, PeriodSections, PeriodSelector } from '@/components';
+import { t } from '@/i18n';
 import { MyTheme } from '@/types/theme';
 import { ProgressPeriod, Workout } from '@/types/WorkoutDTO';
 import { useActionSheet } from '@expo/react-native-action-sheet';
+import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
+    Pressable,
     ScrollView,
     StyleSheet
 } from 'react-native';
@@ -188,7 +191,7 @@ const ProgressView = () => {
     }
 
     const confirmDeleteWorkout = async (workout: Workout) => {
-        const options = ['Delete Workout', 'Cancel'];
+        const options = [t('progress.deleteWorkout.action'), t('common.actions.cancel')];
         const destructiveButtonIndex = 0;
         const cancelButtonIndex = 1;
 
@@ -197,7 +200,7 @@ const ProgressView = () => {
                 options,
                 cancelButtonIndex,
                 destructiveButtonIndex,
-                title: 'Delete this workout?',
+                title: t('progress.deleteWorkout.title'),
             },
             (selectedIndex) => {
                 if (selectedIndex === destructiveButtonIndex) {
@@ -273,6 +276,22 @@ const ProgressView = () => {
             backgroundColor: theme.colors.background,
             padding: 16,
         },
+        createButton: {
+            position: 'absolute',
+            right: 20,
+            bottom: 20,
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            backgroundColor: theme.colors.primary,
+            alignItems: 'center',
+            justifyContent: 'center',
+            elevation: 6,
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: 0.25,
+            shadowRadius: 5,
+        },
     });
 
     if (!periods.length)
@@ -294,6 +313,14 @@ const ProgressView = () => {
                     isMonthPeriod
                 }} />
             </ScrollView>
+            <Pressable
+                style={styles.createButton}
+                onPress={() => router.push('/create-workout')}
+                accessibilityRole="button"
+                accessibilityLabel={t('exercise.createWorkout.accessibility')}
+            >
+                <FontAwesome5 name="plus" size={22} color={theme.colors.onPrimary} />
+            </Pressable>
         </SafeAreaView>
     );
 };

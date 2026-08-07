@@ -1,4 +1,5 @@
 export default {
+  deleteWorkout: { action: 'Delete workout', title: 'Delete this workout?' },
   monthlyPlan: 'Monthly plan',
   editMonthlyPlan: 'Edit monthly plan for {{period}}',
   workoutGoal: '{{amount}} {{unit}} goal',
