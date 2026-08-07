@@ -77,7 +77,16 @@ class SpeechService : Service(), TextToSpeech.OnInitListener {
 
         }
 
-        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "speech")
+        tts.speak(text, TextToSpeech.QUEUE_ADD, null, "speech-${UUID.randomUUID()}")
+    }
+
+    fun stopSpeaking() {
+        tts.stop()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            focusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+        } else {
+            audioManager.abandonAudioFocus(null)
+        }
     }
 
     override fun onDestroy() {

@@ -1,19 +1,21 @@
 import { createStyles } from '@/components/exercise/exercise/CreateStyles';
 import { GoalProgress } from '@/components/exercise/GoalProgress';
+import { loadPlans } from '@/components/plan/storage';
+import { useSpeech } from '@/hooks/useSpeech';
 import { OnboardingData, Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
+import { FontAwesome6 } from '@expo/vector-icons';
 import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
 import { hasBackgroundPermission, hasLocationPermission } from '@/utils/location/location';
 import { resetWorkoutStoreAndNotify, subscribeToWorkout } from '@/utils/location/workoutStore';
 import { endLiveActivity, startLiveActivity, updateLiveActivity } from '@/utils/native/LiveActivityModule';
-import { speak, startSpeechService, stopSpeak, stopSpeechService } from "@/utils/native/NativeSpeech";
 import { sendWorkoutUpdate } from '@/utils/native/WatchBridge';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, Linking, Platform, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, View } from 'react-native';
 import MapView from 'react-native-maps';
 import { ExerciseMap } from './ExerciseMap';
 import { ExerciseStats } from './ExerciseStats';
@@ -26,6 +28,7 @@ export interface ExerciseProps {
 
 export const Exercise: React.FC<ExerciseProps> = (props) => {
     const theme = useTheme() as MyTheme;
+    const { enqueueSpeech, isMuted, resetProgress, setMonthPlanProgress, speakProgressUpdates, start: startSpeech, stop: stopSpeech, toggleMute } = useSpeech();
     const [isPaused, setIsPaused] = useState(false); // pause/resume
     const [startTime, setStartTime] = useState<number>(Date.now()); // Start time in milliseconds
     const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
@@ -70,9 +73,6 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     const caloriesRef = React.useRef<number>(0);
     const activeStartTimeRef = React.useRef<number | null>(null);
     const totalActiveMsRef = React.useRef<number>(0);
-    const lastSpokenBucketRef = React.useRef(0); // bucket = Math.floor(elapsed / 300)
-    const lastSpokenPercentageBucketRef = React.useRef(0); // percentageBucket = Math.floor(percentage / 10)
-    const lastSpokenDistanceBucketRef = React.useRef(0); // distanceBucket = Math.floor(distance / 1000)
 
     const prevLocationRef = React.useRef<Location.LocationObjectCoords | null>(null);
     const prevTimeRef = React.useRef<number | null>(null);
@@ -95,7 +95,8 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
     useFocusEffect(
         React.useCallback(() => {
-            startSpeechService(); // Start Android speech service
+            let active = true;
+            startSpeech(); // Start Android speech service
 
             // Reset global workout store
             resetWorkoutStoreAndNotify();
@@ -112,22 +113,47 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             pathRef.current = [];
 
             activeStartTimeRef.current = Date.now();
-            lastSpokenBucketRef.current = 0;
-            lastSpokenPercentageBucketRef.current = 0;
+            resetProgress();
+
+            const loadCurrentMonthPlan = async () => {
+                try {
+                    const currentDate = new Date();
+                    const currentPeriod = `${String(currentDate.getMonth() + 1).padStart(2, '0')}-${currentDate.getFullYear()}`;
+                    const plans = await loadPlans();
+                    const monthPlan = plans.find((plan) => plan.period === currentPeriod) ?? null;
+                    if (!monthPlan) return;
+
+                    const storedWorkouts = await AsyncStorage.getItem('workouts');
+                    const workouts: Workout[] = storedWorkouts ? JSON.parse(storedWorkouts) : [];
+                    const monthlyWorkouts = workouts.filter((workout) => {
+                        const workoutDate = new Date(workout.startTime);
+                        return workoutDate.getMonth() === currentDate.getMonth()
+                            && workoutDate.getFullYear() === currentDate.getFullYear();
+                    });
+                    const completedAmount = monthPlan.metric === 'distance'
+                        ? monthlyWorkouts.reduce((total, workout) => total + workout.distance, 0) / 1000
+                        : monthlyWorkouts.reduce((total, workout) => total + workout.elapsedTime, 0) / 3600;
+
+                    if (!active) return;
+                    setMonthPlanProgress(monthPlan, completedAmount);
+                } catch (error) {
+                    console.error('Failed to load current month plan progress', error);
+                }
+            };
+
+            loadCurrentMonthPlan();
 
             // Speak the message
             setTimeout(() => {
-                speak(props.exercise);
-                setTimeout(() => {
-                    speak(`${props.goalAmount} ${(props.goalMetric === "distance" ? "kilometer" : "minutter")}`);
-                }, 1000)
+                enqueueSpeech(props.exercise);
+                enqueueSpeech(`${props.goalAmount} ${(props.goalMetric === "distance" ? "kilometer" : "minutter")}`);
             }, 1000)
 
             return () => {
-                stopSpeak();
-                stopSpeechService(); // Stop Android speech service when leaving workout
+                active = false;
+                stopSpeech(); // Stop Android speech service when leaving workout
             };
-        }, [])
+        }, [enqueueSpeech, props.exercise, props.goalAmount, props.goalMetric, resetProgress, setMonthPlanProgress, startSpeech, stopSpeech])
     );
 
     // Start background location updates
@@ -232,9 +258,12 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
         sendWorkoutUpdate(distance, paceRef.current, elapsed);
 
-        speakProgress(elapsed);
-        speakPercentageProgress();
-        speakDistanceProgress();
+        speakProgressUpdates({
+            elapsed,
+            distance,
+            pace: paceRef.current,
+            workoutPercentage: percentageRef.current,
+        });
     }
 
     // Subscribe to the workout store for UI updates
@@ -293,65 +322,6 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         // === Workout starts OR resumes ===
         activeStartTimeRef.current = Date.now();
     }
-
-    const speakProgress = (elapsed: number) => {
-        // 5-minute buckets
-        const BUCKET_SECONDS = 300;
-        const bucket = Math.floor(elapsed / BUCKET_SECONDS);
-
-        if (bucket > lastSpokenBucketRef.current) {
-            lastSpokenBucketRef.current = bucket;
-
-            const distKm = Math.floor(distanceRef.current / 1000);
-            const distDecimal = ((distanceRef.current / 1000).toFixed(2).split('.')[1]);
-
-            const hours = Math.floor(elapsed / 3600);
-            const minutes = Math.floor((elapsed % 3600) / 60);
-
-            const paceMinutes = Math.floor(paceRef.current);
-            const paceSeconds = Math.floor((paceRef.current - paceMinutes) * 60);
-
-            // Only speak every 30 seconds
-            speak(
-                `Fremskridt ${percentageRef.current} procent, ` +
-                `varighed ${hours > 0 ? `${hours} time og ` : ''}${minutes} minutter, ` +
-                `distance ${distKm} komma ${distDecimal} kilometer, ` +
-                `tempo ${paceMinutes} minutter og ${paceSeconds} sekunder`
-            );
-        }
-    };
-
-    const speakPercentageProgress = () => {
-        // 20% buckets: 20, 40, 60, 80, 100
-        const bucket = Math.floor(percentageRef.current / 20);
-
-        // Ignore 0%
-        if (bucket <= 0) return;
-
-        if (bucket > lastSpokenPercentageBucketRef.current) {
-            lastSpokenPercentageBucketRef.current = bucket;
-
-            const reachedPercentage = bucket * 20;
-
-            speak(`Du har nået ${reachedPercentage} procent af dit mål.`);
-        }
-    };
-
-    const speakDistanceProgress = () => {
-        // 1km buckets: 1, 2, 3, 4, 5...
-        const bucket = Math.floor(distanceRef.current / 1000);
-
-        // Ignore 0km
-        if (bucket <= 0) return;
-
-        if (bucket > lastSpokenDistanceBucketRef.current) {
-            lastSpokenDistanceBucketRef.current = bucket;
-
-            const reachedDistance = bucket; // in km
-
-            speak(`Du har nået ${reachedDistance} kilometer.`);
-        }
-    };
 
     // Load onboarding data from AsyncStorage
     useEffect(() => {
@@ -507,6 +477,19 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                     goalMetric={props.goalMetric}
                 />
             </View>
+            <Pressable
+                style={styles.muteButton}
+                onPress={toggleMute}
+                accessibilityRole="button"
+                accessibilityLabel={isMuted ? 'Slå stemmevejledning til' : 'Slå stemmevejledning fra'}
+                accessibilityState={{ checked: isMuted }}
+            >
+                <FontAwesome6
+                    name={isMuted ? 'volume-xmark' : 'volume-high'}
+                    size={22}
+                    color={theme.colors.onPrimary}
+                />
+            </Pressable>
         </View>
     );
 };

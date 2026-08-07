@@ -61,4 +61,25 @@ export const createStyles = (theme: MyTheme) =>
             zIndex: 10,
             elevation: 10, // Android
         },
+        muteButton: {
+            position: 'absolute',
+            top: '60%',
+            left: '50%',
+            width: 48,
+            height: 48,
+            transform: [
+                { translateX: 82 },
+                { translateY: -24 },
+            ],
+            borderRadius: 24,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: theme.colors.primary,
+            zIndex: 11,
+            elevation: 11,
+            shadowColor: theme.colors.text,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+        },
     })

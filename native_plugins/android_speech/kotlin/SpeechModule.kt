@@ -27,6 +27,11 @@ class SpeechModule(
     }
 
     @ReactMethod
+    fun stop() {
+        SpeechServiceHolder.service?.stopSpeaking()
+    }
+
+    @ReactMethod
     fun stopService() {
         val intent = Intent(reactApplicationContext, SpeechService::class.java)
         reactApplicationContext.stopService(intent)

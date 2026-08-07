@@ -32,11 +32,7 @@ class BackgroundSpeechIOS: NSObject, AVSpeechSynthesizerDelegate {
         utterance.voice = AVSpeechSynthesisVoice(language: "da-DK")
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate
 
-        // Prevent overlapping speech
-        if synthesizer.isSpeaking {
-            synthesizer.stopSpeaking(at: .immediate)
-        }
-
+        // AVSpeechSynthesizer queues utterances and finishes the current one first.
         synthesizer.speak(utterance)
     }
 
@@ -51,7 +47,9 @@ class BackgroundSpeechIOS: NSObject, AVSpeechSynthesizerDelegate {
         _ synthesizer: AVSpeechSynthesizer,
         didFinish utterance: AVSpeechUtterance
     ) {
-        deactivateAudioSession()
+        if !synthesizer.isSpeaking {
+            deactivateAudioSession()
+        }
     }
 
     private func deactivateAudioSession() {
