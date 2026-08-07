@@ -6,6 +6,7 @@ import { MyTheme } from '@/types/theme';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import React, { useRef } from 'react';
 import { Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
@@ -332,6 +333,24 @@ export const RenderSummary = ({
                     goalMetric={workout.goalMetric}
                 />
             </View>
+            <Pressable
+                style={[
+                    createStyle.goalSibling,
+                    createStyle.muteButton,
+                ]}
+                onPress={() => router.push({
+                    pathname: '/edit-workout',
+                    params: { workout: JSON.stringify(workout) },
+                })}
+                accessibilityRole="button"
+                accessibilityLabel={t('exercise.editWorkout.navigationTitle')}
+            >
+                <FontAwesome5
+                    name="pencil-alt"
+                    size={20}
+                    color={theme.colors.onPrimary}
+                />
+            </Pressable>
         </View >
     )
 }

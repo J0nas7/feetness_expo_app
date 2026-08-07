@@ -9,6 +9,13 @@ export default {
     openSettings: 'Open settings', unavailableTitle: 'Location tracking unavailable', unavailableMessage: 'Feetness could not start location tracking. Check your location permissions and that Location is enabled.',
     notificationTitle: 'Workout in progress', notificationBody: 'Tracking your route',
   },
+  editWorkout: {
+    navigationTitle: 'Edit workout', title: 'Adjust workout', intro: 'Correct the workout details below. Pace and goal progress are recalculated automatically.',
+    activity: 'Activity', when: 'Date and time', date: 'Date', time: 'Time', dateHint: 'Use YYYY-MM-DD and HH:MM.',
+    results: 'Results', calories: 'Calories', goal: 'Workout goal', goalAmount: 'Goal amount',
+    save: 'Save workout', saving: 'Saving…', invalidTitle: 'Check the workout details', invalidMessage: 'Enter a valid date and time, a duration greater than 0, and non-negative distance and calories. The goal must be greater than 0.',
+    saveErrorTitle: 'Could not save workout', saveErrorMessage: 'Your changes were not saved. Please try again.',
+  },
   goalOf: 'of {{amount}} {{unit}}', slideToPause: 'SLIDE TO PAUSE', openMap: 'Open map', closeMap: 'Close map',
   enableVoice: 'Enable voice guidance', disableVoice: 'Disable voice guidance', time: 'Time', steps: 'Steps', finish: 'Finish',
 } as const;

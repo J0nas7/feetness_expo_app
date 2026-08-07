@@ -1,4 +1,8 @@
 export default {
+  monthlyPlan: 'Månedsplan',
+  editMonthlyPlan: 'Rediger månedsplan for {{period}}',
+  workoutGoal: '{{amount}} {{unit}} mål',
+  hours: 'timer',
   period: {
     selector: { week: 'UGE', month: 'MÅNED' },
     week: 'Uge {{week}} ({{date}})',

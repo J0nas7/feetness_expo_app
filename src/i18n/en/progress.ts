@@ -1,4 +1,8 @@
 export default {
+  monthlyPlan: 'Monthly plan',
+  editMonthlyPlan: 'Edit monthly plan for {{period}}',
+  workoutGoal: '{{amount}} {{unit}} goal',
+  hours: 'hours',
   period: {
     selector: { week: 'WEEK', month: 'MONTH' },
     week: 'Week {{week}} ({{date}})',

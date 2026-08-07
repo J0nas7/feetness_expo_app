@@ -136,7 +136,7 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
             ? completedPlanAmount / monthlyPlan.goal * 100
             : 0;
         const progressWidth = `${Math.min(Math.max(planPercentage, 0), 100)}%` as `${number}%`;
-        const planUnit = monthlyPlan?.metric === 'distance' ? 'km' : 'timer';
+        const planUnit = monthlyPlan?.metric === 'distance' ? 'km' : t('progress.hours');
 
         const now = new Date();
 
@@ -154,12 +154,10 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
             .slice(0, 3);
 
         const handleEdit = (workout: Workout) => {
-            // router.push({
-            //     pathname: '/edit-workout',
-            //     params: {
-            //         workout: JSON.stringify(workout),
-            //     },
-            // });
+            router.push({
+                pathname: '/edit-workout',
+                params: { workout: JSON.stringify(workout) },
+            });
         };
 
         const renderRightActions = (workout: Workout) => (
@@ -181,7 +179,7 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
                     }}
                 >
                     <Text style={{ color: 'white', fontWeight: '600' }}>
-                        Edit
+                        {t('common.actions.edit')}
                     </Text>
                 </Pressable>
 
@@ -197,7 +195,7 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
                     }}
                 >
                     <Text style={{ color: 'white', fontWeight: '600' }}>
-                        Delete
+                        {t('common.actions.delete')}
                     </Text>
                 </Pressable>
             </View>
@@ -239,11 +237,11 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
                     style={styles.planProgress}
                     onPress={() => router.push({ pathname: '/edit-plan', params: { id: monthlyPlan.id } })}
                     accessibilityRole="button"
-                    accessibilityLabel={`Rediger månedsplan for ${periodTitle}`}
+                    accessibilityLabel={t('progress.editMonthlyPlan', { period: periodTitle })}
                 >
                     <View style={styles.planProgressContent}>
                         <View style={styles.planProgressLabels}>
-                            <Text style={styles.planProgressTitle}>Månedsplan · {Math.round(planPercentage)}%</Text>
+                            <Text style={styles.planProgressTitle}>{t('progress.monthlyPlan')} · {Math.round(planPercentage)}%</Text>
                             <Text style={styles.planProgressValue}>{Number(completedPlanAmount.toFixed(1))} / {monthlyPlan.goal} {planUnit}</Text>
                         </View>
                         <View
@@ -286,10 +284,10 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
                                 <View style={{ flex: 1 }}>
                                     <Text style={styles.workoutTitle}>
                                         {activityName(workout.exercise)} ·{' '}
-                                        {workout.goalAmount}
-                                        {workout.goalMetric === 'distance'
-                                            ? ' km'
-                                            : ' min'} mål{' '}
+                                        {t('progress.workoutGoal', {
+                                            amount: workout.goalAmount,
+                                            unit: workout.goalMetric === 'distance' ? 'km' : 'min',
+                                        })}{' '}
                                         <Text
                                             style={[
                                                 styles.goalStatus,
@@ -308,7 +306,7 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
                                         {formatDuration(workout.elapsedTime)}
                                     </Text>
                                     <Text style={styles.workoutMeta}>
-                                        {new Date(workout.startTime).toLocaleDateString()}
+                                        {new Date(workout.startTime).toLocaleDateString(localeTag)}
                                     </Text>
                                 </View>
 

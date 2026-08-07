@@ -104,6 +104,14 @@ export default function RootLayout() {
                   title: t('plan.navigation.editMultiple'),
                 }}
               />
+              <Stack.Screen
+                name="edit-workout"
+                options={{
+                  headerShown: true,
+                  headerLeft: () => renderPlanHeaderLeft(),
+                  title: t('exercise.editWorkout.navigationTitle'),
+                }}
+              />
               <Stack.Screen name="explore" options={{ headerShown: false }} />
               <Stack.Screen
                 name="finished-exercise"
