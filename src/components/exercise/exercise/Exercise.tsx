@@ -18,7 +18,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Linking, PermissionsAndroid, Platform, Pressable, View } from 'react-native';
 import MapView from 'react-native-maps';
 import { ExerciseMap } from './ExerciseMap';
-import { ExerciseStats } from './ExerciseStats';
+import { CompactExerciseStats, ExerciseStats } from './ExerciseStats';
 
 export interface ExerciseProps {
     exercise: "Cykling" | "Løb" | "Gågang";
@@ -569,18 +569,26 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                         showUserLocation={false}
                     />
                 </View>
-                <Pressable
-                    style={styles.closeMapButton}
-                    onPress={() => setActiveView('summary')}
-                    accessibilityRole="button"
-                    accessibilityLabel="Luk kortvisning"
-                >
-                    <FontAwesome5
-                        name="times"
-                        size={22}
-                        color={theme.colors.onPrimary}
+                <View style={styles.mapControls}>
+                    <CompactExerciseStats
+                        theme={theme}
+                        distance={distance}
+                        elapsedTime={elapsedTime}
+                        pace={pace}
                     />
-                </Pressable>
+                    <Pressable
+                        style={styles.closeMapButton}
+                        onPress={() => setActiveView('summary')}
+                        accessibilityRole="button"
+                        accessibilityLabel="Luk kortvisning"
+                    >
+                        <FontAwesome5
+                            name="times"
+                            size={22}
+                            color={theme.colors.onPrimary}
+                        />
+                    </Pressable>
+                </View>
             </View>
         );
     }

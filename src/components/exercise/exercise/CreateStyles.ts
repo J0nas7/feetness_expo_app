@@ -13,12 +13,18 @@ export const createStyles = (theme: MyTheme) =>
         fullMapContainer: {
             flex: 1,
         },
-        closeMapButton: {
+        mapControls: {
             position: 'absolute',
+            left: 16,
             right: 16,
-            bottom: 16,
+            bottom: 24,
             zIndex: 11,
             elevation: 11,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 16,
+        },
+        closeMapButton: {
             width: 48,
             height: 48,
             borderRadius: 24,
@@ -29,6 +35,22 @@ export const createStyles = (theme: MyTheme) =>
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.2,
             shadowRadius: 4,
+        },
+        compactStatsContainer: {
+            flex: 1,
+            flexDirection: 'row',
+            paddingVertical: 10,
+            paddingHorizontal: 8,
+            borderRadius: 16,
+            backgroundColor: theme.colors.background,
+            shadowColor: theme.colors.text,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+        },
+        compactStatItem: {
+            flex: 1,
+            alignItems: 'center',
         },
         map: {
             width: '100%',
