@@ -1,4 +1,4 @@
-import { usePlans } from '@/components/plan/usePlans';
+import { usePlans } from '@/hooks/usePlans';
 import { activityName, locale, t } from '@/i18n';
 import { MyTheme } from '@/types/theme';
 import { ExerciseType, ProgressPeriod, Workout } from '@/types/WorkoutDTO';

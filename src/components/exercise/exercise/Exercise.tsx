@@ -1,20 +1,21 @@
 import { createStyles } from '@/components/exercise/exercise/CreateStyles';
 import { GoalProgress } from '@/components/exercise/GoalProgress';
-import { loadPlans } from '@/components/plan/storage';
+import { useCommunication } from '@/hooks/useCommunication';
+import { useExercise } from '@/hooks/useExercise';
+import { usePlans } from '@/hooks/usePlans';
 import { useSpeech } from '@/hooks/useSpeech';
 import { activityName, t } from '@/i18n';
-import { OnboardingData, Workout } from '@/types';
+import { OnboardingData } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { hasBackgroundPermission, hasLocationPermission } from '@/utils/location/location';
 import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
 import { resetWorkoutLocationAnchor, resetWorkoutStoreAndNotify, subscribeToWorkout } from '@/utils/location/workoutStore';
-import { endAndroidWorkoutNotification, endLiveActivity, setNativeWorkoutPaused, startAndroidWorkoutNotification, startLiveActivity, subscribeToWorkoutCommands, updateAndroidWorkoutNotification, updateLiveActivity } from '@/utils/native/LiveActivityModule';
+import { setNativeWorkoutPaused, startAndroidWorkoutNotification, startLiveActivity, subscribeToWorkoutCommands, updateLiveActivity } from '@/utils/native/LiveActivityModule';
 import { publishWatchWorkout, subscribeToWatchWorkoutCommands } from '@/utils/native/WatchBridge';
 import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import * as Location from 'expo-location';
-import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, Linking, PermissionsAndroid, Platform, Pressable, View } from 'react-native';
 import MapView from 'react-native-maps';
@@ -30,6 +31,13 @@ export interface ExerciseProps {
 export const Exercise: React.FC<ExerciseProps> = (props) => {
     const theme = useTheme() as MyTheme;
     const { enqueueSpeech, isMuted, resetProgress, setMonthPlanProgress, speakProgressUpdates, start: startSpeech, stop: stopSpeech, toggleMute } = useSpeech();
+    const { loadCurrentMonthPlan } = usePlans();
+    const { communicateWorkoutUpdate } = useCommunication({
+        exercise: props.exercise,
+        goalAmount: props.goalAmount,
+        goalMetric: props.goalMetric,
+        speakProgressUpdates,
+    });
     const [activeView, setActiveView] = useState<'summary' | 'map'>('summary');
     const [isPaused, setIsPaused] = useState(false); // pause/resume
     const [startTime, setStartTime] = useState<number>(Date.now()); // Start time in milliseconds
@@ -88,6 +96,23 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
     const mapRef = React.useRef<MapView>(null);
     const styles = createStyles(theme);
+    const { stopExercise } = useExercise({
+        exercise: props.exercise,
+        goalAmount: props.goalAmount,
+        goalMetric: props.goalMetric,
+        percentage,
+        distanceRef,
+        elapsedTimeRef,
+        paceRef,
+        caloriesRef,
+        percentageRef,
+        startTimeRef,
+        pathRef,
+        segments,
+        locationSubRef,
+        mapRef,
+    });
+    stopExerciseRef.current = stopExercise;
 
     useEffect(() => { percentageRef.current = percentage; }, [percentage]);
     useEffect(() => { startTimeRef.current = startTime; }, [startTime]);
@@ -179,33 +204,14 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             activeStartTimeRef.current = Date.now();
             resetProgress();
 
-            const loadCurrentMonthPlan = async () => {
-                try {
-                    const currentDate = new Date();
-                    const currentPeriod = `${String(currentDate.getMonth() + 1).padStart(2, '0')}-${currentDate.getFullYear()}`;
-                    const plans = await loadPlans();
-                    const monthPlan = plans.find((plan) => plan.period === currentPeriod) ?? null;
-                    if (!monthPlan) return;
-
-                    const storedWorkouts = await AsyncStorage.getItem('workouts');
-                    const workouts: Workout[] = storedWorkouts ? JSON.parse(storedWorkouts) : [];
-                    const monthlyWorkouts = workouts.filter((workout) => {
-                        const workoutDate = new Date(workout.startTime);
-                        return workoutDate.getMonth() === currentDate.getMonth()
-                            && workoutDate.getFullYear() === currentDate.getFullYear();
-                    });
-                    const completedAmount = monthPlan.metric === 'distance'
-                        ? monthlyWorkouts.reduce((total, workout) => total + workout.distance, 0) / 1000
-                        : monthlyWorkouts.reduce((total, workout) => total + workout.elapsedTime, 0) / 3600;
-
-                    if (!active) return;
-                    setMonthPlanProgress(monthPlan, completedAmount);
-                } catch (error) {
+            loadCurrentMonthPlan()
+                .then((currentMonthPlan) => {
+                    if (!active || !currentMonthPlan) return;
+                    setMonthPlanProgress(currentMonthPlan.monthPlan, currentMonthPlan.completedAmount);
+                })
+                .catch((error) => {
                     console.error('Failed to load current month plan progress', error);
-                }
-            };
-
-            loadCurrentMonthPlan();
+                });
 
             // Speak the message
             setTimeout(() => {
@@ -223,7 +229,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 active = false;
                 stopSpeech(); // Stop Android speech service when leaving workout
             };
-        }, [enqueueSpeech, props.exercise, props.goalAmount, props.goalMetric, resetProgress, setMonthPlanProgress, startSpeech, stopSpeech])
+        }, [enqueueSpeech, loadCurrentMonthPlan, props.exercise, props.goalAmount, props.goalMetric, resetProgress, setMonthPlanProgress, startSpeech, stopSpeech])
     );
 
     // Start background location updates
@@ -328,49 +334,13 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         caloriesRef.current = calories;
         setCalories(calories);
 
-        updateLiveActivity({
-            distance: `${(distance / 1000).toFixed(2)} km, `,
-            timeSpend: `${Math.floor(elapsed / 60)}:${String(Math.floor(elapsed % 60)).padStart(2, '0')}`,
-            percent: percentageRef.current,
-            pace: paceRef.current,
-            exercise: props.exercise,
-            goalAmount: props.goalAmount,
-            goalMetric: props.goalMetric === "duration" ? "min" : "km"
-        });
-
-        updateAndroidWorkoutNotification({
-            exercise: props.exercise,
-            distanceKm: distance / 1000,
-            elapsedSeconds: elapsed,
-            percent: percentageRef.current,
-            pace: paceRef.current,
-            goalAmount: props.goalAmount,
-            goalMetric: props.goalMetric === 'duration' ? 'min' : 'km',
-        });
-
-        const bucketTimestamp = Date.now();
-        const bucketUpdates = speakProgressUpdates({
+        communicateWorkoutUpdate({
             elapsed,
             distance,
             pace: paceRef.current,
-            workoutPercentage: percentageRef.current,
-        }).map((update, index) => ({
-            ...update,
-            id: `${bucketTimestamp}-${index}`,
-            createdAt: bucketTimestamp,
-        }));
-
-        publishWatchWorkout({
-            status: isPausedRef.current ? 'paused' : 'running',
-            exercise: props.exercise,
-            distance,
-            pace: paceRef.current,
-            elapsed,
             calories,
-            percent: percentageRef.current,
-            goalAmount: props.goalAmount,
-            goalMetric: props.goalMetric,
-            bucketUpdates: bucketUpdates.length > 0 ? bucketUpdates : undefined,
+            percentage: percentageRef.current,
+            isPaused: isPausedRef.current,
         });
     }
 
@@ -496,79 +466,6 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
         return Math.floor((totalActiveMsRef.current + activeMs) / 1000);
     };
-
-    const stopExercise = async () => {
-        try {
-            // Stop background tracking
-            const hasStarted = await Location.hasStartedLocationUpdatesAsync(WORKOUT_LOCATION_TASK);
-            if (hasStarted) {
-                await Location.stopLocationUpdatesAsync(WORKOUT_LOCATION_TASK);
-            }
-
-            // Stop live activity
-            endLiveActivity();
-            endAndroidWorkoutNotification();
-            publishWatchWorkout({
-                status: 'finished',
-                exercise: props.exercise,
-                distance: distanceRef.current,
-                pace: paceRef.current,
-                elapsed: elapsedTimeRef.current,
-                calories: caloriesRef.current,
-                percent: percentageRef.current,
-                goalAmount: props.goalAmount,
-                goalMetric: props.goalMetric,
-            });
-
-            locationSubRef.current?.remove();
-            locationSubRef.current = null;
-
-            // Show entire route
-            if (pathRef.current.length > 1) {
-                mapRef.current?.fitToCoordinates(pathRef.current, {
-                    edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
-                    animated: true,
-                });
-            }
-
-            // Save workout to AsyncStorage
-            const workoutData: Workout = {
-                id: Date.now(),
-                exercise: props.exercise,
-                goalAmount: props.goalAmount,
-                goalMetric: props.goalMetric,
-                percentage,
-                startTime: startTimeRef.current,
-                endTime: Date.now(),
-                distance: distanceRef.current,
-                elapsedTime: elapsedTimeRef.current,
-                pace: paceRef.current,
-                calories: caloriesRef.current,
-                path: pathRef.current,
-                segments,
-            };
-
-            // Save workout
-            const storedWorkouts = await AsyncStorage.getItem('workouts');
-            const workouts = storedWorkouts ? JSON.parse(storedWorkouts) : [];
-            workouts.push(workoutData);
-            await AsyncStorage.setItem('workouts', JSON.stringify(workouts));
-
-            //Reset global workout store after finishing
-            resetWorkoutStoreAndNotify();
-
-            router.replace({
-                pathname: "/finished-exercise",
-                params: {
-                    workout: JSON.stringify(workoutData),
-                },
-            });
-        } catch (error) {
-            console.error('Error stopping workout', error);
-        }
-    };
-
-    stopExerciseRef.current = stopExercise;
 
     if (activeView === 'map') {
         return (

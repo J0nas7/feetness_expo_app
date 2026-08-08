@@ -11,7 +11,7 @@ import { currentPeriodIndex, PERIOD_PATTERN, periodIndex, Plan, sortPlans } from
 import { planCardHeight, PlanCard } from './PlanCard';
 import { PlanEmptyState } from './PlanEmptyState';
 import { PlanToolbar } from './PlanToolbar';
-import { usePlans } from './usePlans';
+import { usePlans } from '@/hooks/usePlans';
 
 export function PlanListScreen() {
     const theme = useTheme() as MyTheme;
