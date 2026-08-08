@@ -42,7 +42,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     const [startTime, setStartTime] = useState<number>(Date.now()); // Start time in milliseconds
     const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
     const [distance, setDistance] = useState<number>(0); // Distance in meters
-    const [elapsedTime, setElapsedTime] = useState<number>(0); // Elapsed time in seconds
+    const [elapsedActiveTime, setElapsedActiveTime] = useState<number>(0);
     const [pace, setPace] = useState<number>(0); // Elapsed time in seconds
     const [calories, setCalories] = useState<number>(0); // Calories in kcal
     const [path, setPath] = useState<
@@ -66,7 +66,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         progress = distance / (props.goalAmount * 1000);
     } else if (props.goalMetric === 'duration') {
         // elapsedTime is in seconds, goalAmount is in minutes
-        progress = elapsedTime / (props.goalAmount * 60);
+        progress = elapsedActiveTime / (props.goalAmount * 60);
     }
     progress = Math.min(progress, 1); // clamp 0 → 1
     const percentage = Math.round(progress * 100);
@@ -77,7 +77,11 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     const isPausedRef = React.useRef<boolean>(isPaused);
     const startTimeRef = React.useRef<number>(startTime);
     const distanceRef = React.useRef<number>(distance);
-    const elapsedTimeRef = React.useRef<number>(elapsedTime);
+    const totalElapsedWorkoutTimeRef = React.useRef<number>(0);
+    const elapsedActiveTimeRef = React.useRef<number>(elapsedActiveTime);
+    const elapsedPausedTimeRef = React.useRef<number>(0);
+    const distanceActiveRef = React.useRef<number>(0);
+    const distancePausedRef = React.useRef<number>(0);
     const paceRef = React.useRef<number>(pace);
     const caloriesRef = React.useRef<number>(0);
     const activeStartTimeRef = React.useRef<number | null>(null);
@@ -95,16 +99,20 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
     const mapRef = React.useRef<MapView>(null);
     const styles = createStyles(theme);
-    const stopExercise = () => stopWorkout({
-        percentage, distanceRef, elapsedTimeRef, paceRef, caloriesRef, percentageRef,
-        startTimeRef, pathRef, segments, locationSubRef, mapRef,
-    });
+    const stopExercise = () => {
+        totalElapsedWorkoutTimeRef.current = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        elapsedPausedTimeRef.current = Math.max(totalElapsedWorkoutTimeRef.current - elapsedActiveTimeRef.current, 0);
+        return stopWorkout({
+            percentage, distanceRef, elapsedTimeRef: elapsedActiveTimeRef, elapsedPausedTimeRef, distancePausedRef, paceRef, caloriesRef, percentageRef,
+            startTimeRef, pathRef, segments, locationSubRef, mapRef,
+        });
+    };
     stopExerciseRef.current = stopExercise;
 
     useEffect(() => { percentageRef.current = percentage; }, [percentage]);
     useEffect(() => { startTimeRef.current = startTime; }, [startTime]);
     useEffect(() => { distanceRef.current = distance; }, [distance]);
-    useEffect(() => { elapsedTimeRef.current = elapsedTime; }, [elapsedTime]);
+    useEffect(() => { elapsedActiveTimeRef.current = elapsedActiveTime; }, [elapsedActiveTime]);
     useEffect(() => { paceRef.current = pace; }, [pace]);
     useEffect(() => { isPausedRef.current = isPaused }, [isPaused]);
 
@@ -124,7 +132,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         publishWorkoutState({
             distance: distanceRef.current,
             pace: paceRef.current,
-            elapsed: elapsedTimeRef.current,
+            elapsed: elapsedActiveTimeRef.current,
             calories: caloriesRef.current,
             percentage: percentageRef.current,
             isPaused,
@@ -184,17 +192,25 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             resetWorkoutStoreAndNotify();
 
             // New workout starts
-            setStartTime(Date.now());
+            const workoutStartedAt = Date.now();
+            setStartTime(workoutStartedAt);
+            startTimeRef.current = workoutStartedAt;
             setPace(0);
             setCalories(0);
             setPath([]);
             setSegments([]);
-            setElapsedTime(0);
+            setElapsedActiveTime(0);
             setDistance(0);
+            totalElapsedWorkoutTimeRef.current = 0;
+            elapsedActiveTimeRef.current = 0;
+            elapsedPausedTimeRef.current = 0;
+            distanceActiveRef.current = 0;
+            distancePausedRef.current = 0;
             prevLocationRef.current = null;
             pathRef.current = [];
 
-            activeStartTimeRef.current = Date.now();
+            totalActiveMsRef.current = 0;
+            activeStartTimeRef.current = workoutStartedAt;
             resetProgress();
 
             loadCurrentMonthPlan()
@@ -308,8 +324,8 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 ? Date.now() - activeStartTimeRef.current
                 : 0;
             const elapsed = Math.floor((totalActiveMsRef.current + activeMs) / 1000);
-            elapsedTimeRef.current = elapsed;
-            setElapsedTime(elapsed);
+            elapsedActiveTimeRef.current = elapsed;
+            setElapsedActiveTime(elapsed);
 
             const currentProgress = props.goalMetric === 'distance'
                 ? distance / (props.goalAmount * 1000)
@@ -335,8 +351,15 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
     // Subscribe to the workout store for UI updates
     useEffect(() => {
-        const unsubscribe = subscribeToWorkout(({ distance, path, segments, location, elevationGain }) => {
-            if (isPausedRef.current) return; // Safe pause
+        const unsubscribe = subscribeToWorkout(({ distance, distanceDelta, path, segments, location, elevationGain }) => {
+            setLocation(location);
+
+            if (isPausedRef.current) {
+                distancePausedRef.current += distanceDelta;
+                return;
+            }
+
+            distanceActiveRef.current += distanceDelta;
 
             const elapsed = getElapsedSeconds();
             if (distance > 0 && elapsed > 0) {
@@ -356,11 +379,16 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             setPath(path);
 
             setSegments(segments);
-            setLocation(location);
         });
 
         const interval = setInterval(() => {
-            if (isPausedRef.current) return; // Safe pause
+            const totalElapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+            totalElapsedWorkoutTimeRef.current = totalElapsed;
+
+            if (isPausedRef.current) {
+                elapsedPausedTimeRef.current = Math.max(totalElapsed - elapsedActiveTimeRef.current, 0);
+                return;
+            }
 
             exerciseUpdatesRef.current(distanceRef.current, 0);
         }, 1000); // Second-timer interval for foreground updates (distance/pace updates come from workout store subscription)
@@ -416,7 +444,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                     <CompactExerciseStats
                         theme={theme}
                         distance={distance}
-                        elapsedTime={elapsedTime}
+                        elapsedTime={elapsedActiveTime}
                         pace={pace}
                     />
                     <Pressable
@@ -451,7 +479,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             <ExerciseStats
                 theme={theme}
                 distance={distance}
-                elapsedTime={elapsedTime}
+                elapsedTime={elapsedActiveTime}
                 pace={pace}
                 calories={calories}
                 isPaused={isPaused}

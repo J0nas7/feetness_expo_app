@@ -22,6 +22,7 @@ let segments: Segment[] = [];
 
 type Listener = (data: {
     distance: number;
+    distanceDelta: number;
     path: Point[];
     segments: Segment[];
     location: Location.LocationObjectCoords;
@@ -35,7 +36,7 @@ export const subscribeToWorkout = (listener: Listener) => {
     return () => listeners.delete(listener);
 };
 
-export const storeLocationUpdate = (loc: Location.LocationObject) => {
+export const storeLocationUpdate = (loc: Location.LocationObject, paused = false) => {
     const MIN_DISTANCE_METERS = 12;     // ignore small GPS noise
     const MAX_ACCEPTABLE_ACCURACY = 25; // ignore points with poor accuracy
     const MAX_PLAUSIBLE_SPEED_MPS = 25; // 90 km/h, safely above workout cycling speed
@@ -46,6 +47,34 @@ export const storeLocationUpdate = (loc: Location.LocationObject) => {
     const timestamp = loc.timestamp;
 
     if (coords.accuracy && coords.accuracy > MAX_ACCEPTABLE_ACCURACY) return;
+
+    if (paused) {
+        let distanceDelta = 0;
+        if (prevCoords) {
+            const delta = getDistance(
+                { latitude: prevCoords.latitude, longitude: prevCoords.longitude },
+                { latitude: coords.latitude, longitude: coords.longitude },
+            );
+            const elapsedSeconds = prevTime ? Math.max((timestamp - prevTime) / 1000, 1) : 1;
+            const accuracyAllowance = (prevCoords.accuracy ?? 0) + (coords.accuracy ?? 0);
+            const maxPlausibleDistance = Math.max(50, elapsedSeconds * MAX_PLAUSIBLE_SPEED_MPS + accuracyAllowance);
+            if (delta >= MIN_DISTANCE_METERS && delta <= maxPlausibleDistance) distanceDelta = delta;
+        }
+
+        prevCoords = coords;
+        prevTime = timestamp;
+        listeners.forEach((listener) => listener({
+            distance,
+            distanceDelta,
+            path: [...path],
+            segments: [...segments],
+            location: coords,
+            elevationGain: elevationGainTotal,
+        }));
+        return;
+    }
+
+    let distanceDelta = 0;
 
     if (prevCoords) {
         const delta = getDistance(
@@ -72,6 +101,7 @@ export const storeLocationUpdate = (loc: Location.LocationObject) => {
         }
 
         distance += delta;
+        distanceDelta = delta;
 
         const currPoint = {
             latitude: coords.latitude,
@@ -128,6 +158,7 @@ export const storeLocationUpdate = (loc: Location.LocationObject) => {
     listeners.forEach(l =>
         l({
             distance,
+            distanceDelta,
             path: [...path],
             segments: [...segments],
             location: coords,
@@ -159,6 +190,7 @@ export const resetWorkoutStoreAndNotify = () => {
     listeners.forEach(l =>
         l({
             distance: 0,
+            distanceDelta: 0,
             path: [],
             segments: [],
             location: null as any, // or undefined if you prefer

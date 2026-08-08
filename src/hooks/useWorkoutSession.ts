@@ -25,6 +25,8 @@ export type StopWorkoutOptions = {
     percentage: number;
     distanceRef: ValueRef<number>;
     elapsedTimeRef: ValueRef<number>;
+    elapsedPausedTimeRef: ValueRef<number>;
+    distancePausedRef: ValueRef<number>;
     paceRef: ValueRef<number>;
     caloriesRef: ValueRef<number>;
     percentageRef: ValueRef<number>;
@@ -71,7 +73,7 @@ export function useWorkoutSession({ exercise, goalAmount, goalMetric, speakProgr
         publishWatchWorkout({ status: update.isPaused ? 'paused' : 'running', exercise, distance: update.distance, pace: update.pace, elapsed: update.elapsed, calories: update.calories, percent: update.percentage, goalAmount, goalMetric, bucketUpdates: bucketUpdates.length ? bucketUpdates : undefined });
     }, [exercise, goalAmount, goalMetric, speakProgressUpdates]);
 
-    const stopWorkout = useCallback(async ({ percentage, distanceRef, elapsedTimeRef, paceRef, caloriesRef, percentageRef, startTimeRef, pathRef, segments, locationSubRef, mapRef }: StopWorkoutOptions) => {
+    const stopWorkout = useCallback(async ({ percentage, distanceRef, elapsedTimeRef, elapsedPausedTimeRef, distancePausedRef, paceRef, caloriesRef, percentageRef, startTimeRef, pathRef, segments, locationSubRef, mapRef }: StopWorkoutOptions) => {
         try {
             if (await Location.hasStartedLocationUpdatesAsync(WORKOUT_LOCATION_TASK)) await Location.stopLocationUpdatesAsync(WORKOUT_LOCATION_TASK);
             endLiveActivity();
@@ -80,7 +82,7 @@ export function useWorkoutSession({ exercise, goalAmount, goalMetric, speakProgr
             locationSubRef.current?.remove();
             locationSubRef.current = null;
             if (pathRef.current.length > 1) mapRef.current?.fitToCoordinates(pathRef.current, { edgePadding: { top: 80, right: 80, bottom: 80, left: 80 }, animated: true });
-            const workout: Workout = { id: Date.now(), exercise, goalAmount, goalMetric, percentage, startTime: startTimeRef.current, endTime: Date.now(), distance: distanceRef.current, elapsedTime: elapsedTimeRef.current, pace: paceRef.current, calories: caloriesRef.current, path: pathRef.current, segments };
+            const workout: Workout = { id: Date.now(), exercise, goalAmount, goalMetric, percentage, startTime: startTimeRef.current, endTime: Date.now(), distance: distanceRef.current, elapsedTime: elapsedTimeRef.current, pausedDistance: distancePausedRef.current, pausedTime: elapsedPausedTimeRef.current, pace: paceRef.current, calories: caloriesRef.current, path: pathRef.current, segments };
             await updateWorkout(workout);
             resetWorkoutStoreAndNotify();
             router.replace({ pathname: '/finished-exercise', params: { workout: JSON.stringify(workout) } });

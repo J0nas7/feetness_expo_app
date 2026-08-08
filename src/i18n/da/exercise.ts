@@ -21,5 +21,5 @@ export default {
   },
   createWorkout: { navigationTitle: 'Opret træning', title: 'Tilføj træning', intro: 'Indtast en træning manuelt. Tempo og målfremskridt beregnes automatisk.', save: 'Opret træning', accessibility: 'Opret træning' },
   goalOf: 'af {{amount}} {{unit}}', slideToPause: 'SKUB FOR AT PAUSE', openMap: 'Åbn kort', closeMap: 'Luk kort',
-  enableVoice: 'Slå stemmevejledning til', disableVoice: 'Slå stemmevejledning fra', time: 'Tid', steps: 'Skridt', finish: 'Mål',
+  enableVoice: 'Slå stemmevejledning til', disableVoice: 'Slå stemmevejledning fra', time: 'Tid', pausedTime: 'Pausetid', pausedDistance: 'Pausedistance', maximum: 'Maksimum', altitude: 'Højde', steps: 'Skridt', finish: 'Mål',
 } as const;

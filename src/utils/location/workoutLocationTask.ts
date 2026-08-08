@@ -16,9 +16,7 @@ TaskManager.defineTask(WORKOUT_LOCATION_TASK, async ({ data, error }) => {
     };
 
     if (!locations?.length) return;
-    if (isNativeWorkoutPaused()) return;
-
     for (const location of locations) {
-        storeLocationUpdate(location);
+        storeLocationUpdate(location, isNativeWorkoutPaused());
     }
 });

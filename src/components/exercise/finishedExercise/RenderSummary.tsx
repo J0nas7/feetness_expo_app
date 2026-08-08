@@ -7,8 +7,8 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import React, { useRef } from 'react';
-import { Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Animated, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
 interface RenderSummaryProps {
@@ -23,9 +23,28 @@ export const RenderSummary = ({
     const colorScheme = useColorScheme();
     const theme = useTheme() as MyTheme;
     const mapRef = useRef<MapView>(null);
+    const [showSecondaryStats, setShowSecondaryStats] = useState(false);
+    const statsAnimation = useRef(new Animated.Value(1)).current;
 
     const startPoint = workout.path[0];
     const endPoint = workout.path[workout.path.length - 1];
+    const maximumAltitude = workout.segments
+        .flatMap((segment) => segment.coords)
+        .reduce((maximum, coordinate) => coordinate.altitude == null ? maximum : Math.max(maximum, coordinate.altitude), 0);
+    const averageSpeed = workout.elapsedTime > 0
+        ? (workout.distance / 1000) / (workout.elapsedTime / 3600)
+        : 0;
+    const kilometersPerMinute = workout.elapsedTime > 0
+        ? (workout.distance / 1000) / (workout.elapsedTime / 60)
+        : 0;
+
+    const toggleStats = () => {
+        Animated.timing(statsAnimation, { toValue: 0, duration: 160, useNativeDriver: true }).start(() => {
+            setShowSecondaryStats((current) => !current);
+            statsAnimation.setValue(0);
+            Animated.timing(statsAnimation, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+        });
+    };
 
     const formatTime = (seconds: number) => {
         const h = Math.floor(seconds / 3600);
@@ -139,6 +158,19 @@ export const RenderSummary = ({
             flexWrap: 'wrap', // Allows the items to wrap onto new lines
             justifyContent: 'space-evenly', // Even spacing between items
             width: '100%',
+        },
+        animatedGrid: {
+            width: '100%',
+        },
+        statsToggle: {
+            position: 'absolute',
+            right: 5,
+            top: '50%',
+            width: 36,
+            height: 52,
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2,
         },
         navigation: {
             flexDirection: 'row',
@@ -282,34 +314,74 @@ export const RenderSummary = ({
                 />
             </View>
             <View style={styles.statsContainer}>
-                <View style={styles.grid}>
-                    <View style={styles.statItem}>
-                        <Text style={styles.valueText}>{((workout.distance) / 1000).toFixed(2)} </Text>
-                        <Text style={styles.unitText}>km</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.valueText}>{formatTime(workout.elapsedTime)}</Text>
-                        <Text style={styles.unitText}>{t('exercise.time')}</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.valueText}>{formatPace(workout.pace)}</Text>
-                        <Text style={styles.unitText}>min/km</Text>
-                    </View>
+                <Animated.View style={[styles.animatedGrid, {
+                    opacity: statsAnimation,
+                    transform: [{ translateX: statsAnimation.interpolate({ inputRange: [0, 1], outputRange: [showSecondaryStats ? 20 : -20, 0] }) }],
+                }]}>
+                    <View style={styles.grid}>
+                        {!showSecondaryStats ? <>
+                            <View style={styles.statItem}>
+                                <Text style={styles.valueText}>{((workout.distance) / 1000).toFixed(2)} </Text>
+                                <Text style={styles.unitText}>km</Text>
+                            </View>
+                            <View style={styles.statItem}>
+                                <Text style={styles.valueText}>{formatTime(workout.elapsedTime)}</Text>
+                                <Text style={styles.unitText}>{t('exercise.time')}</Text>
+                            </View>
+                            <View style={styles.statItem}>
+                                <Text style={styles.valueText}>{formatPace(workout.pace)}</Text>
+                                <Text style={styles.unitText}>min/km</Text>
+                            </View>
 
-                    {/* Placeholder stats */}
-                    <View style={styles.statItem}>
-                        <Text style={styles.valueText}>0</Text>
-                        <Text style={styles.unitText}>{t('exercise.steps')}</Text>
+                            {/* Placeholder stats */}
+                            <View style={styles.statItem}>
+                                <Text style={styles.valueText}>0</Text>
+                                <Text style={styles.unitText}>{t('exercise.steps')}</Text>
+                            </View>
+                            <View style={styles.statItem}>
+                                <Text style={styles.valueText}>{Math.floor(workout.calories)}</Text>
+                                <Text style={styles.unitText}>Kcal</Text>
+                            </View>
+                            <View style={styles.statItem}>
+                                <Text style={styles.valueText}>0</Text>
+                                <Text style={styles.unitText}>bpm</Text>
+                            </View>
+                        </> : <>
+                            <View style={styles.statItem}>
+                                <Text style={styles.valueText}>{((workout.pausedDistance ?? 0) / 1000).toFixed(2)}</Text>
+                                <Text style={styles.unitText}>{t('exercise.pausedDistance')}</Text>
+                            </View>
+                            <View style={styles.statItem}>
+                                <Text style={styles.valueText}>{formatTime(workout.pausedTime ?? 0)}</Text>
+                                <Text style={styles.unitText}>{t('exercise.pausedTime')}</Text>
+                            </View>
+                            <View style={styles.statItem}>
+                                <Text style={styles.valueText}>0</Text>
+                                <Text style={styles.unitText}>bpm {t('exercise.maximum')}</Text>
+                            </View>
+                            <View style={styles.statItem}>
+                                <Text style={styles.valueText}>{averageSpeed.toFixed(1)}</Text>
+                                <Text style={styles.unitText}>km/h</Text>
+                            </View>
+                            <View style={styles.statItem}>
+                                <Text style={styles.valueText}>{Math.round(maximumAltitude)} m</Text>
+                                <Text style={styles.unitText}>m {t('exercise.altitude')}</Text>
                     </View>
                     <View style={styles.statItem}>
-                        <Text style={styles.valueText}>{Math.floor(workout.calories)}</Text>
-                        <Text style={styles.unitText}>Kcal</Text>
+                        <Text style={styles.valueText}>{kilometersPerMinute.toFixed(3)}</Text>
+                        <Text style={styles.unitText}>km/m</Text>
                     </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.valueText}>0</Text>
-                        <Text style={styles.unitText}>bpm</Text>
+                        </>}
                     </View>
-                </View>
+                </Animated.View>
+                <Pressable
+                    style={styles.statsToggle}
+                    onPress={toggleStats}
+                    accessibilityRole="button"
+                    accessibilityLabel={showSecondaryStats ? 'Show primary workout stats' : 'Show more workout stats'}
+                >
+                    <FontAwesome5 name="chevron-right" size={20} color={theme.colors.tertiaryText} />
+                </Pressable>
             </View>
 
             <Pressable

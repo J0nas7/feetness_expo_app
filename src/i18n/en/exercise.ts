@@ -21,5 +21,5 @@ export default {
   },
   createWorkout: { navigationTitle: 'Create workout', title: 'Add workout', intro: 'Enter a workout manually. Pace and goal progress are calculated automatically.', save: 'Create workout', accessibility: 'Create workout' },
   goalOf: 'of {{amount}} {{unit}}', slideToPause: 'SLIDE TO PAUSE', openMap: 'Open map', closeMap: 'Close map',
-  enableVoice: 'Enable voice guidance', disableVoice: 'Disable voice guidance', time: 'Time', steps: 'Steps', finish: 'Finish',
+  enableVoice: 'Enable voice guidance', disableVoice: 'Disable voice guidance', time: 'Time', pausedTime: 'Paused time', pausedDistance: 'Paused distance', maximum: 'Maximum', altitude: 'Altitude', steps: 'Steps', finish: 'Finish',
 } as const;

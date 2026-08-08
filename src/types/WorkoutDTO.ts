@@ -22,6 +22,8 @@ export type Workout = {
 
     distance: number; // meters
     elapsedTime: number; // seconds
+    pausedDistance?: number; // meters; optional for workouts saved before pause tracking
+    pausedTime?: number; // seconds; optional for workouts saved before pause tracking
     calories: number; // kcal
     pace: number; // min/km (avg)
 
