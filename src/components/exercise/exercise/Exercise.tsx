@@ -96,21 +96,11 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
     const mapRef = React.useRef<MapView>(null);
     const styles = createStyles(theme);
-    const { stopExercise } = useExercise({
-        exercise: props.exercise,
-        goalAmount: props.goalAmount,
-        goalMetric: props.goalMetric,
-        percentage,
-        distanceRef,
-        elapsedTimeRef,
-        paceRef,
-        caloriesRef,
-        percentageRef,
-        startTimeRef,
-        pathRef,
-        segments,
-        locationSubRef,
-        mapRef,
+    const { stopExercise: finishExercise } = useExercise();
+    const stopExercise = () => finishExercise({
+        exercise: props.exercise, goalAmount: props.goalAmount, goalMetric: props.goalMetric,
+        percentage, distanceRef, elapsedTimeRef, paceRef, caloriesRef, percentageRef,
+        startTimeRef, pathRef, segments, locationSubRef, mapRef,
     });
     stopExerciseRef.current = stopExercise;
 

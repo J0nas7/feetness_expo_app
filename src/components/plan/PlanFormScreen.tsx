@@ -1,4 +1,5 @@
 import { MyTheme } from '@/types/theme';
+import { usePlans } from '@/hooks/usePlans';
 import { locale, t } from '@/i18n';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
@@ -7,13 +8,12 @@ import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { PlanFormFields } from './PlanFormFields';
 import { BulkGoalMode, BulkOperation, calculateBulkGoal, Metric, nextAvailablePeriod, now, PERIOD_PATTERN, Plan } from './model';
-import { loadPlans, savePlans } from './storage';
 
 type Props = { kind: 'create' | 'edit' | 'bulk'; planId?: string; copyFrom?: string; selectedIds?: string[] };
 
 export function PlanFormScreen({ kind, planId, copyFrom, selectedIds = [] }: Props) {
     const theme = useTheme() as MyTheme;
-    const [plans, setPlans] = useState<Plan[]>([]);
+    const { plans, savePlans } = usePlans();
     const [month, setMonth] = useState(now.getMonth() + 1);
     const [year, setYear] = useState(now.getFullYear());
     const [metric, setMetric] = useState<Metric>('distance');
@@ -26,20 +26,17 @@ export function PlanFormScreen({ kind, planId, copyFrom, selectedIds = [] }: Pro
             .format(new Date(selectedYear, selectedMonth - 1, 1));
 
     useEffect(() => {
-        loadPlans().then((storedPlans) => {
-            setPlans(storedPlans);
-            const source = storedPlans.find((plan) => plan.id === (kind === 'edit' ? planId : copyFrom));
-            if (!source) return;
-            const period = kind === 'create' ? nextAvailablePeriod(source.period, storedPlans) : (() => {
-                const match = PERIOD_PATTERN.exec(source.period);
-                return match ? { month: Number(match[1]), year: Number(match[2]) } : { month: now.getMonth() + 1, year: now.getFullYear() };
-            })();
-            setMonth(period.month);
-            setYear(period.year);
-            setMetric(source.metric);
-            setGoal(String(source.goal));
-        });
-    }, [copyFrom, kind, planId]);
+        const source = plans.find((plan) => plan.id === (kind === 'edit' ? planId : copyFrom));
+        if (!source) return;
+        const period = kind === 'create' ? nextAvailablePeriod(source.period, plans) : (() => {
+            const match = PERIOD_PATTERN.exec(source.period);
+            return match ? { month: Number(match[1]), year: Number(match[2]) } : { month: now.getMonth() + 1, year: now.getFullYear() };
+        })();
+        setMonth(period.month);
+        setYear(period.year);
+        setMetric(source.metric);
+        setGoal(String(source.goal));
+    }, [copyFrom, kind, planId, plans]);
 
     const submit = async () => {
         const amount = Number(goal.replace(',', '.'));

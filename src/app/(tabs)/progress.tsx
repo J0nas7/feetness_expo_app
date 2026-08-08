@@ -1,4 +1,5 @@
 import { BarChartsWithPeriods, BigLogo, PeriodSections, PeriodSelector } from '@/components';
+import { useExercise } from '@/hooks/useExercise';
 import { t } from '@/i18n';
 import { MyTheme } from '@/types/theme';
 import { ProgressPeriod, Workout } from '@/types/WorkoutDTO';
@@ -96,6 +97,7 @@ const isoWeekToDate = (year: number, week: number) => {
 const ProgressView = () => {
     // ==== HOOKS ====
     const theme = useTheme() as MyTheme;
+    const { indexWorkouts } = useExercise();
 
     // ==== VARIABLES, STATE AND REFS ====
     const [periodType, setPeriodType] = React.useState<'week' | 'month'>('month');
@@ -139,7 +141,6 @@ const ProgressView = () => {
     );
 
     // On screen focus, load workouts from storage (or use demo), sort them, and distribute them into periods for display.
-    const STORAGE_KEY = 'workouts';
     useFocusEffect(
         React.useCallback(() => {
             let isActive = true;
@@ -150,10 +151,7 @@ const ProgressView = () => {
 
                 let workouts = DEMO_WORKOUTS
 
-                // Attempt to load stored workouts
-                const stored = await AsyncStorage.getItem(STORAGE_KEY);
-
-                const data: Workout[] = stored ? JSON.parse(stored) : [];
+                const data = await indexWorkouts();
 
                 // Use stored workouts if available
                 if (data.length) workouts = data;
@@ -167,7 +165,7 @@ const ProgressView = () => {
             return () => {
                 isActive = false;
             };
-        }, [basePeriods, periodType])
+        }, [basePeriods, indexWorkouts, periodType])
     );
 
     const calculateProgress = (workouts: Workout[]) => {
@@ -220,8 +218,7 @@ const ProgressView = () => {
     const refreshWorkouts = async () => {
         setIsRefreshing(true);
         try {
-            const stored = await AsyncStorage.getItem(STORAGE_KEY);
-            const storedWorkouts: Workout[] = stored ? JSON.parse(stored) : [];
+            const storedWorkouts = await indexWorkouts();
             calculateProgress(storedWorkouts.length ? storedWorkouts : DEMO_WORKOUTS);
         } finally {
             setIsRefreshing(false);

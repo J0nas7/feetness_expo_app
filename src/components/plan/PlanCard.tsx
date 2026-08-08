@@ -1,8 +1,7 @@
+import { useExercise } from '@/hooks/useExercise';
 import { MyTheme } from '@/types/theme';
 import { locale, t } from '@/i18n';
-import { Workout } from '@/types/WorkoutDTO';
 import { FontAwesome5 } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -17,6 +16,7 @@ export const planCardHeight = (plan: Plan) =>
 
 export function PlanCard({ plan, selected, bulkMode, onSelect, onCopy, onEdit, onDelete }: Props) {
     const theme = useTheme() as MyTheme;
+    const { indexWorkouts } = useExercise();
     const current = periodIndex(plan.period) === currentPeriodIndex;
     const showProgress = periodIndex(plan.period) <= currentPeriodIndex;
     const cardHeight = planCardHeight(plan);
@@ -33,8 +33,7 @@ export function PlanCard({ plan, selected, bulkMode, onSelect, onCopy, onEdit, o
             const period = /^(0[1-9]|1[0-2])-(\d{4})$/.exec(plan.period);
             if (!period) return;
 
-            const stored = await AsyncStorage.getItem('workouts');
-            const workouts: Workout[] = stored ? JSON.parse(stored) : [];
+            const workouts = await indexWorkouts();
             const planMonth = Number(period[1]) - 1;
             const planYear = Number(period[2]);
             const monthlyWorkouts = workouts.filter((workout) => {
@@ -50,7 +49,7 @@ export function PlanCard({ plan, selected, bulkMode, onSelect, onCopy, onEdit, o
 
         loadMonthlyProgress();
         return () => { active = false; };
-    }, [plan.metric, plan.period, showProgress]));
+    }, [indexWorkouts, plan.metric, plan.period, showProgress]));
 
     const percentage = plan.goal > 0 ? completedAmount / plan.goal * 100 : 0;
     const displayedPercentage = Math.round(percentage);

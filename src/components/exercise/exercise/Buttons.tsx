@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { MyTheme } from '@/types/theme';
 import { useTheme } from '@react-navigation/native';
 import React from 'react';
@@ -81,6 +82,7 @@ export const Buttons: React.FC<ButtonsProps> = (props) => {
             color: theme.colors.onPrimary,
             fontWeight: 'bold',
             fontSize: 16,
+            textTransform: 'uppercase',
         },
         stopButton: {
             backgroundColor: theme.colors.notification,
@@ -93,6 +95,7 @@ export const Buttons: React.FC<ButtonsProps> = (props) => {
             color: theme.colors.onPrimary,
             fontWeight: 'bold',
             fontSize: 16,
+            textTransform: 'uppercase',
         },
         knob: {
             width: KNOB_SIZE,
@@ -113,10 +116,10 @@ export const Buttons: React.FC<ButtonsProps> = (props) => {
                     style={styles.pauseButton}
                     onPress={() => props.setIsPaused(prev => !prev)}
                 >
-                    <Text style={styles.pauseText}>{props.isPaused ? "RESUME" : "PAUSE"}</Text>
+                    <Text style={styles.pauseText}>{t(props.isPaused ? 'common.actions.resume' : 'common.actions.pause')}</Text>
                 </Pressable>
                 <Pressable style={styles.stopButton} onPress={props.stopExercise}>
-                    <Text style={styles.stopText}>STOP</Text>
+                    <Text style={styles.stopText}>{t('common.actions.stop')}</Text>
                 </Pressable>
             </View>
         )
@@ -127,7 +130,7 @@ export const Buttons: React.FC<ButtonsProps> = (props) => {
             <GestureDetector gesture={panGesture}>
                 <Animated.View style={[styles.knob, knobStyle]} />
             </GestureDetector>
-            <Text style={styles.slideToPause}>SLIDE TO PAUSE</Text>
+            <Text style={styles.slideToPause}>{t('exercise.slideToPause')}</Text>
         </View>
     );
 }

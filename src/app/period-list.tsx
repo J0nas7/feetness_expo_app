@@ -1,10 +1,10 @@
 import { activityName, locale, t } from '@/i18n';
+import { useExercise } from '@/hooks/useExercise';
 import { MyTheme } from '@/types/theme';
 import { ExerciseType, Workout } from '@/types/WorkoutDTO';
 import { useActionSheet } from '@expo/react-native-action-sheet';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Href, router, Stack, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -12,7 +12,6 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const STORAGE_KEY = 'workouts';
 const EXERCISE_ICON: Record<ExerciseType, string> = {
     running: '🏃‍♂️',
     cycling: '🚴‍♀️',
@@ -28,21 +27,10 @@ const formatDuration = (seconds: number) => {
         : `${minutes}:${String(secs).padStart(2, '0')}`;
 };
 
-const getISOWeekInfo = (dateValue: Date) => {
-    const date = new Date(dateValue.getTime());
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
-    const year = date.getFullYear();
-    const weekOne = new Date(year, 0, 4);
-    const week = 1 + Math.round(
-        ((date.getTime() - weekOne.getTime()) / 86400000 - 3 + ((weekOne.getDay() + 6) % 7)) / 7
-    );
-    return { year, week };
-};
-
 export default function PeriodList() {
     const theme = useTheme() as MyTheme;
     const { showActionSheetWithOptions } = useActionSheet();
+    const { bulkDestroyWorkouts, destroyWorkout, readWorkoutsByPeriod } = useExercise();
     const params = useLocalSearchParams<{ title?: string; year?: string; month?: string; week?: string }>();
     const [workouts, setWorkouts] = React.useState<Workout[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
@@ -93,27 +81,16 @@ export default function PeriodList() {
         dangerFloating: { left: 20, backgroundColor: theme.colors.notification },
     });
 
-    const readPeriodWorkouts = React.useCallback(async () => {
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
-        const allWorkouts: Workout[] = stored ? JSON.parse(stored) : [];
-        const selectedYear = Number(params.year);
-        const selectedMonth = params.month === undefined ? undefined : Number(params.month);
-        const selectedWeek = params.week === undefined ? undefined : Number(params.week);
-
-        return allWorkouts.filter((workout) => {
-            const workoutDate = new Date(workout.startTime);
-            if (selectedMonth !== undefined) {
-                return workoutDate.getFullYear() === selectedYear && workoutDate.getMonth() === selectedMonth;
-            }
-            const isoPeriod = getISOWeekInfo(workoutDate);
-            return isoPeriod.year === selectedYear && isoPeriod.week === selectedWeek;
-        }).sort((a, b) => b.startTime - a.startTime);
-    }, [params.month, params.week, params.year]);
+    const workoutPeriod = React.useMemo(() => ({
+        year: params.year,
+        month: params.month,
+        week: params.week,
+    }), [params.month, params.week, params.year]);
 
     useFocusEffect(
         React.useCallback(() => {
             let isActive = true;
-            readPeriodWorkouts()
+            readWorkoutsByPeriod(workoutPeriod)
                 .then((periodWorkouts) => {
                     if (isActive) setWorkouts(periodWorkouts);
                 })
@@ -121,7 +98,7 @@ export default function PeriodList() {
                     if (isActive) setIsLoading(false);
                 });
             return () => { isActive = false; };
-        }, [readPeriodWorkouts])
+        }, [readWorkoutsByPeriod, workoutPeriod])
     );
 
     useFocusEffect(React.useCallback(() => {
@@ -132,22 +109,13 @@ export default function PeriodList() {
     const refreshWorkouts = React.useCallback(async () => {
         setIsRefreshing(true);
         try {
-            setWorkouts(await readPeriodWorkouts());
+            setWorkouts(await readWorkoutsByPeriod(workoutPeriod));
         } finally {
             setIsRefreshing(false);
         }
-    }, [readPeriodWorkouts]);
+    }, [readWorkoutsByPeriod, workoutPeriod]);
 
-    const deleteWorkout = async (workout: Workout) => {
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
-        if (stored) {
-            const allWorkouts: Workout[] = JSON.parse(stored);
-            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(allWorkouts.filter((item) => item.id !== workout.id)));
-        }
-        setWorkouts((current) => current.filter((item) => item.id !== workout.id));
-    };
-
-    const deleteSelected = () => Alert.alert(
+    const confirmBulkDestroy = () => Alert.alert(
         t(selectedIds.length === 1 ? 'progress.bulkDelete.title' : 'progress.bulkDelete.titlePlural', { count: selectedIds.length }),
         t('progress.bulkDelete.warning'),
         [
@@ -155,9 +123,7 @@ export default function PeriodList() {
             {
                 text: t('common.actions.delete'), style: 'destructive', onPress: async () => {
                     const selected = new Set(selectedIds);
-                    const stored = await AsyncStorage.getItem(STORAGE_KEY);
-                    const allWorkouts: Workout[] = stored ? JSON.parse(stored) : [];
-                    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(allWorkouts.filter((workout) => !selected.has(workout.id))));
+                    await bulkDestroyWorkouts(selectedIds);
                     setWorkouts((current) => current.filter((workout) => !selected.has(workout.id)));
                     setSelectedIds([]);
                     setBulkMode(false);
@@ -196,7 +162,11 @@ export default function PeriodList() {
             cancelButtonIndex: 1,
             title: t('progress.deleteWorkout.title'),
         }, (selectedIndex) => {
-            if (selectedIndex === 0) deleteWorkout(workout);
+            if (selectedIndex === 0) {
+                void destroyWorkout(workout).then(() => {
+                    setWorkouts((current) => current.filter((item) => item.id !== workout.id));
+                });
+            }
         });
     };
 
@@ -313,7 +283,7 @@ export default function PeriodList() {
                 </ScrollView>
             </View>
             {bulkMode && selectedIds.length > 0 && <>
-                <Pressable style={[styles.floatingButton, styles.dangerFloating]} onPress={deleteSelected} accessibilityLabel={t('progress.accessibility.deleteSelected', { count: selectedIds.length })}>
+                <Pressable style={[styles.floatingButton, styles.dangerFloating]} onPress={confirmBulkDestroy} accessibilityLabel={t('progress.accessibility.deleteSelected', { count: selectedIds.length })}>
                     <FontAwesome5 name="trash-alt" size={20} color="#FFFFFF" />
                 </Pressable>
                 <Pressable style={[styles.floatingButton, styles.primaryFloating]} onPress={() => router.push({ pathname: '/edit-workouts-bulk', params: { ids: selectedIds.join(',') } } as unknown as Href)} accessibilityLabel={t('progress.accessibility.editSelected', { count: selectedIds.length })}>

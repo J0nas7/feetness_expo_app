@@ -1,14 +1,13 @@
 import { activityName, t } from '@/i18n';
+import { useExercise } from '@/hooks/useExercise';
 import { ExerciseType, GoalMetric, Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-const STORAGE_KEY = 'workouts';
 const activities: ExerciseType[] = ['running', 'cycling', 'walking'];
 
 const pad = (value: number) => String(value).padStart(2, '0');
@@ -26,6 +25,7 @@ type WorkoutFormProps = { mode?: 'create' | 'edit' | 'bulk'; workout?: Workout; 
 
 export function EditWorkoutScreen({ mode = 'edit', workout, selectedIds = [] }: WorkoutFormProps) {
     const theme = useTheme() as MyTheme;
+    const { bulkUpdateWorkouts, updateWorkout } = useExercise();
     const isBulk = mode === 'bulk';
     const source = useMemo<Workout>(() => workout ?? ({
         id: Date.now(),
@@ -124,19 +124,11 @@ export function EditWorkoutScreen({ mode = 'edit', workout, selectedIds = [] }: 
 
             setSaving(true);
             try {
-                const stored = await AsyncStorage.getItem(STORAGE_KEY);
-                const workouts: Workout[] = stored ? JSON.parse(stored) : [];
-                const selected = new Set(selectedIds);
-                const updatedWorkouts = workouts.map((item) => {
-                    if (!selected.has(item.id)) return item;
-                    const completed = goalMetric === 'distance' ? item.distance / 1000 : item.elapsedTime / 60;
-                    return {
-                        ...item,
-                        ...(changeActivity ? { exercise } : {}),
-                        ...(changeGoal ? { goalMetric, goalAmount: goal, percentage: completed / goal * 100 } : {}),
-                    };
+                await bulkUpdateWorkouts({
+                    workoutIds: selectedIds,
+                    exercise: changeActivity ? exercise : undefined,
+                    goal: changeGoal ? { metric: goalMetric, amount: goal } : undefined,
                 });
-                await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedWorkouts));
                 router.back();
             } catch {
                 Alert.alert(t('exercise.editWorkout.saveErrorTitle'), t('exercise.editWorkout.saveErrorMessage'));
@@ -184,12 +176,7 @@ export function EditWorkoutScreen({ mode = 'edit', workout, selectedIds = [] }: 
         };
 
         try {
-            const stored = await AsyncStorage.getItem(STORAGE_KEY);
-            const workouts: Workout[] = stored ? JSON.parse(stored) : [];
-            const exists = mode === 'edit' && workouts.some((item) => item.id === source.id);
-            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(exists
-                ? workouts.map((item) => item.id === source.id ? updated : item)
-                : [...workouts, updated]));
+            await updateWorkout(updated);
             router.back();
         } catch {
             Alert.alert(t('exercise.editWorkout.saveErrorTitle'), t('exercise.editWorkout.saveErrorMessage'));

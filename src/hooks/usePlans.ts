@@ -1,29 +1,36 @@
 import { Plan } from '@/components/plan/model';
-import { loadPlans, savePlans as persistPlans } from '@/components/plan/storage';
-import { Workout } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
+import { useExercise } from './useExercise';
+
+const STORAGE_KEY = 'plans';
 
 export const usePlans = () => {
+    const { indexWorkouts } = useExercise();
     const [plans, setPlans] = useState<Plan[]>([]);
+
+    const loadPlans = useCallback(async (): Promise<Plan[]> => {
+        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        return stored ? JSON.parse(stored) : [];
+    }, []);
 
     useFocusEffect(useCallback(() => {
         let mounted = true;
         loadPlans().then((storedPlans) => { if (mounted) setPlans(storedPlans); });
         return () => { mounted = false; };
-    }, []));
+    }, [loadPlans]));
 
     const savePlans = useCallback(async (newPlans: Plan[]) => {
         setPlans(newPlans);
-        await persistPlans(newPlans);
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newPlans));
     }, []);
 
     const refreshPlans = useCallback(async () => {
         const storedPlans = await loadPlans();
         setPlans(storedPlans);
         return storedPlans;
-    }, []);
+    }, [loadPlans]);
 
     const loadCurrentMonthPlan = useCallback(async () => {
         const currentDate = new Date();
@@ -32,8 +39,7 @@ export const usePlans = () => {
         const monthPlan = storedPlans.find((plan) => plan.period === currentPeriod) ?? null;
         if (!monthPlan) return null;
 
-        const storedWorkouts = await AsyncStorage.getItem('workouts');
-        const workouts: Workout[] = storedWorkouts ? JSON.parse(storedWorkouts) : [];
+        const workouts = await indexWorkouts();
         const monthlyWorkouts = workouts.filter((workout) => {
             const workoutDate = new Date(workout.startTime);
             return workoutDate.getMonth() === currentDate.getMonth()
@@ -44,7 +50,7 @@ export const usePlans = () => {
             : monthlyWorkouts.reduce((total, workout) => total + workout.elapsedTime, 0) / 3600;
 
         return { monthPlan, completedAmount };
-    }, []);
+    }, [indexWorkouts, loadPlans]);
 
     return { plans, savePlans, refreshPlans, loadCurrentMonthPlan };
 };

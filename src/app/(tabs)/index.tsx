@@ -1,4 +1,5 @@
 import { Controls, Map } from '@/components/startpage';
+import { useExercise } from '@/hooks/useExercise';
 import { activityName } from '@/i18n';
 import { createStartpageStyles } from '@/styles/modules/StartpageStyles';
 import { ExerciseType, GoalMetric, Workout } from '@/types';
@@ -14,6 +15,7 @@ import { Alert, Modal, Pressable, Text, View } from 'react-native';
 
 export default function StartScreen() {
     const theme = useTheme() as MyTheme;
+    const { indexWorkouts } = useExercise();
 
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [mode, setMode] = useState<GoalMetric>('distance');
@@ -47,8 +49,7 @@ export default function StartScreen() {
     useFocusEffect(
         useCallback(() => {
             const checkUserLocationPermissions = async () => {
-                const STORAGE_KEY = 'onboardingData';
-                const stored = await AsyncStorage.getItem(STORAGE_KEY);
+                const stored = await AsyncStorage.getItem('onboardingData');
                 if (!stored) return;
 
                 const fgPermission = await hasLocationPermission();
@@ -90,33 +91,20 @@ export default function StartScreen() {
         React.useCallback(() => {
             (async () => {
                 try {
-                    type WorkoutKey = string;
-
-                    const stored = await AsyncStorage.getItem('workouts');
-                    const data: Workout[] = stored ? JSON.parse(stored) : [];
-
-                    const uniqueWorkouts = (() => {
-                        const seen = new Set<WorkoutKey>();
-                        const result: Workout[] = [];
-
-                        for (const workout of data.reverse()) {
-                            const key: WorkoutKey = `${workout.exercise}-${workout.goalAmount}-${workout.goalMetric}`;
-                            if (!seen.has(key)) {
-                                seen.add(key);
-                                result.push(workout);
-                            }
-                        }
-
-                        return result;
-                    })();
-
-                    // Newest first, only unique metrics
+                    const workouts = await indexWorkouts();
+                    const seen = new Set<string>();
+                    const uniqueWorkouts = [...workouts].reverse().filter((workout) => {
+                        const key = `${workout.exercise}-${workout.goalAmount}-${workout.goalMetric}`;
+                        if (seen.has(key)) return false;
+                        seen.add(key);
+                        return true;
+                    });
                     setSavedWorkouts(uniqueWorkouts);
                 } catch (error) {
                     console.error('Error loading workouts', error);
                 }
             })();
-        }, [])
+        }, [indexWorkouts])
     );
 
     // Handle plus/minus buttons for distance/duration
