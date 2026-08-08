@@ -10,7 +10,7 @@ import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
 import { resetWorkoutLocationAnchor, resetWorkoutStoreAndNotify, subscribeToWorkout } from '@/utils/location/workoutStore';
 import { endAndroidWorkoutNotification, endLiveActivity, setNativeWorkoutPaused, startAndroidWorkoutNotification, startLiveActivity, subscribeToWorkoutCommands, updateAndroidWorkoutNotification, updateLiveActivity } from '@/utils/native/LiveActivityModule';
 import { publishWatchWorkout, subscribeToWatchWorkoutCommands } from '@/utils/native/WatchBridge';
-import { FontAwesome5, FontAwesome6 } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import * as Location from 'expo-location';
@@ -658,8 +658,8 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
                 accessibilityLabel={t(isMuted ? 'exercise.enableVoice' : 'exercise.disableVoice')}
                 accessibilityState={{ checked: isMuted }}
             >
-                <FontAwesome6
-                    name={isMuted ? 'volume-xmark' : 'volume-high'}
+                <FontAwesome5
+                    name={isMuted ? 'volume-mute' : 'volume-up'}
                     size={22}
                     color={theme.colors.onPrimary}
                 />
