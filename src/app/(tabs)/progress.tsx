@@ -9,6 +9,7 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
     Pressable,
+    RefreshControl,
     ScrollView,
     StyleSheet
 } from 'react-native';
@@ -99,6 +100,8 @@ const ProgressView = () => {
     // ==== VARIABLES, STATE AND REFS ====
     const [periodType, setPeriodType] = React.useState<'week' | 'month'>('month');
     const [periods, setPeriods] = useState<ProgressPeriod[]>([]);
+    const [allWorkouts, setAllWorkouts] = useState<Workout[]>([]);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const basePeriods = React.useMemo(() => {
         const now = new Date();
@@ -150,9 +153,7 @@ const ProgressView = () => {
                 // Attempt to load stored workouts
                 const stored = await AsyncStorage.getItem(STORAGE_KEY);
 
-                if (!stored) return;
-
-                const data: Workout[] = JSON.parse(stored);
+                const data: Workout[] = stored ? JSON.parse(stored) : [];
 
                 // Use stored workouts if available
                 if (data.length) workouts = data;
@@ -170,6 +171,7 @@ const ProgressView = () => {
     );
 
     const calculateProgress = (workouts: Workout[]) => {
+        setAllWorkouts(workouts);
         // Clear workouts in all periods before reassigning
         basePeriods.forEach((p) => {
             p.workouts = [];
@@ -215,6 +217,17 @@ const ProgressView = () => {
         setPeriods(periods)
     }
 
+    const refreshWorkouts = async () => {
+        setIsRefreshing(true);
+        try {
+            const stored = await AsyncStorage.getItem(STORAGE_KEY);
+            const storedWorkouts: Workout[] = stored ? JSON.parse(stored) : [];
+            calculateProgress(storedWorkouts.length ? storedWorkouts : DEMO_WORKOUTS);
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
+
     // ==== METHODS ====
     // Type guard to check if a ProgressPeriod is a monthly period.
     const isMonthPeriod = (
@@ -253,7 +266,17 @@ const ProgressView = () => {
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
-            <ScrollView style={styles.container}>
+            <ScrollView
+                style={styles.container}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={isRefreshing}
+                        onRefresh={refreshWorkouts}
+                        tintColor={theme.colors.primary}
+                        colors={[theme.colors.primary]}
+                    />
+                }
+            >
                 {/* Period Selector */}
                 <PeriodSelector periodType={periodType} setPeriodType={setPeriodType} />
 
@@ -263,6 +286,7 @@ const ProgressView = () => {
                 {/* Period Sections */}
                 <PeriodSections {...{
                     periods,
+                    allWorkouts,
                     isMonthPeriod
                 }} />
             </ScrollView>

@@ -4,7 +4,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import { router } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { currentPeriodIndex, PERIOD_PATTERN, periodIndex, Plan, sortPlans } from './model';
@@ -15,7 +15,8 @@ import { usePlans } from './usePlans';
 
 export function PlanListScreen() {
     const theme = useTheme() as MyTheme;
-    const { plans, savePlans } = usePlans();
+    const { plans, savePlans, refreshPlans } = usePlans();
+    const [refreshing, setRefreshing] = useState(false);
     const [bulkMode, setBulkMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [historyExpanded, setHistoryExpanded] = useState(false);
@@ -81,6 +82,15 @@ export function PlanListScreen() {
         ]
     );
 
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        try {
+            await refreshPlans();
+        } finally {
+            setRefreshing(false);
+        }
+    }, [refreshPlans]);
+
     const styles = StyleSheet.create({
         safeArea: { flex: 1, backgroundColor: theme.colors.background },
         listFrame: { flex: 1, flexDirection: 'row' },
@@ -134,7 +144,12 @@ export function PlanListScreen() {
             onToggleBulkMode={() => { setSelectedIds([]); setBulkMode((value) => !value); }}
         />
 
-        {plans.length === 0 ? <PlanEmptyState onCreate={() => router.push('/create-plan')} /> : <View style={styles.listFrame}>
+        {plans.length === 0 ? <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} colors={[theme.colors.primary]} />}
+        >
+            <PlanEmptyState onCreate={() => router.push('/create-plan')} />
+        </ScrollView> : <View style={styles.listFrame}>
             {bulkMode && <GestureDetector gesture={selectionGesture}>
                 <ScrollView ref={selectionScrollRef} style={styles.selectionScroll} contentContainerStyle={styles.selectionContent} scrollEnabled={false} bounces={false}>
                     {pastPlans.length > 0 && <><View style={styles.fixedHeader} />{historyExpanded && pastPlans.map(renderSelectionRow)}</>}
@@ -146,6 +161,7 @@ export function PlanListScreen() {
             <ScrollView
                 style={[styles.planScroll, !bulkMode && styles.planScrollFull]}
                 contentContainerStyle={styles.listContent}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} colors={[theme.colors.primary]} />}
                 onScroll={(event) => {
                     const y = event.nativeEvent.contentOffset.y;
                     scrollY.current = y;

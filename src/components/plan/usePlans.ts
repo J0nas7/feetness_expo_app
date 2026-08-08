@@ -17,5 +17,11 @@ export const usePlans = () => {
         await persistPlans(newPlans);
     }, []);
 
-    return { plans, savePlans };
+    const refreshPlans = useCallback(async () => {
+        const storedPlans = await loadPlans();
+        setPlans(storedPlans);
+        return storedPlans;
+    }, []);
+
+    return { plans, savePlans, refreshPlans };
 };

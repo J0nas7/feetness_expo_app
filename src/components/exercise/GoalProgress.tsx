@@ -72,7 +72,7 @@ export const GoalProgress: React.FC<GoalProps> = (props) => {
 
             {/* Center text */}
             <View style={styles.textContainer}>
-                <Text style={styles.percentText}>{props.percentage}%</Text>
+                <Text style={styles.percentText}>{Math.floor(props.percentage)}%</Text>
                 <Text style={styles.goalText}>af {props.goalAmount} {(props.goalMetric === "distance" ? "km" : "min")}</Text>
             </View>
         </View>

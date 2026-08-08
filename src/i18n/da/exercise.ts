@@ -11,6 +11,9 @@ export default {
   },
   editWorkout: {
     navigationTitle: 'Rediger træning', title: 'Tilpas træning', intro: 'Ret træningens oplysninger nedenfor. Tempo og målfremskridt beregnes automatisk igen.',
+    bulkNavigationTitle: 'Rediger træninger', bulkTitle: 'Tilpas {{count}} træninger', bulkIntro: 'Vælg de fælles felter, der skal ændres. Registrerede træningsresultater forbliver uændrede.',
+    keepUnchanged: 'Behold uændret', applying: 'Ændr', bulkSave: 'Gem træninger',
+    bulkNothingTitle: 'Vælg en ændring', bulkNothingMessage: 'Aktivér aktivitet eller træningsmål, før du gemmer.', bulkInvalidMessage: 'Målet skal være større end 0.',
     activity: 'Aktivitet', when: 'Dato og tidspunkt', date: 'Dato', time: 'Tidspunkt', dateHint: 'Brug ÅÅÅÅ-MM-DD og TT:MM.',
     results: 'Resultater', calories: 'Kalorier', goal: 'Træningsmål', goalAmount: 'Målets størrelse',
     save: 'Gem træning', saving: 'Gemmer…', invalidTitle: 'Kontrollér træningens oplysninger', invalidMessage: 'Indtast en gyldig dato og tid, en varighed over 0 samt en ikke-negativ distance og kaloriemængde. Målet skal være større end 0.',

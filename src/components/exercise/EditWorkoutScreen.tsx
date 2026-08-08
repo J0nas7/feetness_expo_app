@@ -22,10 +22,11 @@ const dateParts = (timestamp: number) => {
 
 const parseNumber = (value: string) => Number(value.trim().replace(',', '.'));
 
-type WorkoutFormProps = { mode?: 'create' | 'edit'; workout?: Workout };
+type WorkoutFormProps = { mode?: 'create' | 'edit' | 'bulk'; workout?: Workout; selectedIds?: number[] };
 
-export function EditWorkoutScreen({ mode = 'edit', workout }: WorkoutFormProps) {
+export function EditWorkoutScreen({ mode = 'edit', workout, selectedIds = [] }: WorkoutFormProps) {
     const theme = useTheme() as MyTheme;
+    const isBulk = mode === 'bulk';
     const source = useMemo<Workout>(() => workout ?? ({
         id: Date.now(),
         exercise: 'running',
@@ -51,6 +52,8 @@ export function EditWorkoutScreen({ mode = 'edit', workout }: WorkoutFormProps) 
     const [goalMetric, setGoalMetric] = useState<GoalMetric>(source.goalMetric);
     const [goalAmount, setGoalAmount] = useState(String(source.goalAmount));
     const [saving, setSaving] = useState(false);
+    const [changeActivity, setChangeActivity] = useState(false);
+    const [changeGoal, setChangeGoal] = useState(false);
 
     const styles = StyleSheet.create({
         content: { padding: 20, paddingBottom: 110, gap: 16 },
@@ -71,6 +74,13 @@ export function EditWorkoutScreen({ mode = 'edit', workout }: WorkoutFormProps) 
         input: { flex: 1, color: theme.colors.text, fontSize: 17, paddingVertical: 12 },
         unit: { color: theme.colors.tertiaryText, fontWeight: '700' },
         hint: { color: theme.colors.tertiaryText, fontSize: 12, marginTop: 8 },
+        sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 13 },
+        sectionHeaderTitle: { color: theme.colors.text, fontSize: 16, fontWeight: '800' },
+        applyToggle: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.primary },
+        applyToggleActive: { backgroundColor: theme.colors.primary },
+        applyToggleText: { color: theme.colors.primary, fontSize: 12, fontWeight: '800' },
+        applyToggleTextActive: { color: theme.colors.onPrimary },
+        disabledFields: { opacity: 0.4 },
         save: {
             position: 'absolute',
             right: 20,
@@ -101,6 +111,40 @@ export function EditWorkoutScreen({ mode = 'edit', workout }: WorkoutFormProps) 
     );
 
     const save = async () => {
+        if (isBulk) {
+            const goal = parseNumber(goalAmount);
+            if (!changeActivity && !changeGoal) {
+                Alert.alert(t('exercise.editWorkout.bulkNothingTitle'), t('exercise.editWorkout.bulkNothingMessage'));
+                return;
+            }
+            if (changeGoal && (!Number.isFinite(goal) || goal <= 0)) {
+                Alert.alert(t('exercise.editWorkout.invalidTitle'), t('exercise.editWorkout.bulkInvalidMessage'));
+                return;
+            }
+
+            setSaving(true);
+            try {
+                const stored = await AsyncStorage.getItem(STORAGE_KEY);
+                const workouts: Workout[] = stored ? JSON.parse(stored) : [];
+                const selected = new Set(selectedIds);
+                const updatedWorkouts = workouts.map((item) => {
+                    if (!selected.has(item.id)) return item;
+                    const completed = goalMetric === 'distance' ? item.distance / 1000 : item.elapsedTime / 60;
+                    return {
+                        ...item,
+                        ...(changeActivity ? { exercise } : {}),
+                        ...(changeGoal ? { goalMetric, goalAmount: goal, percentage: completed / goal * 100 } : {}),
+                    };
+                });
+                await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedWorkouts));
+                router.back();
+            } catch {
+                Alert.alert(t('exercise.editWorkout.saveErrorTitle'), t('exercise.editWorkout.saveErrorMessage'));
+                setSaving(false);
+            }
+            return;
+        }
+
         const distanceKm = parseNumber(distance);
         const durationMinutes = parseNumber(duration);
         const calorieAmount = parseNumber(calories);
@@ -156,13 +200,18 @@ export function EditWorkoutScreen({ mode = 'edit', workout }: WorkoutFormProps) 
     return <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
             <View style={styles.hero}>
-                <Text style={styles.heroTitle}>{t(mode === 'create' ? 'exercise.createWorkout.title' : 'exercise.editWorkout.title')}</Text>
-                <Text style={styles.heroText}>{t(mode === 'create' ? 'exercise.createWorkout.intro' : 'exercise.editWorkout.intro')}</Text>
+                <Text style={styles.heroTitle}>{t(isBulk ? 'exercise.editWorkout.bulkTitle' : mode === 'create' ? 'exercise.createWorkout.title' : 'exercise.editWorkout.title', { count: selectedIds.length })}</Text>
+                <Text style={styles.heroText}>{t(isBulk ? 'exercise.editWorkout.bulkIntro' : mode === 'create' ? 'exercise.createWorkout.intro' : 'exercise.editWorkout.intro')}</Text>
             </View>
 
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('exercise.editWorkout.activity')}</Text>
-                <View style={styles.segmented}>{activities.map((value) => {
+                {isBulk ? <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionHeaderTitle}>{t('exercise.editWorkout.activity')}</Text>
+                    <Pressable style={[styles.applyToggle, changeActivity && styles.applyToggleActive]} onPress={() => setChangeActivity((value) => !value)}>
+                        <Text style={[styles.applyToggleText, changeActivity && styles.applyToggleTextActive]}>{t(changeActivity ? 'exercise.editWorkout.applying' : 'exercise.editWorkout.keepUnchanged')}</Text>
+                    </Pressable>
+                </View> : <Text style={styles.sectionTitle}>{t('exercise.editWorkout.activity')}</Text>}
+                <View style={[styles.segmented, isBulk && !changeActivity && styles.disabledFields]} pointerEvents={isBulk && !changeActivity ? 'none' : 'auto'}>{activities.map((value) => {
                     const selected = exercise === value;
                     return <Pressable key={value} style={[styles.segment, selected && styles.segmentActive]} onPress={() => setExercise(value)}>
                         <Text style={[styles.segmentText, selected && styles.segmentTextActive]}>{activityName(value)}</Text>
@@ -170,26 +219,32 @@ export function EditWorkoutScreen({ mode = 'edit', workout }: WorkoutFormProps) 
                 })}</View>
             </View>
 
-            <View style={styles.section}>
+            {!isBulk && <View style={styles.section}>
                 <Text style={styles.sectionTitle}>{t('exercise.editWorkout.when')}</Text>
                 <View style={styles.row}>
                     {field(t('exercise.editWorkout.date'), date, setDate, undefined, 'default')}
                     {field(t('exercise.editWorkout.time'), time, setTime, undefined, 'default')}
                 </View>
                 <Text style={styles.hint}>{t('exercise.editWorkout.dateHint')}</Text>
-            </View>
+            </View>}
 
-            <View style={styles.section}>
+            {!isBulk && <View style={styles.section}>
                 <Text style={styles.sectionTitle}>{t('exercise.editWorkout.results')}</Text>
                 <View style={styles.row}>
                     {field(t('start.distance'), distance, setDistance, 'km')}
                     {field(t('start.duration'), duration, setDuration, 'min')}
                 </View>
                 <View style={{ marginTop: 12 }}>{field(t('exercise.editWorkout.calories'), calories, setCalories, 'kcal')}</View>
-            </View>
+            </View>}
 
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('exercise.editWorkout.goal')}</Text>
+                {isBulk ? <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionHeaderTitle}>{t('exercise.editWorkout.goal')}</Text>
+                    <Pressable style={[styles.applyToggle, changeGoal && styles.applyToggleActive]} onPress={() => setChangeGoal((value) => !value)}>
+                        <Text style={[styles.applyToggleText, changeGoal && styles.applyToggleTextActive]}>{t(changeGoal ? 'exercise.editWorkout.applying' : 'exercise.editWorkout.keepUnchanged')}</Text>
+                    </Pressable>
+                </View> : <Text style={styles.sectionTitle}>{t('exercise.editWorkout.goal')}</Text>}
+                <View style={isBulk && !changeGoal && styles.disabledFields} pointerEvents={isBulk && !changeGoal ? 'none' : 'auto'}>
                 <View style={styles.segmented}>{(['distance', 'duration'] as GoalMetric[]).map((value) => {
                     const selected = goalMetric === value;
                     return <Pressable key={value} style={[styles.segment, selected && styles.segmentActive]} onPress={() => setGoalMetric(value)}>
@@ -197,6 +252,7 @@ export function EditWorkoutScreen({ mode = 'edit', workout }: WorkoutFormProps) 
                     </Pressable>;
                 })}</View>
                 <View style={{ marginTop: 12 }}>{field(t('exercise.editWorkout.goalAmount'), goalAmount, setGoalAmount, goalMetric === 'distance' ? 'km' : 'min')}</View>
+                </View>
             </View>
 
         </ScrollView>
@@ -205,7 +261,7 @@ export function EditWorkoutScreen({ mode = 'edit', workout }: WorkoutFormProps) 
             onPress={save}
             disabled={saving}
             accessibilityRole="button"
-            accessibilityLabel={saving ? t('exercise.editWorkout.saving') : t(mode === 'create' ? 'exercise.createWorkout.save' : 'exercise.editWorkout.save')}
+            accessibilityLabel={saving ? t('exercise.editWorkout.saving') : t(isBulk ? 'exercise.editWorkout.bulkSave' : mode === 'create' ? 'exercise.createWorkout.save' : 'exercise.editWorkout.save')}
             accessibilityState={{ disabled: saving }}
         >
             <FontAwesome5 name={saving ? 'hourglass-half' : 'check'} size={22} color={theme.colors.onPrimary} />

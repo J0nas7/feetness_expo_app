@@ -13,38 +13,57 @@ interface MapProps {
 
 export const Map: React.FC<MapProps> = (props) => {
     const styles = createStartpageStyles(props.theme);
+    const mapRef = React.useRef<MapView>(null);
+    const [mapReady, setMapReady] = React.useState(false);
+    const userLatitude = props.location?.coords.latitude;
+    const userLongitude = props.location?.coords.longitude;
+    const userRegion = userLatitude !== undefined && userLongitude !== undefined ? {
+        latitude: userLatitude,
+        longitude: userLongitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+    } : null;
+
+    React.useEffect(() => {
+        if (mapReady && userLatitude !== undefined && userLongitude !== undefined) {
+            mapRef.current?.animateToRegion({
+                latitude: userLatitude,
+                longitude: userLongitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+            }, 500);
+        }
+    }, [mapReady, userLatitude, userLongitude]);
 
     return (
         <View style={styles.mapContainer}>
-            {props.location && (
-                <>
-                    <MapView
-                        style={[
-                            StyleSheet.absoluteFill,
-                            {
-                                backgroundColor: props.theme.colors.border,
-                                opacity: 0.98,
-                            }
-                        ]}
-                        showsUserLocation
-                        followsUserLocation
-                        initialRegion={{
-                            latitude: props.location.coords.latitude,
-                            longitude: props.location.coords.longitude,
-                            latitudeDelta: 0.01,
-                            longitudeDelta: 0.01,
-                        }}
-                    />
+            <MapView
+                ref={mapRef}
+                style={[
+                    StyleSheet.absoluteFill,
+                    {
+                        backgroundColor: props.theme.colors.border,
+                        opacity: 0.98,
+                    }
+                ]}
+                showsUserLocation
+                followsUserLocation
+                onMapReady={() => setMapReady(true)}
+                initialRegion={userRegion ?? {
+                    latitude: 55.6761,
+                    longitude: 12.5683,
+                    latitudeDelta: 0.25,
+                    longitudeDelta: 0.25,
+                }}
+            />
 
-                    {/* Gradient transition */}
-                    <LinearGradient
-                        colors={['transparent', props.theme.colors.background]}
-                        style={styles.mapGradient}
-                        locations={[0, 1]}
-                        pointerEvents="none"
-                    />
-                </>
-            )}
+            {/* Gradient transition */}
+            <LinearGradient
+                colors={['transparent', props.theme.colors.background]}
+                style={styles.mapGradient}
+                locations={[0, 1]}
+                pointerEvents="none"
+            />
         </View>
     )
 }

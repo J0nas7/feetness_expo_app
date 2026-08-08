@@ -113,6 +113,14 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen
+                name="edit-workouts-bulk"
+                options={{
+                  headerShown: true,
+                  headerLeft: () => renderPlanHeaderLeft(),
+                  title: t('exercise.editWorkout.bulkNavigationTitle'),
+                }}
+              />
+              <Stack.Screen
                 name="create-workout"
                 options={{
                   headerShown: true,

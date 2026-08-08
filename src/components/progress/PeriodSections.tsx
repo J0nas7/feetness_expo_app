@@ -16,6 +16,7 @@ const EXERCISE_ICON: Record<ExerciseType, string> = {
 
 interface PeriodSectionsProps {
     periods: ProgressPeriod[]
+    allWorkouts: Workout[]
     isMonthPeriod: (p: ProgressPeriod) => p is {
         year: number;
         month: number;
@@ -42,6 +43,8 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
     const styles = StyleSheet.create({
         periodSection: { marginBottom: 30 },
         periodTitle: { fontSize: 20, fontWeight: '700', marginBottom: 12, color: theme.colors.text },
+        yearOverview: { marginBottom: 24, paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+        yearOverviewTitle: { fontSize: 23, fontWeight: '800', marginBottom: 12, color: theme.colors.text },
         summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14, gap: 8 },
         summaryText: { color: theme.colors.secondaryText, fontSize: 12 },
         planProgress: {
@@ -63,6 +66,29 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
         listLink: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 7, paddingVertical: 8 },
         listLinkText: { color: theme.colors.primary, fontSize: 13, fontWeight: '700' },
     });
+
+    const summarizeActivities = (workouts: Workout[]) => (['walking', 'running', 'cycling'] as ExerciseType[]).map((exercise) => {
+        const activityWorkouts = workouts.filter((workout) => workout.exercise === exercise);
+        return {
+            exercise,
+            distance: activityWorkouts.reduce((sum, workout) => sum + workout.distance, 0),
+            duration: activityWorkouts.reduce((sum, workout) => sum + workout.elapsedTime, 0),
+            goals: activityWorkouts.filter((workout) => workout.percentage >= 100).length,
+        };
+    });
+
+    const renderActivitySummaries = (workouts: Workout[]) => (
+        <View style={styles.activityGrid}>
+            {summarizeActivities(workouts).map((summary) => (
+                <View key={summary.exercise} style={styles.activityCard}>
+                    <Text style={styles.activityTitle}>{EXERCISE_ICON[summary.exercise]} {activityName(summary.exercise)}</Text>
+                    <Text style={styles.activityMetric}>{(summary.distance / 1000).toFixed(1)} km</Text>
+                    <Text style={styles.activityMetric}>{formatDuration(summary.duration)}</Text>
+                    <Text style={styles.activityMetric}>{t('progress.summary.goalsShort', { count: summary.goals })}</Text>
+                </View>
+            ))}
+        </View>
+    );
 
     return props.periods.map((period, idx) => {
         const totalDistance = period.workouts.reduce((sum, workout) => sum + workout.distance, 0);
@@ -89,18 +115,28 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
                 date: new Date(period.workouts[0]?.startTime || now).toLocaleDateString(localeTag),
             });
 
-        const activitySummaries = (['walking', 'running', 'cycling'] as ExerciseType[]).map((exercise) => {
-            const workouts = period.workouts.filter((workout) => workout.exercise === exercise);
-            return {
-                exercise,
-                distance: workouts.reduce((sum, workout) => sum + workout.distance, 0),
-                duration: workouts.reduce((sum, workout) => sum + workout.elapsedTime, 0),
-                goals: workouts.filter((workout) => workout.percentage >= 100).length,
-            };
-        });
+        const startsNewYear = !!monthlyPeriod && (idx === 0 || props.periods[idx - 1].year !== period.year);
+        const yearWorkouts = startsNewYear
+            ? props.allWorkouts.filter((workout) => new Date(workout.startTime).getFullYear() === period.year)
+            : [];
+        const yearDistance = yearWorkouts.reduce((sum, workout) => sum + workout.distance, 0);
+        const yearDuration = yearWorkouts.reduce((sum, workout) => sum + workout.elapsedTime, 0);
+        const yearCompletedGoals = yearWorkouts.filter((workout) => workout.percentage >= 100).length;
 
         return (
-            <View key={`${period.year}-${period.month ?? period.week ?? idx}`} style={styles.periodSection}>
+            <React.Fragment key={`${period.year}-${period.month ?? period.week ?? idx}`}>
+            {startsNewYear && (
+                <View style={styles.yearOverview}>
+                    <Text style={styles.yearOverviewTitle}>{t('progress.yearOverview', { year: period.year })}</Text>
+                    <View style={styles.summaryRow}>
+                        <Text style={styles.summaryText}>⏱ {formatDuration(yearDuration)}</Text>
+                        <Text style={styles.summaryText}>📏 {(yearDistance / 1000).toFixed(1)} km</Text>
+                        <Text style={styles.summaryText}>🎯 {t(yearCompletedGoals === 1 ? 'progress.summary.completedGoal' : 'progress.summary.completedGoals', { count: yearCompletedGoals })}</Text>
+                    </View>
+                    {renderActivitySummaries(yearWorkouts)}
+                </View>
+            )}
+            <View style={styles.periodSection}>
                 <Text style={styles.periodTitle}>{periodTitle}</Text>
 
                 <View style={styles.summaryRow}>
@@ -141,16 +177,7 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
                     </Pressable>
                 )}
 
-                <View style={styles.activityGrid}>
-                    {activitySummaries.map((summary) => (
-                        <View key={summary.exercise} style={styles.activityCard}>
-                            <Text style={styles.activityTitle}>{EXERCISE_ICON[summary.exercise]} {activityName(summary.exercise)}</Text>
-                            <Text style={styles.activityMetric}>{(summary.distance / 1000).toFixed(1)} km</Text>
-                            <Text style={styles.activityMetric}>{formatDuration(summary.duration)}</Text>
-                            <Text style={styles.activityMetric}>{t('progress.summary.goalsShort', { count: summary.goals })}</Text>
-                        </View>
-                    ))}
-                </View>
+                {renderActivitySummaries(period.workouts)}
 
                 <Pressable
                     style={styles.listLink}
@@ -170,6 +197,7 @@ export const PeriodSections: React.FC<PeriodSectionsProps> = (props) => {
                     <FontAwesome5 name="chevron-right" size={11} color={theme.colors.primary} />
                 </Pressable>
             </View>
+            </React.Fragment>
         );
     });
 };

@@ -70,6 +70,9 @@ export default function StartScreen() {
     useFocusEffect(
         useCallback(() => {
             const fetchLocation = async () => {
+                const lastKnownLocation = await Location.getLastKnownPositionAsync();
+                if (lastKnownLocation) setLocation(lastKnownLocation);
+
                 const loc = await getCurrentLocation();
                 if (loc) {
                     setLocation(loc);

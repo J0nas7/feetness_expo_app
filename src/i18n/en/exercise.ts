@@ -11,6 +11,9 @@ export default {
   },
   editWorkout: {
     navigationTitle: 'Edit workout', title: 'Adjust workout', intro: 'Correct the workout details below. Pace and goal progress are recalculated automatically.',
+    bulkNavigationTitle: 'Edit workouts', bulkTitle: 'Adjust {{count}} workouts', bulkIntro: 'Choose which shared fields to change. Recorded workout results stay untouched.',
+    keepUnchanged: 'Keep unchanged', applying: 'Change', bulkSave: 'Save workouts',
+    bulkNothingTitle: 'Choose a change', bulkNothingMessage: 'Enable activity or workout goal before saving.', bulkInvalidMessage: 'The goal must be greater than 0.',
     activity: 'Activity', when: 'Date and time', date: 'Date', time: 'Time', dateHint: 'Use YYYY-MM-DD and HH:MM.',
     results: 'Results', calories: 'Calories', goal: 'Workout goal', goalAmount: 'Goal amount',
     save: 'Save workout', saving: 'Saving…', invalidTitle: 'Check the workout details', invalidMessage: 'Enter a valid date and time, a duration greater than 0, and non-negative distance and calories. The goal must be greater than 0.',
