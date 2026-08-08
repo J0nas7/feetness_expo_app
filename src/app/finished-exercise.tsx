@@ -1,12 +1,12 @@
 import { FinishedExercise } from '@/components';
-import { useExercise } from '@/hooks/useExercise';
+import { useWorkouts } from '@/hooks/useWorkouts';
 import { Workout } from "@/types";
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams } from "expo-router";
 import React from 'react';
 
 export default function FinishedExerciseScreen() {
-    const { showWorkout } = useExercise();
+    const { showWorkout } = useWorkouts();
     const { workout } = useLocalSearchParams<{
         workout: string;
     }>();

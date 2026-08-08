@@ -1,7 +1,6 @@
 import { createStyles } from '@/components/exercise/exercise/CreateStyles';
 import { GoalProgress } from '@/components/exercise/GoalProgress';
-import { useCommunication } from '@/hooks/useCommunication';
-import { useExercise } from '@/hooks/useExercise';
+import { calculateWorkoutCalories, getWorkoutMet, useWorkoutSession } from '@/hooks/useWorkoutSession';
 import { usePlans } from '@/hooks/usePlans';
 import { useSpeech } from '@/hooks/useSpeech';
 import { activityName, t } from '@/i18n';
@@ -10,8 +9,8 @@ import { MyTheme } from '@/types/theme';
 import { hasBackgroundPermission, hasLocationPermission } from '@/utils/location/location';
 import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
 import { resetWorkoutLocationAnchor, resetWorkoutStoreAndNotify, subscribeToWorkout } from '@/utils/location/workoutStore';
-import { setNativeWorkoutPaused, startAndroidWorkoutNotification, startLiveActivity, subscribeToWorkoutCommands, updateLiveActivity } from '@/utils/native/LiveActivityModule';
-import { publishWatchWorkout, subscribeToWatchWorkoutCommands } from '@/utils/native/WatchBridge';
+import { subscribeToWorkoutCommands } from '@/utils/native/LiveActivityModule';
+import { subscribeToWatchWorkoutCommands } from '@/utils/native/WatchBridge';
 import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
@@ -32,7 +31,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     const theme = useTheme() as MyTheme;
     const { enqueueSpeech, isMuted, resetProgress, setMonthPlanProgress, speakProgressUpdates, start: startSpeech, stop: stopSpeech, toggleMute } = useSpeech();
     const { loadCurrentMonthPlan } = usePlans();
-    const { communicateWorkoutUpdate } = useCommunication({
+    const { communicateWorkoutUpdate, pauseWorkout, publishWorkoutState, startWorkout, stopWorkout } = useWorkoutSession({
         exercise: props.exercise,
         goalAmount: props.goalAmount,
         goalMetric: props.goalMetric,
@@ -96,9 +95,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
     const mapRef = React.useRef<MapView>(null);
     const styles = createStyles(theme);
-    const { stopExercise: finishExercise } = useExercise();
-    const stopExercise = () => finishExercise({
-        exercise: props.exercise, goalAmount: props.goalAmount, goalMetric: props.goalMetric,
+    const stopExercise = () => stopWorkout({
         percentage, distanceRef, elapsedTimeRef, paceRef, caloriesRef, percentageRef,
         startTimeRef, pathRef, segments, locationSubRef, mapRef,
     });
@@ -112,19 +109,25 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
     useEffect(() => { isPausedRef.current = isPaused }, [isPaused]);
 
     useEffect(() => {
-        workoutPausesOrStarts_Resumes();
+        if (isPaused) {
+            prevLocationRef.current = null;
+            prevTimeRef.current = null;
+            if (activeStartTimeRef.current) {
+                totalActiveMsRef.current += Date.now() - activeStartTimeRef.current;
+                activeStartTimeRef.current = null;
+            }
+        } else {
+            activeStartTimeRef.current = Date.now();
+        }
         resetWorkoutLocationAnchor();
 
-        publishWatchWorkout({
-            status: isPaused ? 'paused' : 'running',
-            exercise: props.exercise,
+        publishWorkoutState({
             distance: distanceRef.current,
             pace: paceRef.current,
             elapsed: elapsedTimeRef.current,
             calories: caloriesRef.current,
-            percent: percentageRef.current,
-            goalAmount: props.goalAmount,
-            goalMetric: props.goalMetric,
+            percentage: percentageRef.current,
+            isPaused,
         });
 
         if (!pauseStateInitializedRef.current) {
@@ -133,9 +136,9 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             applyingNativeCommandRef.current = false;
         } else {
             enqueueSpeech(t(isPaused ? 'common.actions.pause' : 'common.actions.resume'));
-            setNativeWorkoutPaused(isPaused);
+            pauseWorkout(isPaused);
         }
-    }, [isPaused]);
+    }, [enqueueSpeech, isPaused, pauseWorkout, publishWorkoutState]);
 
     useEffect(() => {
         const subscription = subscribeToWatchWorkoutCommands((command) => {
@@ -170,7 +173,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         });
 
         return () => subscription?.remove();
-    }, []);
+    }, [enqueueSpeech]);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -234,22 +237,7 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             }
 
             if (cancelled) return;
-            startLiveActivity();
-            startAndroidWorkoutNotification(
-                props.exercise,
-                props.goalAmount,
-                props.goalMetric === 'duration' ? 'min' : 'km',
-            );
-
-            updateLiveActivity({
-                distance: `0,0 km, `,
-                timeSpend: `00:00`,
-                percent: 0,
-                pace: 0,
-                exercise: props.exercise,
-                goalAmount: props.goalAmount,
-                goalMetric: props.goalMetric === "duration" ? "min" : "km"
-            });
+            startWorkout();
 
             let distanceInterval: number | null = null;
             let timeInterval: number | null = null;
@@ -310,36 +298,55 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
         return () => {
             cancelled = true;
         };
-    }, [props.exercise, props.goalAmount, props.goalMetric]);
+    }, [props.exercise, props.goalAmount, props.goalMetric, startWorkout]);
 
-    const exerciseUpdates = (distance: number, elevationGain: number) => {
-        const elapsed = getElapsedSeconds();
-        elapsedTimeRef.current = elapsed;
-        setElapsedTime(elapsed);
+    // Update workout stats and communicate updates to the watch
+    const exerciseUpdatesRef = React.useRef<(distance: number, elevationGain: number) => void>(() => { });
+    useEffect(() => {
+        exerciseUpdatesRef.current = (distance, elevationGain) => {
+            const activeMs = activeStartTimeRef.current
+                ? Date.now() - activeStartTimeRef.current
+                : 0;
+            const elapsed = Math.floor((totalActiveMsRef.current + activeMs) / 1000);
+            elapsedTimeRef.current = elapsed;
+            setElapsedTime(elapsed);
 
-        const met = getMet(props.exercise, paceRef.current);
-        const baseCalories = calculateCalories(met, weight, elapsed);
-        const elevationCalories = (elevationGain * 0.9 * weight / 100);
-        const calories = baseCalories + elevationCalories;
-        caloriesRef.current = calories;
-        setCalories(calories);
+            const currentProgress = props.goalMetric === 'distance'
+                ? distance / (props.goalAmount * 1000)
+                : elapsed / (props.goalAmount * 60);
+            percentageRef.current = Math.round(Math.min(currentProgress, 1) * 100);
 
-        communicateWorkoutUpdate({
-            elapsed,
-            distance,
-            pace: paceRef.current,
-            calories,
-            percentage: percentageRef.current,
-            isPaused: isPausedRef.current,
-        });
-    }
+            const met = getWorkoutMet(props.exercise, paceRef.current);
+            const calories = calculateWorkoutCalories(met, weight, elapsed) + (elevationGain * 0.9 * weight / 100);
+            caloriesRef.current = calories;
+            setCalories(calories);
+
+            // Communicate updates to the watch and live activity
+            communicateWorkoutUpdate({
+                elapsed,
+                distance,
+                pace: paceRef.current,
+                calories,
+                percentage: percentageRef.current,
+                isPaused: isPausedRef.current,
+            });
+        };
+    }, [communicateWorkoutUpdate, props.exercise, props.goalAmount, props.goalMetric, weight]);
 
     // Subscribe to the workout store for UI updates
     useEffect(() => {
         const unsubscribe = subscribeToWorkout(({ distance, path, segments, location, elevationGain }) => {
             if (isPausedRef.current) return; // Safe pause
 
-            exerciseUpdates(distance, elevationGain);
+            const elapsed = getElapsedSeconds();
+            if (distance > 0 && elapsed > 0) {
+                const km = distance / 1000;
+                const minutes = elapsed / 60;
+                paceRef.current = minutes / km;
+                setPace(paceRef.current);
+            }
+
+            exerciseUpdatesRef.current(distance, elevationGain);
 
             // Update UI state
             distanceRef.current = distance;
@@ -350,21 +357,12 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
             setSegments(segments);
             setLocation(location);
-
-            const elapsed = getElapsedSeconds();
-
-            if (distance > 0 && elapsed > 0) {
-                const km = distance / 1000;
-                const minutes = elapsed / 60;
-                paceRef.current = minutes / km;
-                setPace(paceRef.current);
-            }
         });
 
         const interval = setInterval(() => {
             if (isPausedRef.current) return; // Safe pause
 
-            exerciseUpdates(distanceRef.current, 0);
+            exerciseUpdatesRef.current(distanceRef.current, 0);
         }, 1000); // Second-timer interval for foreground updates (distance/pace updates come from workout store subscription)
 
         return () => {
@@ -372,24 +370,6 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
             clearInterval(interval);
         };
     }, []);
-
-    const workoutPausesOrStarts_Resumes = () => {
-        // === When workout pauses ===
-        if (isPaused) {
-            prevLocationRef.current = null;
-            prevTimeRef.current = null;
-
-            if (activeStartTimeRef.current) {
-                totalActiveMsRef.current += Date.now() - activeStartTimeRef.current;
-                activeStartTimeRef.current = null;
-            }
-
-            return;
-        }
-
-        // === Workout starts OR resumes ===
-        activeStartTimeRef.current = Date.now();
-    }
 
     // Load onboarding data from AsyncStorage
     useEffect(() => {
@@ -411,43 +391,6 @@ export const Exercise: React.FC<ExerciseProps> = (props) => {
 
         loadOnboardingData();
     }, []);
-
-    const getMet = (exercise: string, paceMinPerKm: number) => {
-        if (exercise === "walking") {
-            if (paceMinPerKm > 12) return 2.8;
-            if (paceMinPerKm > 9) return 3.5;
-            return 5.0;
-        }
-
-        if (exercise === "running") {
-            const speedKmh = 60 / paceMinPerKm;
-
-            if (speedKmh < 8) return 8.3;
-            if (speedKmh < 10) return 9.8;
-            if (speedKmh < 12) return 11.5;
-            return 12.5;
-        }
-
-        if (exercise === "cycling") {
-            const speedKmh = 60 / paceMinPerKm;
-
-            if (speedKmh < 15) return 4.5;
-            if (speedKmh < 20) return 6.8;
-            if (speedKmh < 25) return 8.5;
-            return 10.5;
-        }
-
-        return 1;
-    };
-
-    const calculateCalories = (
-        met: number,
-        weightKg: number,
-        elapsedSeconds: number
-    ) => {
-        const hours = elapsedSeconds / 3600;
-        return met * weightKg * hours;
-    };
 
     const getElapsedSeconds = () => {
         const activeMs = activeStartTimeRef.current

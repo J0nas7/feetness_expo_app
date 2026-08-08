@@ -1,5 +1,5 @@
 import { activityName, locale, t } from '@/i18n';
-import { useExercise } from '@/hooks/useExercise';
+import { useWorkouts } from '@/hooks/useWorkouts';
 import { MyTheme } from '@/types/theme';
 import { ExerciseType, Workout } from '@/types/WorkoutDTO';
 import { useActionSheet } from '@expo/react-native-action-sheet';
@@ -30,7 +30,7 @@ const formatDuration = (seconds: number) => {
 export default function PeriodList() {
     const theme = useTheme() as MyTheme;
     const { showActionSheetWithOptions } = useActionSheet();
-    const { bulkDestroyWorkouts, destroyWorkout, readWorkoutsByPeriod } = useExercise();
+    const { bulkDestroyWorkouts, destroyWorkout, readWorkoutsByPeriod } = useWorkouts();
     const params = useLocalSearchParams<{ title?: string; year?: string; month?: string; week?: string }>();
     const [workouts, setWorkouts] = React.useState<Workout[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);

@@ -1,5 +1,5 @@
 import { BarChartsWithPeriods, BigLogo, PeriodSections, PeriodSelector } from '@/components';
-import { useExercise } from '@/hooks/useExercise';
+import { useWorkouts } from '@/hooks/useWorkouts';
 import { t } from '@/i18n';
 import { MyTheme } from '@/types/theme';
 import { ProgressPeriod, Workout } from '@/types/WorkoutDTO';
@@ -97,7 +97,7 @@ const isoWeekToDate = (year: number, week: number) => {
 const ProgressView = () => {
     // ==== HOOKS ====
     const theme = useTheme() as MyTheme;
-    const { indexWorkouts } = useExercise();
+    const { indexWorkouts } = useWorkouts();
 
     // ==== VARIABLES, STATE AND REFS ====
     const [periodType, setPeriodType] = React.useState<'week' | 'month'>('month');

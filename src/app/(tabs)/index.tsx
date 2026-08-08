@@ -1,5 +1,5 @@
 import { Controls, Map } from '@/components/startpage';
-import { useExercise } from '@/hooks/useExercise';
+import { useWorkouts } from '@/hooks/useWorkouts';
 import { activityName } from '@/i18n';
 import { createStartpageStyles } from '@/styles/modules/StartpageStyles';
 import { ExerciseType, GoalMetric, Workout } from '@/types';
@@ -15,7 +15,7 @@ import { Alert, Modal, Pressable, Text, View } from 'react-native';
 
 export default function StartScreen() {
     const theme = useTheme() as MyTheme;
-    const { indexWorkouts } = useExercise();
+    const { indexWorkouts } = useWorkouts();
 
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [mode, setMode] = useState<GoalMetric>('distance');

@@ -2,12 +2,12 @@ import { Plan } from '@/components/plan/model';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
-import { useExercise } from './useExercise';
+import { useWorkouts } from './useWorkouts';
 
 const STORAGE_KEY = 'plans';
 
 export const usePlans = () => {
-    const { indexWorkouts } = useExercise();
+    const { indexWorkouts } = useWorkouts();
     const [plans, setPlans] = useState<Plan[]>([]);
 
     const loadPlans = useCallback(async (): Promise<Plan[]> => {

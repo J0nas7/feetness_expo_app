@@ -12,11 +12,16 @@ import { planCardHeight, PlanCard } from './PlanCard';
 import { PlanEmptyState } from './PlanEmptyState';
 import { PlanToolbar } from './PlanToolbar';
 import { usePlans } from '@/hooks/usePlans';
+import { useWorkouts } from '@/hooks/useWorkouts';
+
+type PeriodProgress = Record<string, { distance: number; duration: number }>;
 
 export function PlanListScreen() {
     const theme = useTheme() as MyTheme;
     const { plans, savePlans, refreshPlans } = usePlans();
+    const { indexWorkouts } = useWorkouts();
     const [refreshing, setRefreshing] = useState(false);
+    const [progressByPeriod, setProgressByPeriod] = useState<PeriodProgress>({});
     const [bulkMode, setBulkMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [historyExpanded, setHistoryExpanded] = useState(false);
@@ -37,10 +42,27 @@ export function PlanListScreen() {
             : period;
     };
 
+    const refreshProgress = useCallback(async () => {
+        const workouts = await indexWorkouts();
+        const progress = workouts.reduce<PeriodProgress>((periods, workout) => {
+            const workoutDate = new Date(workout.startTime);
+            if (Number.isNaN(workoutDate.getTime())) return periods;
+
+            const period = `${String(workoutDate.getMonth() + 1).padStart(2, '0')}-${workoutDate.getFullYear()}`;
+            const totals = periods[period] ?? { distance: 0, duration: 0 };
+            totals.distance += workout.distance / 1000;
+            totals.duration += workout.elapsedTime / 3600;
+            periods[period] = totals;
+            return periods;
+        }, {});
+        setProgressByPeriod(progress);
+    }, [indexWorkouts]);
+
     useFocusEffect(useCallback(() => {
         setSelectedIds([]);
         setBulkMode(false);
-    }, []));
+        void refreshProgress();
+    }, [refreshProgress]));
 
     const toggleSelected = (id: string) => setSelectedIds((previous) =>
         previous.includes(id) ? previous.filter((item) => item !== id) : [...previous, id]
@@ -85,11 +107,11 @@ export function PlanListScreen() {
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
         try {
-            await refreshPlans();
+            await Promise.all([refreshPlans(), refreshProgress()]);
         } finally {
             setRefreshing(false);
         }
-    }, [refreshPlans]);
+    }, [refreshPlans, refreshProgress]);
 
     const styles = StyleSheet.create({
         safeArea: { flex: 1, backgroundColor: theme.colors.background },
@@ -115,6 +137,7 @@ export function PlanListScreen() {
     const renderCard = (plan: Plan) => <PlanCard
         key={plan.id}
         plan={plan}
+        completedAmount={progressByPeriod[plan.period]?.[plan.metric === 'distance' ? 'distance' : 'duration'] ?? 0}
         selected={selectedIds.includes(plan.id)}
         bulkMode={bulkMode}
         onSelect={() => toggleSelected(plan.id)}

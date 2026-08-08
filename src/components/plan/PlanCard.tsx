@@ -1,55 +1,23 @@
-import { useExercise } from '@/hooks/useExercise';
 import { MyTheme } from '@/types/theme';
 import { locale, t } from '@/i18n';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { useFocusEffect, useTheme } from '@react-navigation/native';
-import React, { useCallback, useState } from 'react';
+import { useTheme } from '@react-navigation/native';
+import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { currentPeriodIndex, formatPeriod, periodIndex, Plan } from './model';
 
-type Props = { plan: Plan; selected: boolean; bulkMode: boolean; onSelect: () => void; onCopy: () => void; onEdit: () => void; onDelete: () => void };
+type Props = { plan: Plan; completedAmount: number; selected: boolean; bulkMode: boolean; onSelect: () => void; onCopy: () => void; onEdit: () => void; onDelete: () => void };
 const COMPACT_CARD_HEIGHT = 88;
 const PROGRESS_CARD_HEIGHT = 118;
 export const planCardHeight = (plan: Plan) =>
     periodIndex(plan.period) > currentPeriodIndex ? COMPACT_CARD_HEIGHT : PROGRESS_CARD_HEIGHT;
 
-export function PlanCard({ plan, selected, bulkMode, onSelect, onCopy, onEdit, onDelete }: Props) {
+export function PlanCard({ plan, completedAmount, selected, bulkMode, onSelect, onCopy, onEdit, onDelete }: Props) {
     const theme = useTheme() as MyTheme;
-    const { indexWorkouts } = useExercise();
     const current = periodIndex(plan.period) === currentPeriodIndex;
     const showProgress = periodIndex(plan.period) <= currentPeriodIndex;
     const cardHeight = planCardHeight(plan);
-    const [completedAmount, setCompletedAmount] = useState(0);
-
-    useFocusEffect(useCallback(() => {
-        let active = true;
-
-        const loadMonthlyProgress = async () => {
-            if (!showProgress) {
-                if (active) setCompletedAmount(0);
-                return;
-            }
-            const period = /^(0[1-9]|1[0-2])-(\d{4})$/.exec(plan.period);
-            if (!period) return;
-
-            const workouts = await indexWorkouts();
-            const planMonth = Number(period[1]) - 1;
-            const planYear = Number(period[2]);
-            const monthlyWorkouts = workouts.filter((workout) => {
-                const workoutDate = new Date(workout.startTime);
-                return workoutDate.getMonth() === planMonth && workoutDate.getFullYear() === planYear;
-            });
-            const completed = plan.metric === 'distance'
-                ? monthlyWorkouts.reduce((total, workout) => total + workout.distance, 0) / 1000
-                : monthlyWorkouts.reduce((total, workout) => total + workout.elapsedTime, 0) / 3600;
-
-            if (active) setCompletedAmount(completed);
-        };
-
-        loadMonthlyProgress();
-        return () => { active = false; };
-    }, [indexWorkouts, plan.metric, plan.period, showProgress]));
 
     const percentage = plan.goal > 0 ? completedAmount / plan.goal * 100 : 0;
     const displayedPercentage = Math.round(percentage);

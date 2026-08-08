@@ -1,5 +1,5 @@
 import { activityName, t } from '@/i18n';
-import { useExercise } from '@/hooks/useExercise';
+import { useWorkouts } from '@/hooks/useWorkouts';
 import { ExerciseType, GoalMetric, Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -25,7 +25,7 @@ type WorkoutFormProps = { mode?: 'create' | 'edit' | 'bulk'; workout?: Workout; 
 
 export function EditWorkoutScreen({ mode = 'edit', workout, selectedIds = [] }: WorkoutFormProps) {
     const theme = useTheme() as MyTheme;
-    const { bulkUpdateWorkouts, updateWorkout } = useExercise();
+    const { bulkUpdateWorkouts, updateWorkout } = useWorkouts();
     const isBulk = mode === 'bulk';
     const source = useMemo<Workout>(() => workout ?? ({
         id: Date.now(),
