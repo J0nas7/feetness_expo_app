@@ -1,5 +1,6 @@
 import { Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import React, { useEffect, useMemo, useRef } from 'react';
 import {
@@ -22,6 +23,7 @@ const GROUP_SECONDS = 60;
 
 export const RenderTime = ({ workout }: { workout: Workout }) => {
     const theme = useTheme() as MyTheme;
+    const scrollHintAnimation = useRef(new Animated.Value(0)).current;
 
     const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
 
@@ -61,8 +63,6 @@ export const RenderTime = ({ workout }: { workout: Workout }) => {
         );
 
         let distanceSoFar = 0;
-        let kmCounter = 0;
-
         for (let i = 0; i < workout.segments.length; i += chunkSize) {
             const slice = workout.segments.slice(i, i + chunkSize);
 
@@ -133,29 +133,24 @@ export const RenderTime = ({ workout }: { workout: Workout }) => {
                 })
             )
         ).start();
-    }, []);
+    }, [animations]);
 
-    const maxPace = Math.max(...groupedSegments.map(s => s.avgPace || 1));
+    useEffect(() => {
+        const animation = Animated.loop(Animated.sequence([
+            Animated.timing(scrollHintAnimation, { toValue: 1, duration: 900, useNativeDriver: true }),
+            Animated.timing(scrollHintAnimation, { toValue: 0, duration: 900, useNativeDriver: true }),
+        ]));
+        animation.start();
+        return () => animation.stop();
+    }, [scrollHintAnimation]);
 
-    const cumulativeData = groupedSegments.map((_, index) => {
-        return groupedSegments
-            .slice(0, index + 1)
-            .reduce((sum, g) => sum + g.avgPace * GROUP_SECONDS * 60, 0);
-    });
-
-    const cumulativePoints = cumulativeData
-        .map((val, i) => {
-            const x = (i / (cumulativeData.length - 1 || 1)) * chartWidth;
-
-            const y =
-                chartHeight -
-                (val / maxCumulative) * (chartHeight - 20);
-
-            return `${x},${y}`;
-        })
-        .join(' ');
-
-    const maxCumulative = Math.max(...cumulativeData, 1);
+    const paceValues = groupedSegments.map((segment) => segment.avgPace).filter((pace) => pace > 0 && isFinite(pace));
+    const minPace = paceValues.length > 0 ? Math.min(...paceValues) : 0;
+    const maxPace = paceValues.length > 0 ? Math.max(...paceValues) : 0;
+    const paceRange = maxPace - minPace;
+    const paceBarHeight = (pace: number) => paceRange > 0
+        ? 30 + ((pace - minPace) / paceRange) * 80
+        : 70;
 
     const chartWidth = 320;
     const chartHeight = 120;
@@ -211,35 +206,49 @@ export const RenderTime = ({ workout }: { workout: Workout }) => {
             marginBottom: 12,
         },
 
-        row: {
+        groupedChart: {
             flexDirection: 'row',
-            alignItems: 'center',
-            marginBottom: 10,
+            alignItems: 'flex-end',
+            minHeight: 170,
+            paddingHorizontal: 4,
+            paddingTop: 8,
+            gap: 4,
         },
 
-        label: {
-            width: 40,
+        paceBarWrapper: {
+            width: 20,
+            height: 160,
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+        },
+
+        paceValue: {
+            width: 25,
+            height: 12,
+            fontSize: 10,
+            fontWeight: '700',
+            alignItems: 'center',
+            transform: [{ rotate: '-90deg' }],
+        },
+
+        paceBar: {
+            width: 12,
+            marginTop: 20,
+            borderRadius: 6,
+            boxShadow: '2px 2px 0 0 rgba(0, 0, 0, 0.35)',
+        },
+
+        paceGroupLabel: {
+            height: 20,
+            marginTop: 6,
+            fontSize: 11,
             color: theme.colors.tertiaryText,
         },
-
-        barWrap: {
-            flex: 1,
-            height: 10,
-            backgroundColor: theme.colors.border,
-            borderRadius: 6,
-            overflow: 'hidden',
-            marginHorizontal: 10,
-        },
-
-        bar: {
-            height: '100%',
-            borderRadius: 6,
-        },
-
-        value: {
-            width: 60,
-            textAlign: 'right',
-            color: theme.colors.secondaryText,
+        scrollHint: {
+            height: 24,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: 2,
         },
         chartDescription: {
             color: theme.colors.tertiaryText,
@@ -315,142 +324,43 @@ export const RenderTime = ({ workout }: { workout: Workout }) => {
                 {/* GROUPED SEGMENTS */}
                 <Text style={styles.sectionTitle}>Pace (grouped)</Text>
 
-                {groupedSegments.map((seg, i) => {
-                    const prevKm = groupedSegments[i - 1]?.km ?? 0;
-                    const currentKm = Math.floor(seg.km);
-                    const showKmMilestone = currentKm > Math.floor(prevKm);
-
-                    /*{
-                        showKmMilestone && currentKm > 0 && (
-                            <View style={{ marginVertical: 6 }}>
-                                <Text style={{ color: theme.colors.primary, fontWeight: '600' }}>
-                                    🏁 {currentKm} km reached
-                                </Text>
-                            </View>
-                        )
-                    }*/
-
-                    return (
-                        <View key={i} style={styles.row}>
-                            <Text style={styles.label}>'{i + 1}</Text>
-
-                            <View style={styles.barWrap}>
-                                <Animated.View
-                                    style={[
-                                        styles.bar,
-                                        {
-                                            width: animations[i].interpolate({
-                                                inputRange: [0, 1],
-                                                outputRange: [
-                                                    '0%',
-                                                    `${(seg.avgPace / maxPace) * 100}%`,
-                                                ],
-                                            }),
-                                            backgroundColor: paceToColor(seg.avgPace),
-                                        },
-                                    ]}
-                                />
-                            </View>
-
-                            <Text style={styles.value}>
-                                {formatPace(seg.avgPace)}
-                            </Text>
-                        </View>
-                    )
-                })}
-
-                {/* 📈 CUMULATIVE */}
-                <Text style={styles.sectionTitle}>Progress Over Time</Text>
-
-                <Text style={styles.chartDescription}>
-                    This shows how your effort accumulated during the workout.
-                    Steeper line = slower pace, flatter = faster segments.
-                </Text>
-
-                <View style={styles.axisRow}>
-                    <Text style={styles.axisLabel}>Start</Text>
-                    <Text style={styles.axisLabel}>Finish</Text>
-                </View>
-
-                <Svg height={chartHeight} width="100%">
-                    <Polyline
-                        points={cumulativeData
-                            .map((val, i) => {
-                                const x =
-                                    (i /
-                                        (cumulativeData.length - 1 || 1)) *
-                                    chartWidth;
-
-                                const y =
-                                    chartHeight -
-                                    (val / maxCumulative) * (chartHeight - 20);
-
-                                return `${x},${y}`;
-                            })
-                            .join(' ')
-                        }
-                        fill="none"
-                        stroke={theme.colors.primary}
-                        strokeWidth="3"
-                    />
-
-                    {/* Start marker */}
-                    <Polyline
-                        points={`0,${chartHeight} 0,${chartHeight}`}
-                        stroke={theme.colors.success}
-                        strokeWidth="6"
-                    />
-
-                    {/* End marker */}
-                    <Polyline
-                        points={`${chartWidth},0 ${chartWidth},0`}
-                        stroke={theme.colors.notification}
-                        strokeWidth="6"
-                    />
-                </Svg>
-
-                <View style={styles.axisFooterRow}>
-                    <Text style={styles.axisLabel}>Beginning of workout</Text>
-                    <Text style={styles.axisLabel}>End of workout</Text>
-                </View>
-
-                {/* LEGEND */}
-                <View style={styles.legendContainer}>
-                    <View style={styles.legendItem}>
-                        <View
-                            style={[
-                                styles.legendColor,
-                                { backgroundColor: theme.colors.primary },
-                            ]}
-                        />
-                        <Text style={styles.legendText}>
-                            Accumulated effort
-                        </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <View style={styles.groupedChart}>
+                        {groupedSegments.map((seg, i) => {
+                            const color = paceToColor(seg.avgPace);
+                            return (
+                                <View key={i} style={styles.paceBarWrapper}>
+                                    <Text style={[styles.paceValue, { color }]}>
+                                        {formatPace(seg.avgPace)}
+                                    </Text>
+                                    <Animated.View
+                                        style={[
+                                            styles.paceBar,
+                                            {
+                                                height: animations[i].interpolate({
+                                                    inputRange: [0, 1],
+                                                    outputRange: [
+                                                        0,
+                                                        paceBarHeight(seg.avgPace),
+                                                    ],
+                                                }),
+                                                backgroundColor: color,
+                                            },
+                                        ]}
+                                    />
+                                    <Text style={styles.paceGroupLabel}>&apos;{i + 1}</Text>
+                                </View>
+                            );
+                        })}
                     </View>
-
-                    <View style={styles.legendItem}>
-                        <View
-                            style={[
-                                styles.legendColor,
-                                { backgroundColor: theme.colors.success },
-                            ]}
-                        />
-                        <Text style={styles.legendText}>
-                            Start
-                        </Text>
-                    </View>
-
-                    <View style={styles.legendItem}>
-                        <View
-                            style={[
-                                styles.legendColor,
-                                { backgroundColor: theme.colors.notification },
-                            ]}
-                        />
-                        <Text style={styles.legendText}>
-                            Finish
-                        </Text>
-                    </View>
+                </ScrollView>
+                <View style={styles.scrollHint} pointerEvents="none">
+                    <Animated.View style={{
+                        opacity: scrollHintAnimation.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.65] }),
+                        transform: [{ translateX: scrollHintAnimation.interpolate({ inputRange: [0, 1], outputRange: [-5, 5] }) }],
+                    }}>
+                        <FontAwesome5 name="arrows-alt-h" size={12} color={theme.colors.tertiaryText} />
+                    </Animated.View>
                 </View>
 
                 <Text style={styles.sectionTitle}>Elevation Profile</Text>
