@@ -2,7 +2,6 @@ import { BarChartsWithPeriods, BigLogo, PeriodSections, PeriodSelector } from '@
 import { t } from '@/i18n';
 import { MyTheme } from '@/types/theme';
 import { ProgressPeriod, Workout } from '@/types/WorkoutDTO';
-import { useActionSheet } from '@expo/react-native-action-sheet';
 import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
@@ -96,11 +95,9 @@ const isoWeekToDate = (year: number, week: number) => {
 const ProgressView = () => {
     // ==== HOOKS ====
     const theme = useTheme() as MyTheme;
-    const { showActionSheetWithOptions } = useActionSheet();
 
     // ==== VARIABLES, STATE AND REFS ====
     const [periodType, setPeriodType] = React.useState<'week' | 'month'>('month');
-    const [sortedWorkouts, setSortedWorkouts] = useState<Workout[]>([]);
     const [periods, setPeriods] = useState<ProgressPeriod[]>([]);
 
     const basePeriods = React.useMemo(() => {
@@ -172,50 +169,7 @@ const ProgressView = () => {
         }, [basePeriods, periodType])
     );
 
-    const handleDeleteWorkout = async (workout: Workout) => {
-        // Load stored workouts
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
-
-        if (!stored) return;
-
-        const workouts: Workout[] = JSON.parse(stored);
-
-        // Filter out the workout to delete
-        const updatedWorkouts = workouts.filter(w => w.id !== workout.id);
-
-        // Save the updated workouts back to storage
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedWorkouts));
-
-        // Recalculate progress to update the UI
-        calculateProgress(updatedWorkouts);
-    }
-
-    const confirmDeleteWorkout = async (workout: Workout) => {
-        const options = [t('progress.deleteWorkout.action'), t('common.actions.cancel')];
-        const destructiveButtonIndex = 0;
-        const cancelButtonIndex = 1;
-
-        showActionSheetWithOptions(
-            {
-                options,
-                cancelButtonIndex,
-                destructiveButtonIndex,
-                title: t('progress.deleteWorkout.title'),
-            },
-            (selectedIndex) => {
-                if (selectedIndex === destructiveButtonIndex) {
-                    handleDeleteWorkout(workout);
-                }
-            }
-        );
-    };
-
     const calculateProgress = (workouts: Workout[]) => {
-        // Sort workouts by start time (newest first) and update state
-        setSortedWorkouts([...workouts].sort(
-            (a, b) => b.startTime - a.startTime
-        ))
-
         // Clear workouts in all periods before reassigning
         basePeriods.forEach((p) => {
             p.workouts = [];
@@ -309,7 +263,6 @@ const ProgressView = () => {
                 {/* Period Sections */}
                 <PeriodSections {...{
                     periods,
-                    confirmDeleteWorkout,
                     isMonthPeriod
                 }} />
             </ScrollView>

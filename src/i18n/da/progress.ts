@@ -4,6 +4,12 @@ export default {
   editMonthlyPlan: 'Rediger månedsplan for {{period}}',
   workoutGoal: '{{amount}} {{unit}} mål',
   hours: 'timer',
+  minutes: 'min',
+  currentMonth: 'Indeværende måned',
+  monthlyPace: '{{remaining}} {{unit}} tilbage · {{days}} dage tilbage · mindst {{daily}} {{unit}} om dagen',
+  viewWorkoutList: 'Se træningsliste',
+  workoutListTitle: 'Træninger',
+  emptyWorkoutList: 'Ingen træninger i denne periode.',
   period: {
     selector: { week: 'UGE', month: 'MÅNED' },
     week: 'Uge {{week}} ({{date}})',
@@ -19,5 +25,6 @@ export default {
   summary: {
     completedGoal: '{{count}} mål',
     completedGoals: '{{count}} mål',
+    goalsShort: '{{count}} mål',
   },
 } as const;

@@ -4,6 +4,12 @@ export default {
   editMonthlyPlan: 'Edit monthly plan for {{period}}',
   workoutGoal: '{{amount}} {{unit}} goal',
   hours: 'hours',
+  minutes: 'min',
+  currentMonth: 'Current month',
+  monthlyPace: '{{remaining}} {{unit}} remaining · {{days}} days left · minimum {{daily}} {{unit}} per day',
+  viewWorkoutList: 'View workout list',
+  workoutListTitle: 'Workouts',
+  emptyWorkoutList: 'No workouts in this period.',
   period: {
     selector: { week: 'WEEK', month: 'MONTH' },
     week: 'Week {{week}} ({{date}})',
@@ -19,5 +25,6 @@ export default {
   summary: {
     completedGoal: '{{count}} goal',
     completedGoals: '{{count}} goals',
+    goalsShort: '{{count}} goals',
   },
 } as const;
