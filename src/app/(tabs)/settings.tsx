@@ -1,18 +1,17 @@
 import { BigLogo, DateOfBirthPage, FirstNamePage, FitnessLevel, FitnessLevelPage, GenderPage, HeightPage, WeightPage } from '@/components';
 import { createOnboardingStyles } from '@/styles/modules/OnboardingStyles';
 import { OnboardingData, PageTitles } from '@/types';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { MyTheme } from '@/types/theme';
 import { FontAwesome5 } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
-    const STORAGE_KEY = 'onboardingData';
-
     const theme = useTheme() as MyTheme;
+    const { showOnboarding, storeOnboarding } = useOnboarding();
     const styles = createStyles(theme);
     const onboardingStyles = createOnboardingStyles(theme);
 
@@ -37,10 +36,8 @@ export default function SettingsScreen() {
         const loadOnboardingData = async () => {
             setTimeout(async () => {
                 try {
-                    const stored = await AsyncStorage.getItem(STORAGE_KEY);
-                    if (!stored) return;
-
-                    const data: OnboardingData = JSON.parse(stored);
+                    const data = await showOnboarding();
+                    if (!data) return;
 
                     setFirstName(data.firstName ?? '');
                     setGender(data.gender ?? 'Select gender');
@@ -64,13 +61,16 @@ export default function SettingsScreen() {
         };
 
         loadOnboardingData();
-    }, []);
+    }, [showOnboarding]);
 
     // Save automatically when values change
     useEffect(() => {
         if (loading) return;
-
-        saveOnboardingData();
+        const data: OnboardingData = {
+            firstName, gender, height, heightUnit, weight, weightUnit, fitnessLevel,
+            dob: { day, month, year },
+        };
+        storeOnboarding(data).catch((error) => console.error('Failed to save onboarding data', error));
     }, [
         firstName,
         gender,
@@ -82,32 +82,9 @@ export default function SettingsScreen() {
         day,
         month,
         year,
+        loading,
+        storeOnboarding,
     ]);
-
-    // Save updated onboarding data to AsyncStorage
-    const saveOnboardingData = async (partial?: Partial<OnboardingData>) => {
-        try {
-            const data: OnboardingData = {
-                firstName,
-                gender,
-                height,
-                heightUnit,
-                weight,
-                weightUnit,
-                fitnessLevel,
-                dob: {
-                    day,
-                    month,
-                    year,
-                },
-                ...partial, // allow overrides if needed
-            };
-
-            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        } catch (err) {
-            console.error('Failed to save onboarding data', err);
-        }
-    };
 
     if (loading) return (
         <View style={styles.logoContainer}>

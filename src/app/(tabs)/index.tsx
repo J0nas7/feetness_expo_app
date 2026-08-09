@@ -1,5 +1,6 @@
 import { Controls, Map } from '@/components/startpage';
 import { useWorkouts } from '@/hooks/useWorkouts';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { activityName } from '@/i18n';
 import { createStartpageStyles } from '@/styles/modules/StartpageStyles';
 import { ExerciseType, GoalMetric, Workout } from '@/types';
@@ -7,7 +8,6 @@ import { MyTheme } from '@/types/theme';
 import { getCurrentLocation, hasBackgroundPermission, hasLocationPermission } from '@/utils/location/location';
 import { WORKOUT_LOCATION_TASK } from '@/utils/location/workoutLocationTask';
 import { endLiveActivity } from '@/utils/native/LiveActivityModule';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import React, { useCallback, useState } from 'react';
@@ -16,6 +16,7 @@ import { Alert, Modal, Pressable, Text, View } from 'react-native';
 export default function StartScreen() {
     const theme = useTheme() as MyTheme;
     const { indexWorkouts } = useWorkouts();
+    const { showOnboarding } = useOnboarding();
 
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [mode, setMode] = useState<GoalMetric>('distance');
@@ -49,8 +50,8 @@ export default function StartScreen() {
     useFocusEffect(
         useCallback(() => {
             const checkUserLocationPermissions = async () => {
-                const stored = await AsyncStorage.getItem('onboardingData');
-                if (!stored) return;
+                const onboarding = await showOnboarding();
+                if (!onboarding) return;
 
                 const fgPermission = await hasLocationPermission();
                 const bgPermission = await hasBackgroundPermission();
@@ -64,7 +65,7 @@ export default function StartScreen() {
             };
 
             checkUserLocationPermissions();
-        }, [])
+        }, [showOnboarding])
     );
 
     // Get user location

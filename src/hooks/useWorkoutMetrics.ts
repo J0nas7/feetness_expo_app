@@ -1,9 +1,9 @@
-import { OnboardingData, Workout } from '@/types';
+import { Workout } from '@/types';
 import { resetWorkoutStoreAndNotify, subscribeToWorkout } from '@/utils/location/workoutStore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { calculateWorkoutCalories, getWorkoutMet } from './useWorkoutSession';
+import { useOnboarding } from './useOnboarding';
 
 type WorkoutUpdate = { distance: number; elapsed: number; pace: number; calories: number; percentage: number; isPaused: boolean };
 type Options = {
@@ -19,6 +19,7 @@ type Options = {
 };
 
 export function useWorkoutMetrics({ exercise, goalAmount, goalMetric, elapsedActiveTime, elapsedActiveTimeRef, getActiveSeconds, isPausedRef, communicateWorkoutUpdate, setLocation }: Options) {
+    const { showOnboarding } = useOnboarding();
     const [distance, setDistance] = useState(0);
     const [pace, setPace] = useState(0);
     const [calories, setCalories] = useState(0);
@@ -82,14 +83,14 @@ export function useWorkoutMetrics({ exercise, goalAmount, goalMetric, elapsedAct
     useEffect(() => {
         const timeout = setTimeout(async () => {
             try {
-                const stored = await AsyncStorage.getItem('onboardingData');
-                if (stored) setWeight((JSON.parse(stored) as OnboardingData).weight ?? 60);
+                const onboarding = await showOnboarding();
+                if (onboarding) setWeight(onboarding.weight ?? 60);
             } catch (error) {
                 console.error('Failed to load onboarding data', error);
             }
         }, 3000);
         return () => clearTimeout(timeout);
-    }, []);
+    }, [showOnboarding]);
 
     const resetMetrics = useCallback(() => {
         resetWorkoutStoreAndNotify();

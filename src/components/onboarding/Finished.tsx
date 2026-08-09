@@ -2,9 +2,9 @@ import { BigLogo } from '@/components/global/BigLogo';
 import { t } from '@/i18n';
 import { FitnessLevel } from '@/components/onboarding/FitnessLevelPage';
 import { OnboardingData, PageTitles } from '@/types';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { MyTheme } from '@/types/theme';
 import { setOnboardingCompleted } from '@/utils/onboarding';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@react-navigation/native';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -34,6 +34,7 @@ interface FinishedProps {
 
 export const Finished: React.FC<FinishedProps> = (props) => {
     const theme = useTheme() as MyTheme;
+    const { storeOnboarding } = useOnboarding();
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const [glitters, setGlitters] = useState<Glitter[]>([]);
 
@@ -45,7 +46,7 @@ export const Finished: React.FC<FinishedProps> = (props) => {
     useEffect(() => {
         if (!props.completed) return
 
-        const saveOnboarding = async () => {
+        const completeOnboarding = async () => {
             try {
                 const onboardingData: OnboardingData = {
                     firstName: props.firstName,
@@ -61,7 +62,7 @@ export const Finished: React.FC<FinishedProps> = (props) => {
                 }
 
                 // save each piece of info as JSON
-                await AsyncStorage.setItem('onboardingData', JSON.stringify(onboardingData));
+                await storeOnboarding(onboardingData);
 
                 // mark onboarding complete
                 await setOnboardingCompleted();
@@ -70,8 +71,8 @@ export const Finished: React.FC<FinishedProps> = (props) => {
             }
         }
 
-        saveOnboarding()
-    }, [props.completed]);
+        completeOnboarding()
+    }, [storeOnboarding, props.completed, props.day, props.firstName, props.fitnessLevel, props.gender, props.height, props.heightUnit, props.month, props.year]);
 
     // Animate icon scale
     useEffect(() => {

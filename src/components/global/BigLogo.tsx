@@ -1,5 +1,4 @@
-import { OnboardingData } from '@/types'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useOnboarding } from '@/hooks/useOnboarding'
 import React, { useEffect, useRef, useState } from 'react'
 import { Animated, StyleSheet, Text } from 'react-native'
 
@@ -10,6 +9,7 @@ interface BigLogoProps {
 }
 
 export const BigLogo: React.FC<BigLogoProps> = (props) => {
+    const { showOnboarding } = useOnboarding();
     const [LOGO, setLogo] = useState<string>(props.icon || "🏃‍♀️")
 
     const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -38,15 +38,12 @@ export const BigLogo: React.FC<BigLogoProps> = (props) => {
         (async () => {
             if (props.icon) return
 
-            const STORAGE_KEY = 'onboardingData';
-            const stored = await AsyncStorage.getItem(STORAGE_KEY);
-            if (!stored) return;
-
-            const data: OnboardingData = JSON.parse(stored);
+            const data = await showOnboarding();
+            if (!data) return;
 
             if (data.gender) setLogo(data.gender === "Male" ? "🏃" : "🏃‍♀️")
         })();
-    }, [])
+    }, [props.icon, showOnboarding])
 
     const styles = StyleSheet.create({
         icon: {
