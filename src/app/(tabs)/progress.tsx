@@ -94,6 +94,38 @@ const isoWeekToDate = (year: number, week: number) => {
     return result.getTime();
 }
 
+const isMonthPeriod = (
+    period: ProgressPeriod
+): period is { year: number; month: number; workouts: Workout[] } => "month" in period;
+
+export const distributeWorkouts = (
+    workouts: Workout[],
+    basePeriods: ProgressPeriod[],
+): ProgressPeriod[] => basePeriods
+    .map((period) => ({
+        ...period,
+        workouts: workouts
+            .filter((workout) => {
+                const date = new Date(workout.startTime);
+                if (isMonthPeriod(period)) {
+                    return period.year === date.getFullYear() && period.month === date.getMonth();
+                }
+
+                const { weekYear, week } = getISOWeekInfo(date);
+                return period.year === weekYear && period.week === week;
+            })
+            .sort((a, b) => b.startTime - a.startTime),
+    }))
+    .sort((a, b) => {
+        if (isMonthPeriod(a) && isMonthPeriod(b)) {
+            return b.year !== a.year ? b.year - a.year : b.month - a.month;
+        }
+        if (a.week !== undefined && b.week !== undefined) {
+            return isoWeekToDate(b.year, b.week) - isoWeekToDate(a.year, a.week);
+        }
+        return 0;
+    });
+
 const ProgressView = () => {
     // ==== HOOKS ====
     const theme = useTheme() as MyTheme;
@@ -101,8 +133,7 @@ const ProgressView = () => {
 
     // ==== VARIABLES, STATE AND REFS ====
     const [periodType, setPeriodType] = React.useState<'week' | 'month'>('month');
-    const [periods, setPeriods] = useState<ProgressPeriod[]>([]);
-    const [allWorkouts, setAllWorkouts] = useState<Workout[]>([]);
+    const [allWorkouts, setAllWorkouts] = useState<Workout[] | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     const basePeriods = React.useMemo(() => {
@@ -120,6 +151,11 @@ const ProgressView = () => {
                 return { year: weekYear, week, workouts: [] as Workout[] };
             });
     }, [periodType]);
+
+    const periods = React.useMemo(
+        () => allWorkouts ? distributeWorkouts(allWorkouts, basePeriods) : [],
+        [allWorkouts, basePeriods],
+    );
 
     // ==== EFFECTS ====
     // On screen focus, remove any saved 'currentWorkout' and redirect to '/explore' with its data.
@@ -146,17 +182,15 @@ const ProgressView = () => {
             let isActive = true;
 
             const loadAndDistributeWorkouts = async () => {
-                // Stop if the component is unmounted
-                if (!isActive) return;
-
                 let workouts = DEMO_WORKOUTS
 
                 const data = await indexWorkouts();
+                if (!isActive) return;
 
                 // Use stored workouts if available
                 if (data.length) workouts = data;
 
-                calculateProgress(workouts);
+                setAllWorkouts(workouts);
             };
 
             loadAndDistributeWorkouts();
@@ -165,72 +199,17 @@ const ProgressView = () => {
             return () => {
                 isActive = false;
             };
-        }, [basePeriods, indexWorkouts, periodType])
+        }, [indexWorkouts])
     );
-
-    const calculateProgress = (workouts: Workout[]) => {
-        setAllWorkouts(workouts);
-        // Clear workouts in all periods before reassigning
-        basePeriods.forEach((p) => {
-            p.workouts = [];
-        });
-
-        // Assign each workout to the correct period (month or week)
-        workouts.forEach((w) => {
-            const d = new Date(w.startTime);
-
-            const period = basePeriods.find((p) =>
-                p.year === d.getFullYear() &&
-                (isMonthPeriod(p) ? p.month === d.getMonth() : p.week === getISOWeekInfo(d).week)
-            );
-
-            // Add workout to the period if found
-            if (period) period?.workouts.push(w);
-        });
-
-        // Sort workouts inside each period (newest first)
-        basePeriods.forEach((p) => {
-            p.workouts.sort((a, b) => b.startTime - a.startTime);
-        });
-
-        // Sort periods themselves (month vs month, week vs week)
-        const periods = basePeriods.sort((a, b) => {
-            // month vs month
-            if (isMonthPeriod(a) && isMonthPeriod(b)) {
-                return b.year !== a.year
-                    ? b.year - a.year
-                    : b.month - a.month;
-            }
-
-            // week vs week
-            if (!isMonthPeriod(a) && !isMonthPeriod(b)) {
-                return isoWeekToDate(b.year, b.week) - isoWeekToDate(a.year, a.week);
-            }
-
-            // optional: decide how month vs week should be ordered
-            return 0;
-        });
-
-        // Update state with the sorted periods
-        setPeriods(periods)
-    }
 
     const refreshWorkouts = async () => {
         setIsRefreshing(true);
         try {
             const storedWorkouts = await indexWorkouts();
-            calculateProgress(storedWorkouts.length ? storedWorkouts : DEMO_WORKOUTS);
+            setAllWorkouts(storedWorkouts.length ? storedWorkouts : DEMO_WORKOUTS);
         } finally {
             setIsRefreshing(false);
         }
-    };
-
-    // ==== METHODS ====
-    // Type guard to check if a ProgressPeriod is a monthly period.
-    const isMonthPeriod = (
-        p: ProgressPeriod
-    ): p is { year: number; month: number; workouts: Workout[] } => {
-        return "month" in p;
     };
 
     // ==== RENDERING ====
@@ -258,7 +237,7 @@ const ProgressView = () => {
         },
     });
 
-    if (!periods.length)
+    if (!allWorkouts || !periods.length)
         return <BigLogo size={200} animated />
 
     return (
