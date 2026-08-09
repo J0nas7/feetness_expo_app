@@ -24,6 +24,7 @@ export default {
     totalTimeBlocks: 'Total time • {{count}} blocks', fastestBlock: 'Fastest block: {{pace}} min/km', groupedPace: 'Pace (grouped)',
     elevationProfile: 'Elevation profile', elevationDescription: 'Elevation changes throughout your workout.', minimumAltitude: 'Min {{altitude}} m', maximumAltitude: 'Max {{altitude}} m',
   },
+  summaryStats: { showPrimary: 'Show primary workout stats', showMore: 'Show more workout stats' },
   goalOf: 'of {{amount}} {{unit}}', slideToPause: 'SLIDE TO PAUSE', openMap: 'Open map', closeMap: 'Close map',
   enableVoice: 'Enable voice guidance', disableVoice: 'Disable voice guidance', time: 'Time', pausedTime: 'Paused time', pausedDistance: 'Paused distance', maximum: 'Maximum', altitude: 'Altitude', steps: 'Steps', finish: 'Finish',
 } as const;
