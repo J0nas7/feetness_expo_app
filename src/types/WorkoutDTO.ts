@@ -35,5 +35,6 @@ export interface ProgressPeriod {
     year: number;
     month?: number;   // optional if using weeks
     week?: number;    // optional if using weeks
+    date?: number;    // optional timestamp for day charts
     workouts: Workout[];
 }

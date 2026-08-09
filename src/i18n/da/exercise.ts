@@ -24,7 +24,7 @@ export default {
     totalTimeBlocks: 'Samlet tid • {{count}} blokke', fastestBlock: 'Hurtigste blok: {{pace}} min/km', groupedPace: 'Tempo (grupperet)',
     elevationProfile: 'Højdeprofil', elevationDescription: 'Højdeændringer gennem din træning.', minimumAltitude: 'Min. {{altitude}} m', maximumAltitude: 'Maks. {{altitude}} m',
   },
-  summaryStats: { showPrimary: 'Vis primære træningsdata', showMore: 'Vis flere træningsdata' },
+  summaryStats: { showPrimary: 'Vis primære træningsdata', showMore: 'Vis flere træningsdata', workoutDate: 'Træningsdato', startTime: 'Starttid', totalTime: 'Samlet tid' },
   goalOf: 'af {{amount}} {{unit}}', slideToPause: 'SKUB FOR AT PAUSE', openMap: 'Åbn kort', closeMap: 'Luk kort',
   enableVoice: 'Slå stemmevejledning til', disableVoice: 'Slå stemmevejledning fra', time: 'Tid', pausedTime: 'Pausetid', pausedDistance: 'Pausedistance', maximum: 'Maksimum', altitude: 'Højde', steps: 'Skridt', finish: 'Mål',
 } as const;

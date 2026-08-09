@@ -1,4 +1,4 @@
-import { t } from '@/i18n';
+import { locale, t } from '@/i18n';
 import { Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -18,6 +18,10 @@ const createStyles = (theme: MyTheme) => StyleSheet.create({
     value: { fontSize: 18, fontWeight: 'bold', color: theme.colors.secondaryText },
     label: { fontSize: 14, color: theme.colors.tertiaryText },
     toggle: { position: 'absolute', right: 5, top: '50%', width: 36, height: 52, alignItems: 'center', justifyContent: 'center', zIndex: 2 },
+    metadataRow: { flexDirection: 'row', paddingHorizontal: 15, position: 'absolute', bottom: 20 },
+    metadataItem: { flex: 1, alignItems: 'center' },
+    metadataLabel: { color: theme.colors.tertiaryText, fontSize: 10, marginBottom: 2 },
+    metadataValue: { color: theme.colors.secondaryText, fontSize: 11, fontWeight: '600' },
 });
 
 export function WorkoutSummaryStats({ workout }: { workout: Workout }) {
@@ -26,13 +30,16 @@ export function WorkoutSummaryStats({ workout }: { workout: Workout }) {
     const [secondary, setSecondary] = useState(false);
     const animation = useRef(new Animated.Value(1)).current;
     const metrics = deriveSummaryMetrics(workout);
+    const workoutDate = new Date(workout.startTime);
+    const localeTag = locale === 'da' ? 'da-DK' : 'en-US';
+    const totalTime = workout.elapsedTime + (workout.pausedTime ?? 0);
     const toggle = () => Animated.timing(animation, { toValue: 0, duration: 160, useNativeDriver: true }).start(() => {
         setSecondary((value) => !value);
         animation.setValue(0);
         Animated.timing(animation, { toValue: 1, duration: 200, useNativeDriver: true }).start();
     });
 
-    return <View style={styles.container}>
+    return <><View style={styles.container}>
         <Animated.View style={[styles.animatedGrid, { opacity: animation, transform: [{ translateX: animation.interpolate({ inputRange: [0, 1], outputRange: [secondary ? 20 : -20, 0] }) }] }]}>
             <View style={styles.grid}>{secondary ? <>
                 <Stat styles={styles} value={((workout.pausedDistance ?? 0) / 1000).toFixed(2)} label={t('exercise.pausedDistance')} />
@@ -53,5 +60,20 @@ export function WorkoutSummaryStats({ workout }: { workout: Workout }) {
         <Pressable style={styles.toggle} onPress={toggle} accessibilityRole="button" accessibilityLabel={secondary ? t('exercise.summaryStats.showPrimary') : t('exercise.summaryStats.showMore')}>
             <FontAwesome5 name="chevron-right" size={20} color={theme.colors.tertiaryText} />
         </Pressable>
-    </View>;
+        <View style={styles.metadataRow}>
+            <View style={styles.metadataItem}>
+                <Text style={styles.metadataLabel}>{t('exercise.summaryStats.workoutDate')}</Text>
+                <Text style={styles.metadataValue}>{workoutDate.toLocaleDateString(localeTag)}</Text>
+            </View>
+            <View style={styles.metadataItem}>
+                <Text style={styles.metadataLabel}>{t('exercise.summaryStats.startTime')}</Text>
+                <Text style={styles.metadataValue}>{workoutDate.toLocaleTimeString(localeTag, { hour: '2-digit', minute: '2-digit' })}</Text>
+            </View>
+            <View style={styles.metadataItem}>
+                <Text style={styles.metadataLabel}>{t('exercise.summaryStats.totalTime')}</Text>
+                <Text style={styles.metadataValue}>{formatSummaryTime(totalTime)}</Text>
+            </View>
+        </View>
+    </View>
+    </>;
 }

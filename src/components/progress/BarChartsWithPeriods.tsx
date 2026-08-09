@@ -14,10 +14,10 @@ type BarMetric =
 
 interface BarChartsWithPeriodsProps {
     periods: ProgressPeriod[];
-    periodType: "week" | "month"
+    periodType: 'day' | 'week' | 'month' | 'year';
 }
 
-export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = ({ periods }) => {
+export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = ({ periods, periodType }) => {
     const theme = useTheme() as MyTheme;
     const [metric, setMetric] = React.useState<BarMetric>('workouts');
 
@@ -194,11 +194,13 @@ export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = ({ peri
                                 />
 
                                 <Text style={styles.barLabel}>
-                                    {m.week !== undefined
+                                    {periodType === 'day' && m.date !== undefined
+                                        ? new Date(m.date).toLocaleDateString(locale === 'da' ? 'da-DK' : 'en-US', { weekday: 'narrow', day: 'numeric' })
+                                        : periodType === 'week' && m.week !== undefined
                                         ? t('progress.period.weekShort', { week: String(m.week).padStart(2, '0') })
-                                        : m.month !== undefined
+                                        : periodType === 'month' && m.month !== undefined
                                             ? new Date(m.year, m.month).toLocaleString(locale === 'da' ? 'da-DK' : 'en-US', { month: 'short' })
-                                            : ''}
+                                            : periodType === 'year' ? String(m.year) : ''}
                                 </Text>
                             </View>
                         );
