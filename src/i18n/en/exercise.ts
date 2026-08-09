@@ -20,6 +20,10 @@ export default {
     saveErrorTitle: 'Could not save workout', saveErrorMessage: 'Your changes were not saved. Please try again.',
   },
   createWorkout: { navigationTitle: 'Create workout', title: 'Add workout', intro: 'Enter a workout manually. Pace and goal progress are calculated automatically.', save: 'Create workout', accessibility: 'Create workout' },
+  timeSummary: {
+    totalTimeBlocks: 'Total time • {{count}} blocks', fastestBlock: 'Fastest block: {{pace}} min/km', groupedPace: 'Pace (grouped)',
+    elevationProfile: 'Elevation profile', elevationDescription: 'Elevation changes throughout your workout.', minimumAltitude: 'Min {{altitude}} m', maximumAltitude: 'Max {{altitude}} m',
+  },
   goalOf: 'of {{amount}} {{unit}}', slideToPause: 'SLIDE TO PAUSE', openMap: 'Open map', closeMap: 'Close map',
   enableVoice: 'Enable voice guidance', disableVoice: 'Disable voice guidance', time: 'Time', pausedTime: 'Paused time', pausedDistance: 'Paused distance', maximum: 'Maximum', altitude: 'Altitude', steps: 'Steps', finish: 'Finish',
 } as const;
