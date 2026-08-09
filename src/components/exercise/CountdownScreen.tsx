@@ -16,6 +16,7 @@ const SPEECH: Record<number, string> = {
     2: t('exercise.speech.countdown.two'),
     1: t('exercise.speech.countdown.one'),
 };
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 interface CountdownScreenProps {
     setIsCountingDown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -37,10 +38,7 @@ export const CountdownScreen: React.FC<CountdownScreenProps> = ({ setIsCountingD
         strokeDashoffset: circumference - circumference * progress.value,
     }));
 
-    const wait = (ms: number) =>
-        new Promise(resolve => setTimeout(resolve, ms));
-
-    const animateCircle = () => {
+    const animateCircle = useCallback(() => {
         return new Promise<void>((resolve) => {
             progress.value = 0;
 
@@ -57,7 +55,7 @@ export const CountdownScreen: React.FC<CountdownScreenProps> = ({ setIsCountingD
                 }
             );
         });
-    };
+    }, [progress]);
 
     useFocusEffect(useCallback(() => {
         finishedRef.current = false;
@@ -113,7 +111,7 @@ export const CountdownScreen: React.FC<CountdownScreenProps> = ({ setIsCountingD
             appStateSubscription.remove();
             stopSpeak();
         };
-    }, [progress, setIsCountingDown]));
+    }, [animateCircle, progress, setIsCountingDown]));
 
     const styles = useMemo(() => StyleSheet.create({
         container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent' },

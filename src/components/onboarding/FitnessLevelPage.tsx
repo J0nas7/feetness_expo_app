@@ -41,7 +41,7 @@ export const FitnessLevelPage: React.FC<FitnessLevelPageProps> = (props) => {
                                     onboardingStyles.toggleTextActive,
                                 ]}
                             >
-                                {level.toUpperCase()}
+                                {t(`onboarding.fitnessLevels.${level}`).toUpperCase()}
                             </Text>
                         </Pressable>
                     )

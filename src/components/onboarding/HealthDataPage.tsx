@@ -3,7 +3,7 @@ import { t } from '@/i18n';
 import { PageTitles } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { requestHealthDataPermissions } from '@/utils/requestHealthDataPermissions';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,8 +13,8 @@ interface HealthDataPageProps {
     onNext: (pageName: PageTitles) => void;
 }
 
-export const HealthDataPage: React.FC<HealthDataPageProps> = (props) => {
-    const handleEnableHealthData = async () => {
+export const HealthDataPage: React.FC<HealthDataPageProps> = ({ theme, currentPage, onNext }) => {
+    const handleEnableHealthData = useCallback(async () => {
         try {
             console.log("handleEnableHealthData()")
             await requestHealthDataPermissions();
@@ -22,20 +22,20 @@ export const HealthDataPage: React.FC<HealthDataPageProps> = (props) => {
             console.error('Error requesting health data permissions', error);
         }
 
-        props.onNext("FirstName");
-    };
+        onNext("FirstName");
+    }, [onNext]);
 
     useEffect(() => {
-        console.log("props.currentPage", props.currentPage)
-        if (props.currentPage === 'HealthData') {
+        console.log("currentPage", currentPage)
+        if (currentPage === 'HealthData') {
             handleEnableHealthData();
         }
-    }, [props.currentPage]);
+    }, [handleEnableHealthData, currentPage]);
 
     const styles = StyleSheet.create({
         container: {
             flex: 1,
-            backgroundColor: props.theme.colors.background,
+            backgroundColor: theme.colors.background,
         },
         content: {
             flex: 1,
@@ -48,12 +48,12 @@ export const HealthDataPage: React.FC<HealthDataPageProps> = (props) => {
             fontSize: 28,
             fontWeight: 'bold',
             marginBottom: 20,
-            color: props.theme.colors.text,
+            color: theme.colors.text,
             textAlign: 'center',
         },
         description: {
             fontSize: 18,
-            color: props.theme.colors.secondaryText,
+            color: theme.colors.secondaryText,
             textAlign: 'center',
         },
     });
@@ -66,10 +66,10 @@ export const HealthDataPage: React.FC<HealthDataPageProps> = (props) => {
                 <View>
                     <Text style={styles.title}>{t('onboarding.healthTitle')}</Text>
                     <Text style={styles.description}>
-                        Back up your workout data in Apple Health
+                        {t('onboarding.healthLine1')}
                     </Text>
                     <Text style={styles.description}>
-                        and activate all pedometer- and heartrate-functions.
+                        {t('onboarding.healthLine2')}
                     </Text>
                 </View>
             </View>

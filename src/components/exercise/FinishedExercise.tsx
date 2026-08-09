@@ -1,7 +1,5 @@
 import { RenderMap, RenderNavigation, RenderSummary, RenderTime } from '@/components/exercise/finishedExercise/index';
 import { Workout } from '@/types';
-import { MyTheme } from '@/types/theme';
-import { useTheme } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,8 +9,6 @@ interface FinishedExerciseProps {
 }
 
 export const FinishedExercise: React.FC<FinishedExerciseProps> = ({ workout }) => {
-    const theme = useTheme() as MyTheme;
-
     const [activeTab, setActiveTab] = useState<'summary' | 'time' | 'media' | 'map'>('summary');
 
     return (

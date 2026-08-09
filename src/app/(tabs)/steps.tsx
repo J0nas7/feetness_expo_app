@@ -115,7 +115,7 @@ const StepsCircle: React.FC<StepsCircleProps> = ({ steps, goal }) => {
                 duration: 800,
                 useNativeDriver: false,
             }).start();
-        }, [steps, goal])
+        }, [animation, goal, steps])
     );
 
 
@@ -197,7 +197,7 @@ const StepsBarChart: React.FC<{ values: number[] }> = ({ values }) => {
                     useNativeDriver: false,
                 }).start();
             });
-        }, [maxValue, values])
+        }, [animatedHeights, animatedLabels, maxValue, values])
     );
 
     const styles = StyleSheet.create({

@@ -7,6 +7,7 @@ interface SelectModalProps {
     theme: MyTheme;
     visible: boolean;
     items: string[];
+    getItemLabel?: (value: string) => string;
     onSelect: (value: string) => void;
     onClose: () => void;
 }
@@ -46,7 +47,7 @@ export const SelectModal: React.FC<SelectModalProps> = (props) => {
                                 { color: props.theme.colors.text },
                             ]}
                         >
-                            {item}
+                            {props.getItemLabel?.(item) ?? item}
                         </Text>
                     </Pressable>
                 ))}

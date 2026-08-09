@@ -1,10 +1,11 @@
 import { DateOfBirthPage, Finished, FirstNamePage, FitnessLevel, FitnessLevelPage, GenderPage, HealthDataPage, HeightPage, LocationPage, SelectModal, WeightPage, Welcome } from '@/components';
 import { createOnboardingStyles } from '@/styles/modules/OnboardingStyles';
+import { t } from '@/i18n';
 import { PageTitles } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { useTheme } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
     Animated,
     Dimensions,
@@ -35,14 +36,13 @@ export default function OnboardingScreen() {
 
     const [fitnessLevel, setFitnessLevel] = useState<FitnessLevel | null>(null);
 
-    const [dobModal, setDobModal] = useState<null | 'day' | 'month' | 'year'>(null);
     const [day, setDay] = useState('Day');
     const [month, setMonth] = useState('Month');
     const [year, setYear] = useState('Year');
 
     const [completed, setCompleted] = useState(false);
 
-    const goToNextPage = (pageName: PageTitles) => {
+    const goToNextPage = useCallback((pageName: PageTitles) => {
         // Trigger haptic feedback
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
@@ -53,19 +53,19 @@ export default function OnboardingScreen() {
             offset: currentIndex.current * width,
             animated: true,
         });
-    };
+    }, []);
 
     const pages = [
-        <Welcome onNext={goToNextPage} />,
-        <LocationPage {...{ theme, currentPage, onNext: goToNextPage }} />,
-        <HealthDataPage {...{ theme, currentPage, onNext: goToNextPage }} />,
-        <FirstNamePage {...{ theme, currentPage, firstName, setFirstName, onNext: goToNextPage }} />,
-        <GenderPage {...{ theme, gender, setGenderModalVisible }} />,
-        <HeightPage {...{ theme, height, setHeight, heightUnit, setHeightUnit, onNext: goToNextPage }} />,
-        <WeightPage {...{ theme, weight, setWeight, weightUnit, setWeightUnit, onNext: goToNextPage }} />,
-        <FitnessLevelPage {...{ theme, fitnessLevel, setFitnessLevel, onNext: goToNextPage }} />,
-        <DateOfBirthPage {...{ theme, day, month, year, setDay, setMonth, setYear, setCompleted, onNext: goToNextPage }} />,
-        <Finished {...{ completed, currentPage, firstName, gender, height, heightUnit, fitnessLevel, day, month, year }} />,
+        <Welcome key="welcome" onNext={goToNextPage} />,
+        <LocationPage key="location" {...{ theme, currentPage, onNext: goToNextPage }} />,
+        <HealthDataPage key="health" {...{ theme, currentPage, onNext: goToNextPage }} />,
+        <FirstNamePage key="name" {...{ theme, currentPage, firstName, setFirstName, onNext: goToNextPage }} />,
+        <GenderPage key="gender" {...{ theme, gender, setGenderModalVisible }} />,
+        <HeightPage key="height" {...{ theme, height, setHeight, heightUnit, setHeightUnit, onNext: goToNextPage }} />,
+        <WeightPage key="weight" {...{ theme, weight, setWeight, weightUnit, setWeightUnit, onNext: goToNextPage }} />,
+        <FitnessLevelPage key="fitness" {...{ theme, fitnessLevel, setFitnessLevel, onNext: goToNextPage }} />,
+        <DateOfBirthPage key="dob" {...{ theme, day, month, year, setDay, setMonth, setYear, setCompleted, onNext: goToNextPage }} />,
+        <Finished key="finished" {...{ completed, currentPage, firstName, gender, height, heightUnit, fitnessLevel, day, month, year }} />,
     ];
 
     return (
@@ -117,6 +117,7 @@ export default function OnboardingScreen() {
             <SelectModal
                 visible={genderModalVisible}
                 items={['Male', 'Female', 'Other']}
+                getItemLabel={(value) => t(`onboarding.genderOptions.${value.toLowerCase()}`)}
                 theme={theme}
                 onSelect={(v) => {
                     setGender(v);

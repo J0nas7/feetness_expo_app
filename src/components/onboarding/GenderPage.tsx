@@ -11,6 +11,9 @@ interface GenderPageProps {
 
 export const GenderPage: React.FC<GenderPageProps> = (props) => {
     const onboardingStyles = createOnboardingStyles(props.theme);
+    const genderLabel = props.gender === 'Select gender'
+        ? t('onboarding.selectGender')
+        : t(`onboarding.genderOptions.${props.gender.toLowerCase()}`);
     return (
         <View style={onboardingStyles.center}>
             <Text style={onboardingStyles.title}>{t('onboarding.gender')}</Text>
@@ -20,7 +23,7 @@ export const GenderPage: React.FC<GenderPageProps> = (props) => {
                 onPress={() => props.setGenderModalVisible(true)}
             >
                 <Text style={[onboardingStyles.selectText, { color: props.theme.colors.text }]}>
-                    {props.gender}
+                    {genderLabel}
                 </Text>
             </Pressable>
         </View>

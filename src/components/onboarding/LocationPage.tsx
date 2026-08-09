@@ -3,7 +3,7 @@ import { t } from '@/i18n';
 import { PageTitles } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { requestLocationPermissions } from '@/utils/location/location';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,26 +13,26 @@ interface LocationPageProps {
     onNext: (pageName: PageTitles) => void
 }
 
-export const LocationPage: React.FC<LocationPageProps> = (props) => {
-    const handleEnableLocation = async () => {
+export const LocationPage: React.FC<LocationPageProps> = ({ theme, currentPage, onNext }) => {
+    const handleEnableLocation = useCallback(async () => {
         try {
-            const response = await requestLocationPermissions();
+            await requestLocationPermissions();
         } catch (error) {
             console.error('Error requesting location', error);
         }
-        props.onNext("HealthData");
-    };
+        onNext("HealthData");
+    }, [onNext]);
 
     useEffect(() => {
-        if (props.currentPage === "Location") {
+        if (currentPage === "Location") {
             handleEnableLocation()
         }
-    }, [props.currentPage])
+    }, [handleEnableLocation, currentPage])
 
     const styles = StyleSheet.create({
         container: {
             flex: 1,
-            backgroundColor: props.theme.colors.background,
+            backgroundColor: theme.colors.background,
         },
         content: {
             flex: 1,
@@ -45,22 +45,22 @@ export const LocationPage: React.FC<LocationPageProps> = (props) => {
             fontSize: 28,
             fontWeight: 'bold',
             marginBottom: 20,
-            color: props.theme.colors.text,
+            color: theme.colors.text,
             textAlign: 'center',
         },
         description: {
             fontSize: 18,
-            color: props.theme.colors.secondaryText,
+            color: theme.colors.secondaryText,
             textAlign: 'center',
         },
         button: {
-            backgroundColor: props.theme.colors.success,
+            backgroundColor: theme.colors.success,
             paddingVertical: 16,
             paddingHorizontal: 32,
             borderRadius: 12,
         },
         buttonText: {
-            color: props.theme.colors.onPrimary,
+            color: theme.colors.onPrimary,
             fontSize: 20,
             fontWeight: 'bold',
         },

@@ -1,4 +1,5 @@
 import { createOnboardingStyles } from '@/styles/modules/OnboardingStyles';
+import { locale, t } from '@/i18n';
 import { PageTitles } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { Picker } from '@react-native-picker/picker';
@@ -44,6 +45,8 @@ export const DateOfBirthPage: React.FC<DateOfBirthPageProps> = ({
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December',
     ];
+    const monthLabel = (month: string) => new Date(2000, monthsAll.indexOf(month), 1)
+        .toLocaleString(locale === 'da' ? 'da-DK' : 'en-US', { month: 'long' });
     const years = Array.from(
         { length: 100 },
         (_, i) => `${new Date().getFullYear() - i}`
@@ -141,7 +144,7 @@ export const DateOfBirthPage: React.FC<DateOfBirthPageProps> = ({
 
     return (
         <View style={onboardingStyles.center}>
-            <Text style={onboardingStyles.title}>Date of Birth</Text>
+            <Text style={onboardingStyles.title}>{t('onboarding.birthDate')}</Text>
 
             <View style={{ flexDirection: 'row', width: '100%' }}>
                 {/* Day */}
@@ -151,7 +154,7 @@ export const DateOfBirthPage: React.FC<DateOfBirthPageProps> = ({
                     onValueChange={handleDayChange}
                     itemStyle={{ color: theme.colors.text }}
                 >
-                    <Picker.Item label="Day" value="Day" />
+                    <Picker.Item label={t('onboarding.day')} value="Day" />
                     {days.map(d => (
                         <Picker.Item key={d} label={d} value={d} />
                     ))}
@@ -164,9 +167,9 @@ export const DateOfBirthPage: React.FC<DateOfBirthPageProps> = ({
                     onValueChange={handleMonthChange}
                     itemStyle={{ color: theme.colors.text }}
                 >
-                    <Picker.Item label="Month" value="Month" />
+                    <Picker.Item label={t('onboarding.month')} value="Month" />
                     {months.map(m => (
-                        <Picker.Item key={m} label={m} value={m} />
+                        <Picker.Item key={m} label={monthLabel(m)} value={m} />
                     ))}
                 </Picker>
 
@@ -177,7 +180,7 @@ export const DateOfBirthPage: React.FC<DateOfBirthPageProps> = ({
                     onValueChange={handleYearChange}
                     itemStyle={{ color: theme.colors.text }}
                 >
-                    <Picker.Item label="Year" value="Year" />
+                    <Picker.Item label={t('onboarding.year')} value="Year" />
                     {years.map(y => (
                         <Picker.Item key={y} label={y} value={y} />
                     ))}
@@ -194,7 +197,7 @@ export const DateOfBirthPage: React.FC<DateOfBirthPageProps> = ({
                 ]}
             >
                 <Text style={onboardingStyles.nextButtonText}>
-                    Next
+                    {t('onboarding.next')}
                 </Text>
             </Pressable>
         </View>

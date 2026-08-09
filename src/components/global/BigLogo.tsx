@@ -16,8 +16,9 @@ export const BigLogo: React.FC<BigLogoProps> = (props) => {
 
     // Animate icon scale
     useEffect(() => {
+        let animation: Animated.CompositeAnimation | undefined;
         if (props.animated) {
-            Animated.loop(
+            animation = Animated.loop(
                 Animated.sequence([
                     Animated.timing(scaleAnim, {
                         toValue: 1.3,
@@ -30,9 +31,11 @@ export const BigLogo: React.FC<BigLogoProps> = (props) => {
                         useNativeDriver: true,
                     }),
                 ])
-            ).start();
+            );
+            animation.start();
         }
-    }, [scaleAnim]);
+        return () => animation?.stop();
+    }, [props.animated, scaleAnim]);
 
     useEffect(() => {
         (async () => {

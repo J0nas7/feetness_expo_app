@@ -132,7 +132,7 @@ export const WeightPage: React.FC<WeightPageProps> = (props) => {
                 }}
             >
                 <Text style={{ color: props.theme.colors.onPrimary, fontWeight: 'bold' }}>
-                    Next
+                    {t('onboarding.next')}
                 </Text>
             </Pressable>
         </View>

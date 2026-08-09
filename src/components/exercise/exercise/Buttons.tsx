@@ -17,14 +17,14 @@ interface ButtonsProps {
     stopExercise: () => void
 };
 
-export const Buttons: React.FC<ButtonsProps> = (props) => {
+export const Buttons: React.FC<ButtonsProps> = ({ isPaused, setIsPaused, stopExercise }) => {
     const theme = useTheme() as MyTheme;
     const SLIDE_WIDTH = 260;
     const KNOB_SIZE = 50;
 
     const doPause = React.useCallback(() => {
-        props.setIsPaused(true)
-    }, []);
+        setIsPaused(true)
+    }, [setIsPaused]);
 
     const translateX = useSharedValue(0);
     const gestureFinished = React.useRef(false);
@@ -109,16 +109,16 @@ export const Buttons: React.FC<ButtonsProps> = (props) => {
         }
     });
 
-    if (props.isPaused) {
+    if (isPaused) {
         return (
             <View style={styles.buttonArea}>
                 <Pressable
                     style={styles.pauseButton}
-                    onPress={() => props.setIsPaused(prev => !prev)}
+                    onPress={() => setIsPaused(prev => !prev)}
                 >
-                    <Text style={styles.pauseText}>{t(props.isPaused ? 'common.actions.resume' : 'common.actions.pause')}</Text>
+                    <Text style={styles.pauseText}>{t(isPaused ? 'common.actions.resume' : 'common.actions.pause')}</Text>
                 </Pressable>
-                <Pressable style={styles.stopButton} onPress={props.stopExercise}>
+                <Pressable style={styles.stopButton} onPress={stopExercise}>
                     <Text style={styles.stopText}>{t('common.actions.stop')}</Text>
                 </Pressable>
             </View>

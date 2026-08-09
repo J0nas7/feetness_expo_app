@@ -1,4 +1,5 @@
 import { createOnboardingStyles } from '@/styles/modules/OnboardingStyles';
+import { t } from '@/i18n';
 import { PageTitles } from '@/types';
 import { MyTheme } from '@/types/theme';
 import Slider from '@react-native-community/slider';
@@ -38,7 +39,7 @@ export const HeightPage: React.FC<HeightPageProps> = (props) => {
 
     return (
         <View style={onboardingStyles.center}>
-            <Text style={onboardingStyles.title}>Your Height</Text>
+            <Text style={onboardingStyles.title}>{t('onboarding.height')}</Text>
 
             <View style={onboardingStyles.valueRow}>
                 <Pressable
@@ -131,7 +132,7 @@ export const HeightPage: React.FC<HeightPageProps> = (props) => {
                 }}
             >
                 <Text style={{ color: props.theme.colors.onPrimary }}>
-                    Next
+                    {t('onboarding.next')}
                 </Text>
             </Pressable>
         </View>

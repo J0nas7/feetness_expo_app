@@ -53,7 +53,7 @@ export default function StartScreen() {
                 const onboarding = await showOnboarding();
                 if (!onboarding) return;
 
-                const fgPermission = await hasLocationPermission();
+                await hasLocationPermission();
                 const bgPermission = await hasBackgroundPermission();
 
                 if (!bgPermission) {
@@ -112,8 +112,6 @@ export default function StartScreen() {
     const pressGoalAmount = (direction: "plus" | "minus") => {
         let newGoalAmount = mode === 'distance' ? distance : duration
 
-        mode === 'distance' ? 0.25 : 5
-
         if (direction === "plus") {
             if (mode === 'distance') newGoalAmount = (newGoalAmount + 0.25)
             if (mode === 'duration') newGoalAmount = (newGoalAmount + 5)
@@ -123,9 +121,8 @@ export default function StartScreen() {
             if (mode === 'duration') newGoalAmount = (newGoalAmount - 5)
         }
 
-        mode === 'distance'
-            ? setDistance(newGoalAmount)
-            : setDuration(newGoalAmount)
+        if (mode === 'distance') setDistance(newGoalAmount);
+        else setDuration(newGoalAmount);
     }
 
     // Styles

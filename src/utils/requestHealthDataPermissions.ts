@@ -88,15 +88,6 @@ export const requestHealthDataPermissions = async (): Promise<HealthPermissionSt
  * Does NOT trigger system prompt.
  */
 export const hasHealthDataPermission = async (): Promise<boolean> => {
-    try {
-        /**
-         * Placeholder:
-         * iOS: HealthKit.getAuthorizationStatus
-         * Android: Health Connect permission query
-         */
-        return false;
-    } catch (error) {
-        console.error('Error checking health data permission', error);
-        return false;
-    }
+    // Placeholder: query HealthKit or Health Connect authorization here.
+    return false;
 };

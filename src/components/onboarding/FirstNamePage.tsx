@@ -46,7 +46,7 @@ export const FirstNamePage: React.FC<FirstNamePageProps> = (props) => {
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                     <Text style={{ fontSize: 28, fontWeight: 'bold', marginBottom: 20, color: props.theme.colors.text }}>
-                        What's your first name?
+                        {t('onboarding.firstNameQuestion')}
                     </Text>
 
                     <TextInput
@@ -78,7 +78,7 @@ export const FirstNamePage: React.FC<FirstNamePageProps> = (props) => {
                         disabled={localName.trim().length === 0}
                     >
                         <Text style={onboardingStyles.nextButtonText}>
-                            Next
+                            {t('onboarding.next')}
                         </Text>
                     </Pressable>
                 </View>

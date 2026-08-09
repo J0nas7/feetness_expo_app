@@ -2,7 +2,7 @@ import { MyTheme } from '@/types/theme';
 import { locale, t } from '@/i18n';
 import { ProgressPeriod } from '@/types/WorkoutDTO';
 import { useTheme } from '@react-navigation/native';
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
 type BarMetric =
@@ -17,11 +17,11 @@ interface BarChartsWithPeriodsProps {
     periodType: "week" | "month"
 }
 
-export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = (props) => {
+export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = ({ periods }) => {
     const theme = useTheme() as MyTheme;
     const [metric, setMetric] = React.useState<BarMetric>('workouts');
 
-    const getMetricValue = (m: typeof props.periods[number]) => {
+    const getMetricValue = useCallback((m: typeof periods[number]) => {
         switch (metric) {
             case 'workouts':
                 return m.workouts.length;
@@ -43,9 +43,9 @@ export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = (props)
                 return Number(avg.toFixed(1));
             }
         }
-    };
+    }, [metric]);
 
-    const values = props.periods.map(getMetricValue);
+    const values = useMemo(() => periods.map(getMetricValue), [getMetricValue, periods]);
 
     const maxBarValue = Math.max(...values, 1);
 
@@ -59,15 +59,15 @@ export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = (props)
 
     // Create a ref array for animated heights and labels
     const animatedHeights = useRef(
-        props.periods.map(() => new Animated.Value(0))
+        periods.map(() => new Animated.Value(0))
     ).current;
 
     const animatedLabels = useRef(
-        props.periods.map(() => new Animated.Value(0))
+        periods.map(() => new Animated.Value(0))
     ).current;
 
     useEffect(() => {
-        props.periods.slice().reverse().forEach((m, idx) => {
+        periods.slice().reverse().forEach((m, idx) => {
             const value = getMetricValue(m);
             const heightPercent = value === 0 ? 4 : (value / maxBarValue) * 100;
 
@@ -78,10 +78,10 @@ export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = (props)
                 useNativeDriver: false,
             }).start();
         });
-    }, [metric, maxBarValue, props.periodType]);
+    }, [animatedHeights, getMetricValue, maxBarValue, periods]);
 
     useEffect(() => {
-        props.periods.slice().reverse().forEach((m, idx) => {
+        periods.slice().reverse().forEach((m, idx) => {
             const value = getMetricValue(m);
 
             // Animate label counting
@@ -91,7 +91,7 @@ export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = (props)
                 useNativeDriver: false, // must be false for text
             }).start();
         });
-    }, [metric, props.periodType]);
+    }, [animatedLabels, getMetricValue, periods]);
 
     const styles = StyleSheet.create({
         subtitle: {
@@ -171,13 +171,11 @@ export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = (props)
             </Text>
 
             <View style={styles.chart}>
-                {props.periods
+                {periods
                     .slice()
                     .reverse()
                     .map((m, idx) => {
                         const count = getMetricValue(m);
-                        const height = count === 0 ? 4 : (count / maxBarValue) * 100;
-
                         return (
                             <View key={idx} style={styles.barWrapper}>
                                 <AnimatedNumber value={animatedLabels[idx]} decimals={metric === 'pace' ? 1 : 0} />
@@ -190,7 +188,7 @@ export const BarChartsWithPeriods: React.FC<BarChartsWithPeriodsProps> = (props)
                                                 inputRange: [0, 100],
                                                 outputRange: ['0%', '100%'],
                                             }),
-                                            opacity: getMetricValue(m) === 0 ? 0.3 : 1,
+                                            opacity: count === 0 ? 0.3 : 1,
                                         },
                                     ]}
                                 />
@@ -220,7 +218,7 @@ const AnimatedNumber: React.FC<{ value: Animated.Value; decimals?: number }> = (
             setDisplay(Number(value.toFixed(decimals)));
         });
         return () => value.removeListener(id);
-    }, [value]);
+    }, [decimals, value]);
 
     const styles = StyleSheet.create({
         barValue: {

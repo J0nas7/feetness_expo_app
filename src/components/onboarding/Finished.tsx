@@ -138,7 +138,7 @@ export const Finished: React.FC<FinishedProps> = (props) => {
         }
 
         return () => clearTimeout(timer);
-    }, [props.currentPage]);
+    }, [buttonOpacity, props.currentPage]);
 
     const styles = StyleSheet.create({
         container: {
@@ -199,7 +199,7 @@ export const Finished: React.FC<FinishedProps> = (props) => {
                             }}
                         >
                             <Text style={{ color: theme.colors.onPrimary, fontSize: 20, fontWeight: 'bold' }}>
-                                Hit the trail, {props.firstName}! 🌲🏃‍♂️
+                                {t('onboarding.finishCta', { name: props.firstName })}
                             </Text>
                         </Pressable>
                     </Animated.View>
