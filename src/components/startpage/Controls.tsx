@@ -3,10 +3,8 @@ import { createStartpageStyles } from '@/styles/modules/StartpageStyles';
 import { ExerciseType, GoalMetric, Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
 import { FontAwesome5 } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
 import React from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { activityName, t } from '@/i18n';
@@ -21,11 +19,12 @@ export interface ControlsProps {
     duration: number
     setDistance: React.Dispatch<React.SetStateAction<number>>
     setDuration: React.Dispatch<React.SetStateAction<number>>
-    setActivityModalVisible: React.Dispatch<React.SetStateAction<boolean>>
+    openActivityModal: () => void
     activity: ExerciseType
     savedWorkouts: Workout[]
     setActivity: React.Dispatch<React.SetStateAction<ExerciseType>>
     setShowCustom: React.Dispatch<React.SetStateAction<boolean>>
+    onStart: () => void
 }
 
 export const Controls: React.FC<ControlsProps> = (props) => {
@@ -105,26 +104,14 @@ export const Controls: React.FC<ControlsProps> = (props) => {
 
                     <Pressable
                         style={styles.selectRow}
-                        onPress={() => props.setActivityModalVisible(true)}
+                        onPress={props.openActivityModal}
                     >
                         <Text style={styles.selectText}>{activityName(props.activity)}</Text>
                     </Pressable>
 
                     {/* START button */}
                     <Pressable
-                        onPress={async () => {
-                            // Save workout config in AsyncStorage
-                            const workoutConfig = {
-                                mode: props.mode,
-                                distance: props.distance,
-                                duration: props.duration,
-                                activity: props.activity
-                            };
-                            await AsyncStorage.setItem('currentWorkout', JSON.stringify(workoutConfig));
-
-                            // Navigate to progress page cleanly, no params
-                            router.push('/progress');
-                        }}
+                        onPress={props.onStart}
                         style={styles.startButton}
                     >
                         <Text style={styles.startText}>{t('start.start')}</Text>
