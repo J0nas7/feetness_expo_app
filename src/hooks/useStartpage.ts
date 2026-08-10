@@ -69,10 +69,9 @@ export const useStartpage = () => {
 
     const pressGoalAmount = (direction: 'plus' | 'minus') => {
         const increment = mode === 'distance' ? 0.25 : 5;
-        const current = mode === 'distance' ? distance : duration;
-        const next = direction === 'plus' ? current + increment : current - increment;
-        if (mode === 'distance') setDistance(next);
-        else setDuration(next);
+        const amount = direction === 'plus' ? increment : -increment;
+        if (mode === 'distance') setDistance((current) => Math.min(Math.max(current + amount, 0.25), 20));
+        else setDuration((current) => Math.min(Math.max(current + amount, 10), 300));
     };
 
     const selectActivity = (selectedActivity: ExerciseType) => {

@@ -1,4 +1,5 @@
 import { createOnboardingStyles } from '@/styles/modules/OnboardingStyles';
+import { useRepeatPress } from '@/hooks/useRepeatPress';
 import { t } from '@/i18n';
 import { PageTitles } from '@/types';
 import { MyTheme } from '@/types/theme';
@@ -23,19 +24,18 @@ export const HeightPage: React.FC<HeightPageProps> = (props) => {
     const cmToFt = (cm: number) => Math.floor(cm / 30.48);
     const ftToCm = (ft: number) => Math.floor(ft * 30.48);
 
-    const pressHeight = (direction: "plus" | "minus") => {
-        let newHeight = props.height
-
-        if (direction === "plus") newHeight++
-        if (direction === "minus") newHeight--
-
-        setHeightWithHaptics(newHeight)
-    }
-
     const setHeightWithHaptics = (value: number) => {
         props.setHeight(value);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     };
+    const changeHeight = (amount: number) => {
+        const minimum = isCm ? 120 : 4;
+        const maximum = isCm ? 220 : 7;
+        props.setHeight((current) => Math.min(Math.max(current + amount, minimum), maximum));
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    };
+    const decreaseHeightPress = useRepeatPress(() => changeHeight(-1));
+    const increaseHeightPress = useRepeatPress(() => changeHeight(1));
 
     return (
         <View style={onboardingStyles.center}>
@@ -44,7 +44,7 @@ export const HeightPage: React.FC<HeightPageProps> = (props) => {
             <View style={onboardingStyles.valueRow}>
                 <Pressable
                     style={onboardingStyles.roundButton}
-                    onPress={() => pressHeight('minus')}
+                    {...decreaseHeightPress}
                 >
                     <Text style={onboardingStyles.roundButtonText}>-</Text>
                 </Pressable>
@@ -57,7 +57,7 @@ export const HeightPage: React.FC<HeightPageProps> = (props) => {
 
                 <Pressable
                     style={onboardingStyles.roundButton}
-                    onPress={() => pressHeight('plus')}
+                    {...increaseHeightPress}
                 >
                     <Text style={onboardingStyles.roundButtonText}>+</Text>
                 </Pressable>

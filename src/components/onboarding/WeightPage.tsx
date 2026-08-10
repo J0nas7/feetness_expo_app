@@ -1,4 +1,5 @@
 import { createOnboardingStyles } from '@/styles/modules/OnboardingStyles';
+import { useRepeatPress } from '@/hooks/useRepeatPress';
 import { t } from '@/i18n';
 import { PageTitles } from '@/types';
 import { MyTheme } from '@/types/theme';
@@ -25,19 +26,18 @@ export const WeightPage: React.FC<WeightPageProps> = (props) => {
     const kgToLb = (kg: number) => Math.round(kg * 2.20462);
     const lbToKg = (lb: number) => Math.round(lb / 2.20462);
 
-    const pressWeight = (direction: "plus" | "minus") => {
-        let newWeight = props.weight
-
-        if (direction === "plus") newWeight++
-        if (direction === "minus") newWeight--
-
-        setWeightWithHaptics(newWeight)
-    }
-
     const setWeightWithHaptics = (value: number) => {
         props.setWeight(value);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     };
+    const changeWeight = (amount: number) => {
+        const minimum = isKg ? 30 : 66;
+        const maximum = isKg ? 200 : 440;
+        props.setWeight((current) => Math.min(Math.max(current + amount, minimum), maximum));
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    };
+    const decreaseWeightPress = useRepeatPress(() => changeWeight(-1));
+    const increaseWeightPress = useRepeatPress(() => changeWeight(1));
 
     return (
         <View style={onboardingStyles.center}>
@@ -46,7 +46,7 @@ export const WeightPage: React.FC<WeightPageProps> = (props) => {
             <View style={onboardingStyles.valueRow}>
                 <Pressable
                     style={onboardingStyles.roundButton}
-                    onPress={() => pressWeight('minus')}
+                    {...decreaseWeightPress}
                 >
                     <Text style={onboardingStyles.roundButtonText}>-</Text>
                 </Pressable>
@@ -57,7 +57,7 @@ export const WeightPage: React.FC<WeightPageProps> = (props) => {
 
                 <Pressable
                     style={onboardingStyles.roundButton}
-                    onPress={() => pressWeight('plus')}
+                    {...increaseWeightPress}
                 >
                     <Text style={onboardingStyles.roundButtonText}>+</Text>
                 </Pressable>

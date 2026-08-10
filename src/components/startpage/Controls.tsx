@@ -1,4 +1,5 @@
 import { ReusePreviousWorkout } from '@/components';
+import { useRepeatPress } from '@/hooks/useRepeatPress';
 import { createStartpageStyles } from '@/styles/modules/StartpageStyles';
 import { ExerciseType, GoalMetric, Workout } from '@/types';
 import { MyTheme } from '@/types/theme';
@@ -29,6 +30,8 @@ export interface ControlsProps {
 
 export const Controls: React.FC<ControlsProps> = (props) => {
     const styles = createStartpageStyles(props.theme);
+    const decreaseGoalPress = useRepeatPress(() => props.pressGoalAmount('minus'));
+    const increaseGoalPress = useRepeatPress(() => props.pressGoalAmount('plus'));
 
     return (
         <View style={styles.controls}>
@@ -45,7 +48,7 @@ export const Controls: React.FC<ControlsProps> = (props) => {
                         <View style={styles.valueRow}>
                             <Pressable
                                 style={styles.roundButton}
-                                onPress={() => props.pressGoalAmount('minus')}
+                                {...decreaseGoalPress}
                             >
                                 <Text style={styles.roundButtonText}>-</Text>
                             </Pressable>
@@ -58,7 +61,7 @@ export const Controls: React.FC<ControlsProps> = (props) => {
 
                             <Pressable
                                 style={styles.roundButton}
-                                onPress={() => props.pressGoalAmount('plus')}
+                                {...increaseGoalPress}
                             >
                                 <Text style={styles.roundButtonText}>+</Text>
                             </Pressable>
