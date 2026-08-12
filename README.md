@@ -1,118 +1,158 @@
-# Feetness
+# Feetness frontend
 
-**Feetness** is a React Native/Expo fitness app, allowing users to track their workouts, routes, pace, distance, and duration. It supports activities like cycling, running, and walking, and provides voice feedback on progress.
+Feetness is a cross-platform workout companion built with Expo and React Native. It supports planning and recording running, walking, and cycling workouts, then reviewing them through a calendar, maps, pace and elevation summaries, and progress views.
 
----
+The app currently stores user data locally on the device; it does not require a backend to run.
 
 ## Table of Contents
 
 - [Features](#features)
 - [Tech Stack](#tech-stack)
-- [Installation](#installation)
-- [Usage](#usage)
+- [Prerequisites](#prerequisites)
+- [Getting started](#getting-started)
+- [Available scripts](#available-scripts)
 - [Project Structure](#project-structure)
 - [Key Components](#key-components)
-
----
+- [Native development notes](#native-development-notes)
+- [Localization](#localization)
+- [Before submitting changes](#before-submitting-changes)
 
 ## Features
 
-- Track workouts: cycling, running, and walking
-- Real-time distance, pace, and duration tracking
-- Map view of workout paths
-- Voice feedback for progress every 5 minutes
-- Pause/resume workouts
-- Save workouts locally using AsyncStorage
-- Goal-based tracking (distance or duration)
-- Workout history accessible after finishing exercises
-
----
+- Goal-based workout sessions with time, distance, pace, elevation, and route tracking
+- Background location tracking and spoken workout updates
+- Workout plans, calendar management, history, and progress charts
+- iOS HealthKit integration, Live Activities, and an Apple Watch target
+- Android foreground workout notifications and native background speech
+- Light and dark themes
+- English and Danish localization
 
 ## Tech Stack
 
-- **React Native** 0.81
-- **Expo** 54
-- **TypeScript**
-- **React Navigation** 7
-- **React Native Maps**
-- **Expo Location & Task Manager** for GPS tracking
-- **AsyncStorage** for persistent storage
-- **Expo Speech** for voice feedback
-- **Geolib** for distance calculations
+- Expo SDK 54, React Native 0.81, and React 19
+- TypeScript with strict mode enabled
+- Expo Router for file-based navigation
+- React Navigation for tabs and theming
+- AsyncStorage for local persistence
+- Expo Location and Task Manager for workout tracking
+- Native iOS and Android modules generated through local Expo config plugins
 
----
+## Prerequisites
 
-## Installation
+- Node.js (a current LTS release) and npm
+- A physical iOS or Android device for realistic location and background testing
+- For iOS: macOS, Xcode, CocoaPods, and an Apple developer team for HealthKit, App Groups, Live Activities, and the Watch target
+- For Android: Android Studio, the Android SDK, and a Google Maps API key
 
-1. Clone the repository:
+Because Feetness contains custom native modules, Expo Go cannot exercise the complete app. Use a local development build with `npm run ios` or `npm run android`.
 
-```bash
-git clone https://github.com/yourusername/feetness_expo_app.git
-cd feetness_expo_app
-```
+## Getting started
 
-2. Install dependencies:
+1. Install dependencies:
 
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
-3. Start the Expo development server:
+2. Create the local environment file:
 
-```bash
-npm start
-```
+   ```bash
+   cp .env.example .env
+   ```
 
-4. Run on a device or simulator:
+3. Add an Android Google Maps key to `.env`:
 
-```bash
-npm run android   # for Android
-npm run ios       # for iOS
-npm run web       # for Web
+   ```dotenv
+   GOOGLE_MAPS_API_KEY=your_key_here
+   ```
 
-npx expo run:android --variant release
-```
+   This value is read by `app.config.js` during the native build. It can remain empty when working only on iOS.
 
-## Usage
+4. Generate the native projects when needed:
 
-1. Open the app on your device.
-2. Navigate to Start in the tabs.
-3. Select an exercise type: Cycling, Running, or Walking.
-4. Set a goal (distance in km or duration in minutes).
-5. Start the workout:
-* The map shows your route in real time
-* Voice prompts provide updates on progress
-6. Pause/resume as needed.
-7. Finish workout:
-* The workout data (distance, pace, time, path) is saved locally
-* You can view details on the Progress tab
+   ```bash
+   npm run prebuild:clean
+   ```
+
+5. Build and launch the app:
+
+   ```bash
+   npm run ios
+   # or
+   npm run android
+   ```
+
+After the development build is installed, `npm start` starts the Metro bundler for subsequent JavaScript and TypeScript changes.
+
+> `npm run prebuild:clean` deletes and regenerates `ios/`, `android/`, and `.expo/`. Do not keep manual native changes in those generated folders. Put reproducible native changes in `native_plugins/` or `targets/` instead.
+
+## Available scripts
+
+| Command | Purpose |
+| --- | --- |
+| `npm start` | Start the Expo development server |
+| `npm run ios` | Compile and run the iOS development build |
+| `npm run android` | Compile and run the Android development build |
+| `npm run web` | Start the web version; native workout features are limited |
+| `npm run lint` | Run the Expo ESLint configuration |
+| `npm run prebuild:clean` | Regenerate native projects and apply local config plugins |
+
+There is no automated test command yet. At minimum, run `npm run lint` and manually exercise the affected platform before opening a pull request.
 
 ## Project Structure
 
+```text
 src/
-├─ app/                # Main Expo Router screens
-│  ├─ (tabs)/          # Bottom tab navigation
-│  ├─ explore/         # Explore workouts
-│  ├─ finished-exercise.tsx
-│  └─ onboarding.tsx
-├─ components/         # UI components
-│  ├─ exercise/        # Workout components
-│  │  ├─ exercise/     # Core exercise logic & map
-│  │  ├─ GoalProgress.tsx
-│  │  └─ FinishedExercise.tsx
-│  └─ global/          # Global UI components
-├─ types/              # TypeScript types
-├─ utils/              # Utilities
-│  ├─ location/        # Location tracking & workout store
-│  └─ native/          # Native speech & live activity modules
-└─ styles/             # Global styles
+  app/                 Expo Router routes and tab layout
+  components/          Screens and reusable UI grouped by feature
+  hooks/               Workout, plan, settings, and onboarding behavior
+  i18n/                English and Danish application/native strings
+  styles/              Shared style modules
+  types/               Application and theme types
+  utils/               Location tracking, persistence, and native bridges
+assets/                 Icons, splash images, fonts, and other static assets
+native_plugins/         Expo config plugins and native source templates
+targets/                Apple Watch and Live Activity widget targets
+app.config.js           Expo app, permissions, platform, and plugin config
+```
+
+The `@/` import alias maps to `src/`. Routes live in `src/app`; adding a file there adds a route. Most domain state is exposed through hooks and persisted with AsyncStorage.
 
 ## Key Components
 
-* Exercise.tsx: Main workout screen, handles state, timer, location tracking, and progress.
-* ExerciseMap.tsx: Displays user's route and segments on a map.
-* ExerciseStats.tsx: Shows distance, pace, elapsed time, and pause/resume controls.
-* GoalProgress.tsx: Circular progress indicator for workout goals.
-* workoutStore.ts: Handles background location updates, distance calculations, and notifying listeners.
-* NativeSpeech.ts: Integrates text-to-speech for real-time workout feedback.
+- **App shell:** `src/app/_layout.tsx` configures navigation, themes, onboarding, and application-state handling.
+- **Workout experience:** `src/components/exercise` contains active workout controls, goal progress, editing, and post-workout summaries.
+- **Workout tracking:** `src/hooks/useWorkoutSession.ts` coordinates workout state, while `src/utils/location` handles background location updates, distance, pace, and elevation.
+- **Plans and calendar:** `src/components/plan` manages workout plans, and `src/components/calendar` presents scheduled and completed workouts.
+- **Progress:** `src/components/progress` provides period-based workout charts and summaries.
+- **Native bridges:** `src/utils/native` connects the React Native app to Live Activities, Apple Watch communication, and platform speech services.
+- **Localization:** `src/i18n` contains the typed translation helper and feature-level English and Danish strings.
 
+## Native development notes
+
+- Test workout tracking on a real device. Simulators are useful for UI work but do not accurately represent GPS movement, background execution, HealthKit, notifications, or Watch communication.
+- Location access includes foreground and background permissions. A workout should be checked with the app active, backgrounded, paused, resumed, and stopped.
+- iOS native capabilities depend on the bundle identifier, Apple team, App Group, and entitlements in `app.config.js`. Developers using another Apple account must update those values consistently.
+- The Steps screen currently uses demo data; HealthKit permission support exists, but the screen is not yet backed by live step queries.
+- Web is primarily useful for quick UI feedback. HealthKit, Live Activities, Apple Watch communication, background location behavior, and the Android workout service are native-only.
+
+## Localization
+
+Application translations are split by feature under `src/i18n/en` and `src/i18n/da`. Native target strings live in the corresponding `.lproj` directories under `targets/`.
+
+When adding user-facing copy:
+
+1. Add the same key to both application locales.
+2. Use `t('feature.key')` instead of inline text.
+3. Update native target localization files too when the copy appears in the Watch app or Live Activity.
+
+## Before submitting changes
+
+Run:
+
+```bash
+npm run lint
+npx tsc --noEmit
+```
+
+For changes involving permissions, config plugins, or native targets, regenerate the native projects and verify a clean platform build as well.
